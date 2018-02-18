@@ -459,7 +459,7 @@ sub READCODEFILE
 		}
 		# check doubled words.
 		# the crazy one, from https://stackoverflow.com/questions/23001408/perl-regular-expression-matching-repeating-words, catches all duplicate words such as "the the"
-		if( !$twook && !$intable && $lctwoline =~ /(?:\b(\w+)\b) (?:\1(?: |$))+/ && $1 ne 'em' ) {
+		if( !$twook && !$intable && !$inequation && $lctwoline =~ /(?:\b(\w+)\b) (?:\1(?: |$))+/ && $1 ne 'em' ) {
 			print "SERIOUS: word duplication problem of word '$1' on line $. in $input.\n";
 		}
 		# see https://english.stackexchange.com/questions/34378/etc-with-postpositioned-brackets-at-the-end-of-a-sentence
@@ -847,58 +847,58 @@ sub READCODEFILE
 			print "'mip-map' to 'mipmap' (no hyphen), on line $. in $input.\n";
 		}
 		if( !$ok && !$isref && ($lctheline =~ / (cubemap)/ || ($strict && $lctheline =~ /(cube-map)/)) ) {
-			print "'$1' to 'cube map', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'cube map', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && ($lctheline =~ / (lightmap)/ || ($strict && $lctheline =~ /(light-map)/)) ) {
-			print "'$1' to 'light map', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'light map', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && ($lctheline =~ / (screenspace)/ || ($strict && $lctheline =~ /(screen-space)/)) ) {
-			print "'$1' to 'screen space', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'screen space', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && ($lctheline =~ / (raytrac)/ || ($strict && $lctheline =~ /(ray-trac)/)) ) {
-			print "'$1' to 'ray trac*', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'ray trac*', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && ($lctheline =~ / (pathtrac)/ || ($strict && $lctheline =~ /(path-trac)/)) ) {
-			print "'$1' to 'path trac*', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'path trac*', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && $lctheline =~ / (sub-surface)/ ) {
-			print "'$1' to 'subsurface', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'subsurface', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && $lctheline =~ / (preintegrate)/ ) {
-			print "'$1' to 'pre-integrate', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'pre-integrate', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && $lctheline =~ / (pre-calculate)/ ) { # slight google preference for this, but we'll go precalculate
-			print "'$1' to 'precalculate', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'precalculate', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$ok && !$isref && $lctheline =~ / (pre-compute)/ ) {
-			print "'$1' to 'precompute', on line $. in $input, or chex_latex.\n";
+			print "change '$1' to 'precompute', on line $. in $input, or add '% chex_latex' to line.\n";
 		}
 		if( !$isref && $lctheline  =~ /grey/ ) { # http://www.dictionary.com/e/gray-or-grey/
-			print "'grey' to 'gray', on line $. in $input. MAGA!\n";
+			print "change 'grey' to 'gray', on line $. in $input. MAGA!\n";
 		}
 		if( !$isref && $lctheline  =~ /non-linear/ ) {
-			print "'non-linear' to 'nonlinear', on line $. in $input.\n";
+			print "change 'non-linear' to 'nonlinear', on line $. in $input.\n";
 		}
 		if( !$isref && $lctheline  =~ /haloes/ ) {
-			print "'haloes' to 'halos', on line $. in $input. MAGA!\n";
+			print "change 'haloes' to 'halos', on line $. in $input. MAGA!\n";
 		}
 		if( !$ok && !$isref && $lctheline  =~ /zeroes/ ) {
-			print "'zeroes' to 'zeros', on line $. in $input.\n";
+			print "change 'zeroes' to 'zeros', on line $. in $input.\n";
 		}
 		if( !$isref && $lctheline  =~ /un-blur/ ) {
-			print "'un-blur' to 'unblur' (no hyphen), on line $. in $input.\n";
+			print "change 'un-blur' to 'unblur' (no hyphen), on line $. in $input.\n";
 		}
 		if( !$isref && $lctheline  =~ /off-line/ ) {
-			print "'off-line' to 'offline' (no hyphen), on line $. in $input.\n";
+			print "change 'off-line' to 'offline' (no hyphen), on line $. in $input.\n";
 		}
 		if( !$isref && $theline  =~ /XBox/ || $theline  =~ /XBOX/ ) {
-			print "'XBox' to 'Xbox', on line $. in $input.\n";
+			print "change 'XBox' to 'Xbox', on line $. in $input.\n";
 		}
 		if( !$isref && $theline  =~ /Renderman/ ) {
-			print "'Renderman' to 'RenderMan', on line $. in $input.\n";
+			print "change 'Renderman' to 'RenderMan', on line $. in $input.\n";
 		}
 		if ( $theline =~ /Game Developer Conference/ && ($input =~ /refs.tex/) ) {
-			print "'Game Developer Conference' to 'Game Developers Conference', on line $. in $input.\n";
+			print "change 'Game Developer Conference' to 'Game Developers Conference', on line $. in $input.\n";
 		}
 		if ( $theline =~ /\?\-/ && ($input =~ /refs.tex/) ) {
 			print "There's a ?- page reference (how do these get there? I think it's a hidden character before the first - from copy and paste of Computer Graphics Forum references), on line $. in $input.\n";
