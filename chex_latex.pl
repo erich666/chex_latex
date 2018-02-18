@@ -19,7 +19,7 @@
 use File::Find;
 
 # set $strict to 1 to flag words with hyphens, such as "light-map" - these can be valid when used as adjectives,
-# so add % chex_latex ok to such lines to ignore them.
+# so add % chex_latex to such lines to ignore them.
 $strict = 0;
 
 my @dirs;
@@ -157,7 +157,7 @@ sub READCODEFILE
 			$skip = 1;
 		}
 		
-		# skip lines with includegraphics on them
+		# cut rest of any line with includegraphics and trim= on it
 		if ( $theline =~ /\\includegraphics\[/ ) {
 			if ( $theline =~ /trim=/ ) {
 				# lame, we just delete rest of line, but want to avoid junk like:
@@ -165,6 +165,11 @@ sub READCODEFILE
 				# which flags a word duplication problem.
 				$theline = $`;
 			}
+		}
+		
+		# skip lines with \STATE
+		if ( $theline =~ /\\STATE/ ) {
+			$skip = 1;
 		}
 		
 		if ( !$skip &&
@@ -223,7 +228,7 @@ sub READCODEFILE
 			} elsif ( $indexname =~ /\|\)/ ) {
 				#print "right index *$`*\n";
 				if ( !exists($indexlong{$`}) ) {
-					printf "ERROR: found right index {$`|)} without left index in $nextfile.\n  Perhaps you repeated this right entry?\n";
+					printf "ERROR: found right index {$`|)} without left index in $nextfile.\n    Perhaps you repeated this right entry?\n";
 				} else {
 					$indexlong{$`}--;
 					if ( $indexlong{$`} == 0 ) {
@@ -269,10 +274,14 @@ sub READCODEFILE
 				}
 				my $sw = &CONNECTOR_WORD($wds[$i], $i);
 				if ( $sw == 2 ) {
-					print "Section title has a word '$wds[$i]' that should not be capitalized, on line $. in $input.\n";
+					print "POSSIBLY SERIOUS: Section title has a word '$wds[$i]' that should not be capitalized, on line $. in $input.\n";
+					print "    This script may be missing a 'connector word' such as 'in' - you can\n";
+					print "    better test your title at https://capitalizemytitle.com/\n";
 				}
 				elsif ( $sw == 0 && (length($wds[$i]) > 0) && !&CAPITALIZED($wds[$i]) ) {
-					print "Section title has a word '$wds[$i]' uncapitalized, on line $. in $input.\n";
+					print "POSSIBLY SERIOUS: Section title has a word '$wds[$i]' uncapitalized, on line $. in $input.\n";
+					print "    This script may be missing a 'connector word' such as 'in' - you can\n";
+					print "    better test your title at https://capitalizemytitle.com/\n";
 				}
 			}
 
@@ -686,7 +695,7 @@ sub READCODEFILE
 			print "ERROR: '$&' date range has only one dash, needs two, on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $twoline  =~ / \(\d+-\d+\)/) {
-			print "ERROR: '$&' date range needs to use brackets, [], not parentheses, and\n  has only one dash, needs two, on line $. in $input.\n";
+			print "ERROR: '$&' date range needs to use brackets, [], not parentheses, and\n    has only one dash, needs two, on line $. in $input.\n";
 		}
 		#if( $isref && !($twoline  =~ /--/) && $twoline  =~ /-/ ) {
 		#	print "Warning: '$_' in refs has only one dash, on line $. in $input.\n";
@@ -1206,7 +1215,7 @@ sub READCODEFILE
 		}
 		if( !$isref && !$ok && $lctheline  =~ /literally/ && !$inquote ) {
 			print "tip: you can probably not use 'literally' (and may mean 'figuratively'), on line $. in $input.\n";
-			print "   If you think it's OK, put on the end of the line the comment '% chex_latex ok'\n";
+			print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 		}
 		if( $lctwoline =~ / a lot more/ ) {
 			print "tip: replace 'a lot' with 'much' on line $. in $input.\n";
@@ -1230,16 +1239,16 @@ sub READCODEFILE
 			print "Change 'formulas' to 'formulae' on line $. in $input, or rewrite.\n";
 		}
 		if( !$isref && !$twook && $lctwoline =~ /in terms of / ) {
-			print "tip: you probably should replace 'in terms of' with 'using' or 'by' or 'and' on line $. in $input, or rewrite.\n  It's a wordy phrase.\n";
-			print "   If you think it's OK, put on the end of the line the comment '% chex_latex ok'\n";
+			print "tip: you probably should replace 'in terms of' with 'using' or 'by' or 'and' on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
+			print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 		}
 		# slight Google preference, and https://en.wikipedia.org/wiki/Lookup_table
 		if( !$isref && !$ok && $lctheline =~ /look-up/ ) {
 			print "Change 'look-up table' to 'lookup table' or similar on line $. in $input.\n";
 		}
 		if( !$isref && !$twook && $lctwoline =~ /so as to / ) {
-			print "tip: you probably should replace 'so as to' with 'to' or similar on line $. in $input, or rewrite.\n  It's a wordy phrase.\n";
-			print "   If you think it's OK, put on the end of the line the comment '% chex_latex ok'\n";
+			print "tip: you probably should replace 'so as to' with 'to' or similar on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
+			print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 		}
 		if( !$isref && $lctwoline =~ / interesting/ ) {
 			print "tip: reconsider 'interesting' on line $. in $input, probably delete it\n    or change to 'key', 'noteworthy', 'notable', 'different', or 'worthwhile'.\n    Everything in your work should be interesting.\n    Say why something is of interest, and write so that it is indeed interesting.\n";
@@ -1263,13 +1272,13 @@ sub READCODEFILE
 			print "add comma: after 'Generally', on line $. in $input.\n";
 		}
 		if( !$isref && !$twook && $lctwoline  =~ /data is/ ) {
-			print "possible tip: 'data' should be plural, not singular, on line $. in $input. Reword?\n   Sometimes it is fine, e.g., 'the analysis of the data is taking a long time.' since analysis is singular.\n";
-			print "   If you think it's OK, put on the end of the line the comment '% chex_latex ok'\n";
+			print "possible tip: 'data' should be plural, not singular, on line $. in $input. Reword?\n    Sometimes it is fine, e.g., 'the analysis of the data is taking a long time.' since analysis is singular.\n";
+			print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 		}
 		# see http://www.quickanddirtytips.com/education/grammar/use-versus-utilize?page=1
 		if( !$isref && $lctheline  =~ /utiliz/ && !($lctheline  =~ /utilization/) && !$ok && !$inquote && !$isfront ) {
-			print "Change the 'utiliz-' form to 'use' or similar, on line $. in $input.\n  'Utiliz-' sounds big and looks impressive but isn't needed - keep it simple.\n";
-			print "   If you think it's truly OK (use it maybe once a chanpter), put on the end of the line the comment '% chex_latex ok'\n";
+			print "Change the 'utiliz-' form to 'use' or similar, on line $. in $input.\n    'Utiliz-' sounds big and looks impressive but isn't needed - keep it simple.\n";
+			print "    If you think it's truly OK (use it maybe once a chapter), put on the end of the line the comment '% chex_latex'\n";
 		}
 		# nice for a final check TODO END, but kind of crazed
 		$style = 0;
@@ -1281,34 +1290,34 @@ sub READCODEFILE
 			#}
 			if( !$isref && $lctwoline  =~ /a number of/ && !$twook ) {
 				print "shortening tip: replace 'a number of' with 'several' (or possibly even remove), on line $. in $input.\n";
-				print "   If you think it's truly OK, put on the end of the line the comment '% chex_latex ok'\n";
+				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			if( !$isref && $lctwoline  =~ /in particular/ ) {
 				print "shortening tip: perhaps remove 'in particular', on line $. in $input.\n";
-				print "   If you think it's truly OK, put on the end of the line the comment '% chex_latex ok'\n";
+				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			if( !$isref && $lctwoline  =~ /similar to/ ) {
 				print "shortening tip: perhaps replace 'similar to' with 'like', on line $. in $input.\n";
-				print "   If you think it's truly OK, put on the end of the line the comment '% chex_latex ok'\n";
+				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			if( !$isref && $lctwoline  =~ /in order to/ ) {
 				print "shortening tip: perhaps replace 'in order to' with 'to', on line $. in $input.\n";
-				print "   If you think it's truly OK, put on the end of the line the comment '% chex_latex ok'\n";
+				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			if( !$isref && $lctwoline  =~ / all of the/ && !($lctwoline  =~ /or all of the/) ) {
 				print "shortening tip: replace 'all of' with 'all', on line $. in $input.\n";
-				print "   If you think it's truly OK, put on the end of the line the comment '% chex_latex ok'\n";
+				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			if( !$isref && $lctwoline  =~ /the majority of/ ) {
 				print "shortening tip: replace 'the majority of' with 'most', on line $. in $input.\n";
-				print "   If you think it's truly OK, put on the end of the line the comment '% chex_latex ok'\n";
+				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			if( !$isref && $lctwoline =~ / quite/ ) {
 				print "The word 'quite' is a cheat for 'very' - can we avoid it? Line $. in $input.\n";
 			}
 			if( $lctwoline =~ /kind of/ && !$twook ) {
 				print "If you don't mean 'type of', for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line $. in $input.\n";
-				print "   If you think it's OK, put on the end of the line the comment '% chex_latex ok'\n";
+				print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 		}
 		# ones people do:
@@ -1395,6 +1404,7 @@ sub CONNECTOR_WORD
 		$testword eq "a" ||
 		$testword eq "by" ||
 		$testword eq "on" ||
+		$testword eq "in" ||
 		$testword eq "as" ||
 		$testword eq "about" ||
 		$testword eq "an" ||
