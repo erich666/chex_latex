@@ -7,4 +7,8 @@ and all .tex files in your directory and subdirectories will be read and checked
 
     perl chex_latex.pl yourfile.tex
 
-This script is one used for the book ''Real-Time Rendering'' and so has a bunch of book-specific rules. I hope to make it more general and customizable in the future. For now, blithely ignore our opinions or, better yet, just comment out or delete the lines you don't like in the script. You can also add "% chex_latex" to the end of any line in your file in order to have this script skip some error tests on it, i.e., you can say a line is OK and should not be tested.
+This script is one used for the book ''Real-Time Rendering'' and so has a bunch of book-specific rules. I hope to make it more general and customizable in the future. For now, blithely ignore our opinions or, better yet, just comment out or delete the lines you don't like in the script. You can also add "% chex_latex" to the end of any line in your .tex file in order to have this script skip some error tests on it, e.g.:
+
+    This method of using data is reasonable. % don't flag "data is" - chex_latex
+
+The "chex_latex" says the line is OK and won't be tested. Of course, if you make any other errors on this line in the future, they also won't be tested. I should add a "force testing" flag... (and so begins the endless addition of flags.)
