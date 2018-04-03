@@ -114,7 +114,7 @@ Thanks to John Owens for providing a bunch of theses and technical articles for 
 
 Interactive spell checkers are fine for small documents, but for long ones I find it tedious to step through every word flagged as not being in the dictionary. Most of the time these are names, and for each hit I have to choose "ignore/add/fix" or whatever. I just want to toss in *.tex files and get a long list back of what words failed. Here's how I do it. My contribution is a little Perl script at the end that consolidates results.
 
-The main piece is the program [_Aspell_](http://aspell.net/). For Windows the best setup I found is [here](https://notepad-plus-plus.org/community/topic/8206/method-to-install-gnu-aspell-win32-dictionaries-and-spell-check-plugin-on-n).
+The main piece is the program [_Aspell_](http://aspell.net/). For Windows the best setup explanation I found is [here](https://notepad-plus-plus.org/community/topic/8206/method-to-install-gnu-aspell-win32-dictionaries-and-spell-check-plugin-on-n) - a little involved, but entirely worth it to me.
 
 After installing, I first put all .tex files into one test file. For example, on Windows:
 
@@ -128,7 +128,7 @@ Say that file is now in C:\temp. I then run Aspell on this file by going to the 
 
     bin\aspell list -t < C:\temp\alltext.txt > C:\temp\alltypos.txt
 
-This gives a long file of misspelled (or, more likely, not found) words, in order found. The same author's name will show up a bunch of times, other code bits and whatnot will show up, etc. I find it much faster to look at a sorted list of typos, showing each word just once.
+This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, other code bits and whatnot will show up, etc. I find it much faster to look at a sorted list of typos, showing each word just once.
 
 To make such a list, use the script aspell_sorter.pl:
 
