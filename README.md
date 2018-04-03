@@ -55,7 +55,7 @@ The chex_latex.pl script tests for:
 * Any \bibitems's that do not have any \cite's, and vice versa.
 * And much else - more than 300 tests in all.
 
-This script is in no way foolproof, and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to edit and delete or modify any tests that you don't like.
+This script is in no way foolproof, and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to delete or modify any tests that you don't like.
 
 # Installation and Use
 
