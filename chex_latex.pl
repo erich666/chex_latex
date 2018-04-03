@@ -1,19 +1,19 @@
 #!/usr/contrib/bin/perl
 # Script to read in a latex file or directory and its subdirectories and check for typographic
 # and syntax errors of various sort.
-# Some things:
-#   * Look for \label and \ref markers, and note any figure \label's that do not have any \ref's.
-#   * Look for \bibitem and \cite markers, note any \bibitems's that do not have any \cite's.
+# See https://github.com/erich666/chex_latex for details.
 
 #
 # Usage: perl chex_latex.pl
-#     this checks all files in the current directory, since the default directory is .
+#     this checks all files in the current directory
 #
 # Usage: perl chex_latex.pl advlite.tex
 #     checks just this tex file.
 #
 # Usage: perl chex_latex.pl latex_docs/thesis
 #     check all *.tex files in the directory latex_docs/thesis, and its subdirectories
+#
+# See 'sub USAGE' below for command-line options.
 
 use strict;
 
