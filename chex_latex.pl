@@ -962,6 +962,7 @@ sub READCODEFILE
 			# Personal preferences, take them or leave them
 			# "Substitute 'damn' every time you’re inclined to write 'very,'" said Mark Twain. "Your editor will delete it and the writing will be just as it should be." https://lifehacker.com/replace-very-with-damn-to-improve-your-writing-1708460103
 			# Try to find a substitute, e.g., "very small" could become "minute" or "tiny"
+			# substitutes site here: https://www.grammarcheck.net/very/
 			if( !$twook && !$isref && (($lctwoline =~ / very/ && !$inquote ) || ($lctwoline =~ /^very/))) {
 				print "tip: remove or replace 'very' on line $. in $input.\n";
 			}
