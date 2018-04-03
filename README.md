@@ -43,7 +43,7 @@ Here's what chex_latex.pl finds in a fraction of a second:
 	Not capitalized at start of sentence (or the period should have a \ before it), on line 7 in ./testfile.tex.
 	==========================================================================================================
 
-You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of them. A few minutes wading through them can catch errors hard to notice otherwise.
+You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of all of them. A few minutes wading through these can catch errors hard to notice otherwise.
 	
 The chex_latex.pl script tests for:
 * Doubled words, such as "the the."
