@@ -56,3 +56,5 @@ Instead of adding a comment "% chex_latex" to lines you want the script to ignor
     -R refs.tex
 	
 By default, the file "refs.tex" is the one that contains \bibitem entries. Our book uses these, just about no one else does. If you actually do use \bibitem, this one is worth setting to your references file. It will tell you whether you reference something that doesn't exist in the references file, and whether any references in the file are not used in the text.
+
+Thanks to John Owens for providing a bunch of theses and technical articles for testing.
