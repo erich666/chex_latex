@@ -479,11 +479,11 @@ sub READCODEFILE
 		# ---------------------------------------------------------
 		# citation problem: use a ~ instead of a space so that the citation is connected with the content before it.
 		if( !$ok && $theline =~ /[\s\w\.,}]\\cite\{/ ) {
-			print "\\cite problem on line $. in $input, needs a tilde ~\\cite before citation.\n";
+			print "\\cite needs a tilde ~\\cite before citation, on line $. in $input.\n";
 		}
 		# has the tilde, but there's a space before the tilde
 		if( !$ok && $theline =~ /\s~\\cite\{/ ) {
-			print "\\cite problem on line $. in $input, remove the space before the tilde ~\\cite.\n";
+			print "\\cite - remove the space before the tilde ~\\cite, on line $. in $input.\n";
 		}
 		if( !$ok && $theline =~ /\/cite/ ) {
 			print "SERIOUS: '/cite' $& problem, should use backslash, on line $. in $input.\n";
@@ -498,7 +498,7 @@ sub READCODEFILE
 		# ----------------------------------------------------------
 		# index entry tests
 		if( !$ok && $theline =~ /\/index\{/ && !$isref ) {
-			print "SERIOUS: '/index' $& problem, should be \\index, on line $. in $input.\n";
+			print "SERIOUS: '/index' should be \\index, on line $. in $input.\n";
 		}
 		if( !$ok && $theline =~ /\\index/ && !$isref ) {
 			# look at index entry - only looks at first one in line, though.
@@ -511,14 +511,14 @@ sub READCODEFILE
 		if( !$ok && $theline =~ /[\s\w\.,}]\\ref\{/ ) {
 			my $testit = $`;
 			if ( !( $testit =~ /and$/ ) && !( $testit =~ /,$/ ) ) { # don't worry about second number for figure being on same line.
-				print "\\ref problem on line $. in $input, needs a tilde ~\\ref before reference.\n";
+				print "\\ref needs a tilde ~\\ref before reference, on line $. in $input.\n";
 			}
 		}
 		# pageref needs tilde
 		if( !$ok && $theline =~ /[\s\w\.,}]\\pageref\{/ ) {
 			my $testit = $`;
 			if ( !( $testit =~ /and$/ ) && !( $testit =~ /,$/ ) ) { # don't worry about second number for figure being on same line.
-				print "\\pageref problem on line $. in $input, needs a tilde ~\\pageref before reference.\n";
+				print "\\pageref needs a tilde ~\\pageref before reference, on line $. in $input.\n";
 			}
 		}
 		# if it says "page" before the reference
@@ -527,15 +527,15 @@ sub READCODEFILE
 		}
 		# cite should have a \ before this keyword
 		if( !$ok && $theline =~ /~cite\{/ ) {
-			print "\\cite problem on line $. in $input, missing \\.\n";
+			print "'cite' is missing a leading \\ for '\\cite' on line $. in $input.\n";
 		}
 		# ref should have a \ before this keyword
 		if( !$ok && $theline =~ /~ref\{/ ) {
-			print "\\ref problem on line $. in $input, missing \\.\n";
+			print "'ref' is missing a leading \\ for '\\ref' on line $. in $input.\n";
 		}
 		# pageref should have a \ before this keyword
 		if( !$ok && $theline =~ /~pageref\{/ ) {
-			print "\\pageref problem on line $. in $input, missing \\.\n";
+			print "'pageref' is missing a leading \\ for \\pageref on line $. in $input.\n";
 		}
 		$str = $theline;
 		# label used twice
@@ -691,9 +691,6 @@ sub READCODEFILE
 		if ( !$ok && $theline =~ /\-\?/ && $isref ) {
 			print "There's a -? page reference (how do these get there? I think it's a hidden character before the first - from copy and paste of Computer Graphics Forum references), on line $. in $input.\n";
 		}
-		if( !$twook && $twoline  =~ /_\{diff\}/ ) {
-			print "SERIOUS: change _{diff} to _{\\Diff}, on line $. in $input.\n";
-		}
 		if( !$ok && $theline  =~ /\/times/ ) {
 			print "SERIOUS: change '/times' to '\\times' on line $. in $input.\n";
 		}
@@ -794,13 +791,13 @@ sub READCODEFILE
 		# as if it's the end of a sentence, which causes a bit of additional space to get added after it.
 		# Easiest is to just spell out vs.
 		if( !$twook && !$isref && $twoline  =~ / vs\./ && !$ok ) {
-			print "SERIOUS: change 'vs.' to 'versus' to avoid period inter-sentence/inter-word spacing problem, or use 'vs\\.' on line $. in $input.\n";
+			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs\\.' on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $twoline =~ / vs / ) {
 			print "SERIOUS: change 'vs' to 'versus' on line $. in $input\n";
 		}
-		if( !$twook && !$isref && $twoline  =~ / etc\./ && !$ok ) {
-			print "POSSIBLY SERIOUS: change 'etc.' to 'etc\\.' to avoid period inter-sentence/inter-word spacing problem, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
+		if( !$twook && !$isref && $twoline  =~ / etc\. [a-z]/ && !$ok ) {
+			print "POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc\\.' to avoid having a 'double-space'\n    appear after the period, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
 			$period_problem = 1;
 		}
 		
