@@ -134,8 +134,8 @@ To make such a list, use the script aspell_sorter.pl:
 
     perl aspell_sorter.pl alltypos.txt > spell_check.txt
 	
-which simply sorts the words in the alltypos.txt file. The file produced is all uppercase (easy to get rid of authors that way), then all lowercase.
+which simply sorts the words in the alltypos.txt file, removing duplicates and giving a count. The file produced first lists all capitalized words (it is easy to skim past authors that way), then all lowercase.
 
-That's it - nothing fancy, but it has saved me a lot of time and a lot of "oh, wait, was that an error?" but the interactive spell checker can't go backwards, so I have to start again somewhere earlier.
+That's it - nothing fancy, but it has saved me a lot of time and a lot of "oh, wait, was that an error?" but the interactive spell checker can't go backwards, so I have to start again somewhere earlier and possibly miss something. I can also save the results file, change .tex files, and then make a new spell_check.txt and do a "diff" to see if I've introduced any new errors.
 
-Better yet, Aspell also works on plaintext files, so if you can extract your text into a simple text file you can use this process to perform batch spell checking.
+Aspell also works on plaintext files, so if you can extract your text into a simple text file you can use this process to perform batch spell checking on anything.
