@@ -109,3 +109,33 @@ Instead of adding a comment "% chex_latex" to lines you want the script to ignor
 By default, the file "refs.tex" is the one that contains \bibitem entries. Our book uses these, just about no one else does. If you actually do use \bibitem, this one is worth setting to your references file. It will tell you whether you reference something that doesn't exist in the references file, and whether any references in the file are not used in the text.
 
 Thanks to John Owens for providing a bunch of theses and technical articles for testing.
+
+# Bonus Tool: Aspell Sorter for Batch Spell Checking
+
+Interactive spell checkers are fine for small documents, but for long ones I find it tedious to step through every word flagged as not being in the dictionary. Most of the time these are names, and for each hit I have to choose "ignore/add/fix" or whatever. I just want to toss in *.tex files and get a long list back of what words failed. Here's how I do it. My contribution is a little Perl script at the end that consolidates results.
+
+The main piece is the program [_Aspell_](http://aspell.net/). For Windows the best setup I found is [here](https://notepad-plus-plus.org/community/topic/8206/method-to-install-gnu-aspell-win32-dictionaries-and-spell-check-plugin-on-n).
+
+After installing, I first put all .tex files into one test file. For example, on Windows:
+
+    type *.tex > alltext.txt
+	
+On linuxy systems:
+
+    cat *.tex > alltext.txt
+	
+Say that file is now in C:\temp. I then run Aspell on this file by going to the Aspell directory and doing this:
+
+    bin\aspell list -t < C:\temp\alltext.txt > C:\temp\alltypos.txt
+
+This gives a long file of misspelled (or, more likely, not found) words, in order found. The same author's name will show up a bunch of times, other code bits and whatnot will show up, etc. I find it much faster to look at a sorted list of typos, showing each word just once.
+
+To make such a list, use the script aspell_sorter.pl:
+
+    perl aspell_sorter.pl alltypos.txt > spell_check.txt
+	
+which simply sorts the words in the alltypos.txt file. The file produced is all uppercase (easy to get rid of authors that way), then all lowercase.
+
+That's it - nothing fancy, but it has saved me a lot of time and a lot of "oh, wait, was that an error?" but the interactive spell checker can't go backwards, so I have to start again somewhere earlier.
+
+Better yet, Aspell also works on plaintext files, so if you can extract your text into a simple text file you can use this process to perform batch spell checking.
