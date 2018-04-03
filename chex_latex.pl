@@ -478,11 +478,11 @@ sub READCODEFILE
 
 		# ---------------------------------------------------------
 		# citation problem: use a ~ instead of a space so that the citation is connected with the content before it.
-		if( !$ok && $theline =~ /[\s\w\.,}]\\cite\{/ ) {
-			print "\\cite needs a tilde ~\\cite before citation, on line $. in $input.\n";
+		if( !$twook && $twoline =~ /[\s\w\.,}]\\cite\{/ ) {
+			print "\\cite needs a tilde ~\\cite before citation to avoid separation, on line $. in $input.\n";
 		}
 		# has the tilde, but there's a space before the tilde
-		if( !$ok && $theline =~ /\s~\\cite\{/ ) {
+		if( !$twook && $twoline =~ /\s~\\cite\{/ ) {
 			print "\\cite - remove the space before the tilde ~\\cite, on line $. in $input.\n";
 		}
 		if( !$ok && $theline =~ /\/cite/ ) {

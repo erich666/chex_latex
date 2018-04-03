@@ -22,6 +22,7 @@ Here's what chex_latex.pl finds in a fraction of a second:
 		Also, feel free to go into the code and comment out this test!
 	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in ./testfile.tex.
 	SERIOUS: no contractions: ''ll' to ' will' on line 2 in ./testfile.tex.
+	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in ./testfile.tex.
 	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc\.' to avoid having a 'double-space'
 		appear after the period, on line 4 in ./testfile.tex.
 		(To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)
