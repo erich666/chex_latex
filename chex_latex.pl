@@ -65,7 +65,6 @@ while (@ARGV) {
 	if ( substr($arg,0,1) eq '-' ) {
 		# go through characters and interpret them
 		my $chars = substr($arg,1);
-		print "chars is $chars\n";
 		for ( $i=0; $i < length($chars); $i++ ) {
 			my $char = substr($chars, $i, 1);
 			if ( $char eq 'd' ) {
