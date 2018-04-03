@@ -387,7 +387,7 @@ sub READCODEFILE
 					print "POSSIBLY SERIOUS: Section title has a word '$wds[$i]' uncapitalized, on line $. in $input.\n";
 					print "    Ignore if this word '$wds[$i]' is a 'connector word' such as 'in' or 'and' -\n";
 					print "    you can test your title at https://capitalizemytitle.com/\n";
-					print "    Also, feel free to go into the code and comment out this test!\n";
+					print "    Also, feel free to use the '-t' option or even go into the code and comment out this test.\n";
 				}
 			}
 

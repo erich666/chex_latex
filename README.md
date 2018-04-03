@@ -19,7 +19,7 @@ Here's what chex_latex.pl finds in a fraction of a second:
 	POSSIBLY SERIOUS: Section title has a word 'that' uncapitalized, on line 1 in ./testfile.tex.
 		Ignore if this word 'that' is a 'connector word' such as 'in' or 'and' -
 		you can test your title at https://capitalizemytitle.com/
-		Also, feel free to go into the code and comment out this test!
+		Also, feel free to use the '-t' option or even go into the code and comment out this test.
 	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in ./testfile.tex.
 	SERIOUS: no contractions: ''ll' to ' will' on line 2 in ./testfile.tex.
 	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in ./testfile.tex.
