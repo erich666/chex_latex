@@ -24,7 +24,7 @@ For a different directory, called say ''work_files\my-thesis-master'':
 
     perl chex_latex.pl yourfile.tex work_files\my-thesis-master
 
-This script is one used for the book ''Real-Time Rendering'' and so has a bunch of book-specific rules. Blithely ignore our opinions or, better yet, comment out the warning lines you don't like in the script. You can also add "% chex_latex" to the end of any line in your .tex file in order to have this script skip some error tests on it, e.g.:
+This script is one used for the book ''Real-Time Rendering'' and so has a bunch of book-specific rules. Blithely ignore our opinions or, better yet, comment out the warning lines you don't like in the script (the program's just a text file, nothing complex). You can also add "% chex_latex" to the end of any line in your .tex file in order to have this script skip some error tests on it, e.g.:
 
     This method of using data is reasonable. % don't flag "data is" - chex_latex
 
@@ -46,7 +46,9 @@ So if you want all the tests, do:
 If you want the bare minimum, do:
 
     perl chex_latex.pl -ditu [directory or files]
-	
+
+If a message confuses you, look in the Perl script itself, as there are comments about some of the issues.
+
 Two other more obscure options:
 
     -O okword
