@@ -1,7 +1,7 @@
 # chex_latex
 LaTeX file checking tool.
 
-This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and a lot of other problems. Put it in your directory of .tex files and run it to look for common problems.
+This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and a lot of other problems. Put it in your directory of .tex files and run it to look for common mistakes.
 
 As an example, here is a snippet of a .tex file; look it over for problems yourself:
 
