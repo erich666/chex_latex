@@ -14,7 +14,8 @@
 #
 # Usage: perl chex_latex.pl latex_docs/thesis
 #     check all *.tex files in the directory latex_docs/thesis, and its subdirectories
-#
+
+use strict;
 
 use File::Find;
 # options for tests. You can set these to whatever defaults you like
@@ -36,6 +37,24 @@ my $refstex = "refs.tex";
 
 # internal stuff
 my $foundref = 0;
+my $i;
+my $input;
+my $dump;
+my $cfnum;
+my $conum;
+my $nextfile;
+my $lastl;
+my $numbib;
+my %filenames_found;
+my %cite;
+my %label;
+my %ref;
+my %biborder;
+my %bibitem;
+my @codefiles;
+my @citeorder;
+my @citeloc;
+
 
 # scan command line arguments
 my @dirs;
@@ -49,9 +68,6 @@ while (@ARGV) {
 		print "chars is $chars\n";
 		for ( $i=0; $i < length($chars); $i++ ) {
 			my $char = substr($chars, $i, 1);
-			#if ( $char eq 'v' ) {
-			#	# verbose TODO
-			#	my $verbose = 1;
 			if ( $char eq 'd' ) {
 				# set $dashes to false, to ignore dash tests
 				$dashes = 0;
@@ -59,16 +75,16 @@ while (@ARGV) {
 				# set $formal to false, to allow informal bits such as contractions
 				$formal = 0;
 			} elsif ( $char eq 'p' ) {
-				# set $picky to true, to check for things that may be stylistically suspect
+				# set $picky to TRUE, to check for things that may be stylistically suspect
 				$picky = 1;
 			} elsif ( $char eq 's' ) {
-				# set $style to flag words with hyphens, such as "light-map" - these can be valid when used as adjectives, however, so it's probably too strict
+				# set $style to TRUE to catch a number of style problems
 				$style = 1;
 			} elsif ( $char eq 't' ) {
 				# set $titles to false, to allow section titles to be lowercase
 				$titles = 0;
 			} elsif ( $char eq 'u' ) {
-				# set $usstyle to false, to ignore period or comma outside quotes tests
+				# set $usstyle to false, to ignore U.S. punctuation style tests for period or comma outside quotes
 				$usstyle = 0;
 			# TODO - hook these up
 			} elsif ( $char eq 'O' ) {
@@ -119,10 +135,10 @@ sub USAGE
 	print "Usage: perl chex_latex.pl [-dipstu] [-O okword] [-R refs.tex] [directory [directory...]]\n";
 	print "  -d - turn off dash tests for '-' or '--' flagged as needing to be '...'.\n";
 	print "  -i - turn off formal writing check; allows contractions and other informal usage.\n";
-	print "  -p - turn ON picky style check, which looks for more style stuff but is not so reliable.\n";
-	print "  -s - turn ON style check; looks for poor usage and punctuation.\n";
+	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
+	print "  -s - turn ON style check; looks for poor usage, punctuation, and consistency.\n";
 	print "  -t - turn off capitalization check for section titles.\n";
-	print "  -u - turn off U.S. style of putting commas and periods inside quotes.\n";
+	print "  -u - turn off U.S. style tests for putting commas and periods inside quotes.\n";
 }
 
 sub READRECURSIVEDIR
@@ -137,16 +153,13 @@ sub PROCESSFILES
 {
 	my $i;
 	my @fld;
-	$incolldet = 0;
 	for ( $i = 0 ; $i < $cfnum ; $i++ ) {
-		if ($verbose) { printf "Reading file $codefiles[$i]\n"; }
+
 		@fld = split('/',$codefiles[$i]);	# split
-		$nextfile = $fld[$#fld];
+		my $nextfile = $fld[$#fld];
 		my @subfld;
 		@subfld = split('\.',$nextfile);
-		$filecore = $subfld[0];
-		$path = substr($codefiles[$i],$dirchop,length($codefiles[$i])-length($nextfile)-$dirchop);
-#printf "PATH: $path vs $codefiles[$i]\n";
+		#my $path = substr($codefiles[$i],$dirchop,length($codefiles[$i])-length($nextfile)-$dirchop);
 		print "file is $nextfile\n";
 		if ( exists($filenames_found{$nextfile}) ) {
 			print "BEWARE: two .tex files with same name $nextfile found in directory or subdirectory.\n";
@@ -157,9 +170,9 @@ sub PROCESSFILES
 		&READCODEFILE();
 	}
 
-	$critical = 0;
-	$potential = 0;
+	my $elem;
 	# figure labeled with "fig_" but not referenced.
+	my $potential = 0;
 	foreach $elem ( sort keys %label ) {
 		if ( !exists( $ref{$elem} ) ) {
 			if ( $elem =~ /fig_/ || $elem =~ /plate_/ ) {
@@ -169,6 +182,7 @@ sub PROCESSFILES
 		}
 	}
 	# element referenced but not found
+	my $critical = 0;
 	foreach $elem ( sort keys %ref ) {
 		if ( !exists( $label{$elem} ) ) {
 			if ( $critical == 0 ) { $critical = 1; printf "\n\n*************************\nCRITICAL ERRORS FOLLOW:\n"; }
@@ -188,11 +202,11 @@ sub PROCESSFILES
 
 	# bad citation order
 	for ($i = 0; $i < $conum ; $i++ ){
-		$subf = $citeorder[$i];
-		@fldc = split(/,/,$subf);
-		$checkit = 1;
+		my $subf = $citeorder[$i];
+		my @fldc = split(/,/,$subf);
+		my $checkit = 1;
 		#printf "on $i with $subf\n";
-		for ($j = 1; $j <= $#fldc && $checkit; $j++ ) {
+		for ( my $j = 1; $j <= $#fldc && $checkit; $j++ ) {
 			if ( $biborder{$fldc[$j-1]} > $biborder{$fldc[$j]} ) {
 				$checkit = 0;
 				print "ERROR: citations *$subf* out of order (or reference missing) at $citeloc[$i]\n";
@@ -213,9 +227,16 @@ sub PROCESSFILES
 sub READCODEFILE
 {
 	my @fld;
+	my $isref = 0;
+	my $prev_line = '';
+	my $prev_real_line = '';
 	if ( $input =~ /$refstex/ ) { $isref = 1; } else { $isref = 0; }
-
-	$ignore_first = 1;
+	my $infigure = 0;
+	my $inequation = 0;
+	my $intable = 0;
+	my $inquote = 0;
+	my $ignore_first = 0;
+	my %indexlong;
 
 	# now the code file read
 	unless (open(DATAFILE,$input)) {
@@ -224,9 +245,9 @@ sub READCODEFILE
 	}
 	while (<DATAFILE>) {
 		chop;       # strip record separator
-		$theline = $_;
-		$skip = 0;
-		$period_problem = 0;
+		my $theline = $_;
+		my $skip = 0;
+		my $period_problem = 0;
 		
 		# cut rest of any line with includegraphics and trim= on it
 		if ( $theline =~ /\\includegraphics\[/ ) {
@@ -266,10 +287,10 @@ sub READCODEFILE
 		
 		# if the line has chex_latex on it in the comments, can ignore certain flagged problems,
 		# and ignore figure names.
-		$ok = ( $theline =~ /$okword/ ); # TODO - look only in comments
-		$twook |= $ok;
+		my $ok = ( $theline =~ /$okword/ ); # TODO - look only in comments
+		my $twook |= $ok;
 		# hit a new paragraph?
-		$newpara = (length($theline) == 0);
+		my $newpara = (length($theline) == 0);
 		# convert \% to Pct so we don't confuse it with a comment.
 		$theline =~ s/\\%/PercentSign/g;
 		# now trim any comment from the line.
@@ -292,15 +313,15 @@ sub READCODEFILE
 		if ( $skip || length($theline) > 0 ) {
 		
 		# previous "last token" and next line joined, to look for multiline problems.
-		$twoline = ' ' . $prev_line . ' ' . $theline . ' ';
+		my $twoline = ' ' . $prev_line . ' ' . $theline . ' ';
 
 		# index searcher: find left |( and right |) index entries and make sure they match up.
-		$str = $twoline;
-		$newtwoline = '';
+		my $str = $twoline;
+		my $newtwoline = '';
 
 		# index test
 		while ( $str =~ /\\index\{([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
-			$indexname = $1;
+			my $indexname = $1;
 
 			$str = $';
 			$newtwoline .= $`;
@@ -329,17 +350,17 @@ sub READCODEFILE
 		#}
 		# twoline now has the index entries removed from it.
 		$twoline = $newtwoline;
-		$lctwoline = lc($twoline);
+		my $lctwoline = lc($twoline);
 		
 		$str = $theline;
 		if ( $str =~ /see\{([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
-			$seestr = $1;
+			my $seestr = $1;
 			if ( $seestr =~ /!/ ) {
 				print "Error: ''$seestr'', replace exclamation point with comma and space, on line $.\n";
 			}
 		}
 
-		$lctheline = lc($theline);
+		my $lctheline = lc($theline);
 		
 		# check for section, etc. and see that words are capitalized
 		# can compare with Chicago online https://capitalizemytitle.com/ - may need to add more connector words to this subroutine.
@@ -349,7 +370,7 @@ sub READCODEFILE
 			$theline =~ /\\subsection\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\subsubsection\{([A-Za-z| -]+)\}/ ) {
 			#print "section found $1 for $theline\n";
-			@wds = split(/[ -]/,$1);	# split
+			my @wds = split(/[ -]/,$1);	# split
 			$dump = 0;
 			#$dump = ( $lctheline =~ /ambient/ );
 			for ($i = 0; $i <= $#wds; $i++ ) {
@@ -439,7 +460,7 @@ sub READCODEFILE
 			}
 			# does last name of first author not have a comma after it?
 			if ( !$ok ) {
-				@bibname = split( /\s+/, $theline );
+				my @bibname = split( /\s+/, $theline );
 				if ( $#bibname >= 0 ) {
 					if ( !($bibname[0] =~ /,$/) && !($bibname[0] =~ /``/) && !($bibname[0] =~ /\\em/) && 
 						lc($bibname[0]) ne "de" &&
@@ -482,21 +503,21 @@ sub READCODEFILE
 		}
 		if( !$ok && $theline =~ /\\index/ && !$isref ) {
 			# look at index entry - only looks at first one in line, though.
-			$index = $';
+			my $index = $';
 			if ( $index =~ /\|/ && !($index =~ /\|see/) && !($index =~ /\|nn/) && !($index =~ /\|emph/) && !($index =~ /\|\(/) && !($index =~ /\|\)/) ) {
 				print "SERIOUS: '\index' has a '|' without a 'see' or similar after it, on line $. in $input. Did you mean '!'?\n";
 			}
 		}
 		# reference needs tilde
 		if( !$ok && $theline =~ /[\s\w\.,}]\\ref\{/ ) {
-			$testit = $`;
+			my $testit = $`;
 			if ( !( $testit =~ /and$/ ) && !( $testit =~ /,$/ ) ) { # don't worry about second number for figure being on same line.
 				print "\\ref problem on line $. in $input, needs a tilde ~\\ref before reference.\n";
 			}
 		}
 		# pageref needs tilde
 		if( !$ok && $theline =~ /[\s\w\.,}]\\pageref\{/ ) {
-			$testit = $`;
+			my $testit = $`;
 			if ( !( $testit =~ /and$/ ) && !( $testit =~ /,$/ ) ) { # don't worry about second number for figure being on same line.
 				print "\\pageref problem on line $. in $input, needs a tilde ~\\pageref before reference.\n";
 			}
@@ -548,9 +569,9 @@ sub READCODEFILE
 		$str = $theline;
 		# for bibitems, did prev_line (i.e., the previous bibitem) end with a period? All should! comments are deleted.
 		if ( $str =~ /\\bibitem\{([\w_']+)}/ ) {
-			$k = chop $prev_real_line;
+			my $k = chop $prev_real_line;
 			#printf "k is $k\n";
-			$kk = chop $prev_real_line;
+			my $kk = chop $prev_real_line;
 			#printf "k is $k\n";
 			if ( $k ne '.' && $kk ne '.' && !$ignore_first ) {
 				printf "no period on around line $lastl in $input.\n";
@@ -568,11 +589,10 @@ sub READCODEFILE
 		}
 		$str = $theline;
 		while ( $str =~ /\\cite\{([\w_,'\s*]+)}/ ) {
-			$front = $`;
 			$str = $';
-			$subf = $1;
+			my $subf = $1;
 			$subf =~ s/ //g;
-			@fldc = split(/,/,$subf);	# split
+			my @fldc = split(/,/,$subf);	# split
 			if ($#fldc > 0) {
 				# more than one citation, keep for checking alpha order later
 				$citeorder[$conum] = $subf;
@@ -756,7 +776,7 @@ sub READCODEFILE
 			$period_problem = 1;
 		}
 		if( !$twook && $lctwoline  =~ / et al/ ) {
-			$post = $';
+			my $post = $';
 			if ( !($post =~ /^\./ || $post =~ /^ia/) ) {
 				print "'et al' is not followed by '.' or 'ia' on line $. in $input.\n";
 			}
@@ -936,7 +956,7 @@ sub READCODEFILE
 			if( !$ok && !$isref && $theline =~ /formulas/ ) {
 				print "Change 'formulas' to 'formulae' on line $. in $input, or rewrite.\n";
 			}
-			if( !$wook && $twoline  =~ /Generally / ) {
+			if( !$twook && $twoline  =~ /Generally / ) {
 				print "add comma: after 'Generally' on line $. in $input.\n";
 			}
 		}
@@ -1514,6 +1534,7 @@ sub READCODEFILE
 
 	close DATAFILE;
 
+	my $elem;
 	foreach $elem ( sort keys %indexlong ) {
 		print "ERROR: index entry started, not ended: {$elem|( in $input.\n";
 	}
