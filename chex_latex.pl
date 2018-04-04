@@ -907,6 +907,9 @@ sub READCODEFILE
 		if ( $formal ) {
 			# -----------------------------
 			# Formal style
+			# See https://www.vappingo.com/word-blog/when-is-it-okay-to-use-contractions-in-formal-writing/
+			# "Do not use contractions in documents that serve very formal purposes, such as legal contracts,
+			# [and] submissions to professional publications."
 			if( !$ok && !$isref && $lctwoline  =~ / got / && !$inquote ) {
 				print "Please don't use 'got' on line $. in $input.\n";
 			}
