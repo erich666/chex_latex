@@ -1,4 +1,4 @@
-#!/usr/contrib/bin/perl
+#!/usr/bin/env perl
 # Script to read in a latex file or directory and its subdirectories and check for typographic
 # and syntax errors of various sort.
 # See https://github.com/erich666/chex_latex for details.
