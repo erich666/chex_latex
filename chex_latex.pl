@@ -721,10 +721,10 @@ sub READCODEFILE
 		}
 
 		if( !$twook && $twoline && $twoline =~ / Corp\. / ) {
-			print "'Corp. ' needs backslash 'Corp\\.' to avoid wide space after period, on line $. in $input.\n";
+			print "'Corp. ' needs backslash 'Corp.\\' to avoid wide space after period, on line $. in $input.\n";
 		}
 		if( !$twook && $twoline =~ / Inc\. / ) {
-			print "'Inc. ' needs backslash 'Inc\\.' to avoid wide space after period, on line $. in $input.\n";
+			print "'Inc. ' needs backslash 'Inc.\\' to avoid wide space after period, on line $. in $input.\n";
 		}
 		if( !$twook && $twoline  =~ /\.\) / ) {
 			print "POSSIBLY SERIOUS: '.) ' needs a \\ after it to avoid extra space, on line $. in $input.\n";
@@ -791,13 +791,13 @@ sub READCODEFILE
 		# as if it's the end of a sentence, which causes a bit of additional space to get added after it.
 		# Easiest is to just spell out vs.
 		if( !$twook && !$isref && $twoline  =~ / vs\./ && !$ok ) {
-			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs\\.' on line $. in $input.\n";
+			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs.\\' on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $twoline =~ / vs / ) {
 			print "SERIOUS: change 'vs' to 'versus' on line $. in $input\n";
 		}
 		if( !$twook && !$isref && $twoline  =~ / etc\. [a-z]/ && !$ok ) {
-			print "POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc\\.' to avoid having a 'double-space'\n    appear after the period, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
+			print "POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\\' to avoid having a 'double-space'\n    appear after the period, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
 			$period_problem = 1;
 		}
 		
