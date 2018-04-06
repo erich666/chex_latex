@@ -22,7 +22,6 @@ use File::Find;
 my $style = 0;
 my $picky = 0;
 my $formal = 1;
-my $titles = 1;
 my $dashes = 1;
 my $usstyle = 1;
 
@@ -37,14 +36,17 @@ my $refstex = "refs.tex";
 
 # internal stuff
 my $foundref = 0;
+my $theline;
 my $i;
 my $input;
-my $dump;
 my $cfnum;
 my $conum;
 my $nextfile;
 my $lastl;
 my $numbib;
+my $title_type;
+my $caps_used;
+my $caps_loc;
 my %filenames_found;
 my %cite;
 my %label;
@@ -54,6 +56,8 @@ my %bibitem;
 my @codefiles;
 my @citeorder;
 my @citeloc;
+my @cap_title;
+my @cap_title_loc;
 
 
 # scan command line arguments
@@ -81,7 +85,7 @@ while (@ARGV) {
 				$style = 1;
 			} elsif ( $char eq 't' ) {
 				# set $titles to false, to allow section titles to be lowercase
-				$titles = 0;
+				print "NOTE: the -t titles option is no longer needed, as titles are tested for self-consistency. Option ignored.\n";
 			} elsif ( $char eq 'u' ) {
 				# set $usstyle to false, to ignore U.S. punctuation style tests for period or comma outside quotes
 				$usstyle = 0;
@@ -136,7 +140,6 @@ sub USAGE
 	print "  -i - turn off formal writing check; allows contractions and other informal usage.\n";
 	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
 	print "  -s - turn ON style check; looks for poor usage, punctuation, and consistency.\n";
-	print "  -t - turn off capitalization check for section titles.\n";
 	print "  -u - turn off U.S. style tests for putting commas and periods inside quotes.\n";
 }
 
@@ -243,8 +246,11 @@ sub READCODEFILE
 		exit 1 ;
 	}
 	while (<DATAFILE>) {
-		chop;       # strip record separator
-		my $theline = $_;
+		if ( /\R$/ ) {
+			# should work in perl 5.10 and later
+			chop;       # strip record separator
+		}
+		$theline = $_;
 		my $skip = 0;
 		my $period_problem = 0;
 		
@@ -279,8 +285,8 @@ sub READCODEFILE
 		if ( $theline =~ /\\vfill/ ) { $theline = $`; }
 		if ( $theline =~ /\\subfloat/ ) { $theline = $`; }
 		if ( $theline =~ /\\input/ ) { $theline = $`; }
-		if ( $theline =~ /\\begin/ ) { $theline = $`; }
-		if ( $theline =~ /\\end/ ) { $theline = $`; }
+		#if ( $theline =~ /\\begin/ ) { $theline = $`; }
+		#if ( $theline =~ /\\end/ ) { $theline = $`; }
 		if ( $theline =~ /\\centering/ ) { $theline = $`; }
 
 		
@@ -360,7 +366,7 @@ sub READCODEFILE
 		}
 
 		my $lctheline = lc($theline);
-		
+
 		# check for section, etc. and see that words are capitalized
 		# can compare with Chicago online https://capitalizemytitle.com/ - may need to add more connector words to this subroutine.
 		if ( 
@@ -368,26 +374,33 @@ sub READCODEFILE
 			$theline =~ /\\section\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\subsection\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\subsubsection\{([A-Za-z| -]+)\}/ ) {
-			#print "section found $1 for $theline\n";
 			my @wds = split(/[ -]/,$1);	# split
-			$dump = 0;
-			#$dump = ( $lctheline =~ /ambient/ );
 			for ($i = 0; $i <= $#wds; $i++ ) {
-				if ( $dump ) {
-					print "testing $i of $#wds $wds[$i] in $input\n";
-				}
-				my $sw = &CONNECTOR_WORD($wds[$i], $i);
-				if ( $sw == 2 ) {
-					print "POSSIBLY SERIOUS: Section title has a word '$wds[$i]' that should not be capitalized, on line $. in $input.\n";
-					print "    You can test your title at https://capitalizemytitle.com/\n";
-				}
-				elsif ( $titles && $sw == 0 && (length($wds[$i]) > 0) && !&CAPITALIZED($wds[$i]) ) {
-					# feel free to comment this one out, or comment out subsection or similar above, for the
-					# types of sections where you don't capitalize
-					print "POSSIBLY SERIOUS: Section title has a word '$wds[$i]' uncapitalized, on line $. in $input.\n";
-					print "    Ignore if this word '$wds[$i]' is a 'connector word' such as 'in' or 'and' -\n";
-					print "    you can test your title at https://capitalizemytitle.com/\n";
-					print "    Also, feel free to use the '-t' option or even go into the code and comment out this test.\n";
+				if ( $i == 0 ) {
+					# first word - just check for capitalization, which should always be true for any form of title
+					if ( !CAPITALIZED($wds[$i]) ) {
+						printf "LIKELY SERIOUS: Chapter or Section's first word '$wds[$i]' is not capitalized, on line $. in $input.\n";
+					}
+				} else {
+					my $sw = &CONNECTOR_WORD($wds[$i], $i);
+					if ( $sw == 2 ) {
+						# This test is always good, you should never capitalize connector words. Really.
+						print "LIKELY SERIOUS: Chapter or Section title has a word '$wds[$i]' that should not be capitalized, on line $. in $input.\n";
+						print "    You can test your title at https://capitalizemytitle.com/\n";
+					} elsif ( $sw == 0 && (length($wds[$i]) > 0) && &SECTION_MISMATCH($wds[$i]) ) {
+						# Not a connector word, and the capitalization is different than the previous word encountered
+						# in this type of chapter/section/subsection, so flag it.
+						printf "SERIOUS: Title has a word '$wds[$i]' that is %s, on line $. in $input.\n",
+							$caps_used ? "uncapitalized" : "capitalized";
+						print "    This does not match the style in the first $title_type encountered\n";
+						printf "    $caps_loc, which is %s word.\n",
+							$caps_used ? "a capitalized" : "an uncapitalized";
+						if ( $caps_used ) {
+							print "    Ignore if this word '$wds[$i]' is a 'connector word' such as 'in' or 'and' (and please report this bug).\n";
+							print "    To be sure, you can test your title at https://capitalizemytitle.com/\n";
+							print "    You could edit the code and comment out this test, or add the word to CONNECTOR_WORD.\n";
+						}
+					}
 				}
 			}
 
@@ -410,10 +423,6 @@ sub READCODEFILE
 		if ( $theline =~ /begin\{tabbing}/ ) {
 			$inequation = 1;
 		}
-		if ( $theline =~ /begin\{tabular}/ ) {
-			$inequation = 1;
-			#print "tabular start line $.\n";
-		}
 		if ( $theline =~ /begin\{align}/ ) {
 			$inequation = 1;
 		}
@@ -424,7 +433,9 @@ sub READCODEFILE
 			$inquote = 1;
 		}
 		if ( $theline =~ /begin\{tabular/ ) {
+			# turn off equation tests, too, in tables
 			$intable = 1;
+			$inequation = 1;
 		}
 
 		# let the main testing begin!
@@ -669,12 +680,14 @@ sub READCODEFILE
 		if( !$ok && $dashes && $theline  =~ / -- / ) {
 			print "POTENTIALLY SERIOUS: change ' -- ' to the full dash '---' on line $. in $input.\n";
 		}
-		if( $dashes && !$twook && $twoline  =~ / --- / ) {
-			print "SERIOUS: ' --- ' should not have spaces before and after it, on line $. in $input.\n";
-		} elsif( $dashes && !$twook && $twoline  =~ /--- / ) {
-			print "SERIOUS: '--- ' should not have a space after it, on line $. in $input.\n";
-		} elsif( $dashes && !$twook && $twoline  =~ / ---/ && !$inquote ) {
-			print "SERIOUS: ' ---' should not have a space before it, on line $. in $input.\n";
+		if( $dashes && !$intable && !$twook ) {
+			if ( $twoline  =~ / --- / ) {
+				print "SERIOUS: ' --- ' should not have spaces before and after it, on line $. in $input.\n";
+			} elsif( $twoline  =~ /--- / ) {
+				print "SERIOUS: '--- ' should not have a space after it, on line $. in $input.\n";
+			} elsif( $twoline  =~ / ---/ && !$inquote ) {
+				print "SERIOUS: ' ---' should not have a space before it, on line $. in $input.\n";
+			}
 		}
 		if( !$twook && $isref && $twoline  =~ /pp. \d+-\d+/ ) {
 			print "ERROR: '$&' page number has only one dash, on line $. in $input.\n";
@@ -710,8 +723,7 @@ sub READCODEFILE
 		#if( !$twook && $twoline  =~ /\\times\d/ ) {
 		#	print "right \\times spacing problem on line $. in $input.\n";
 		#}
-		
-		# TODO - may want to suppress with, say, -t - text-only testing.
+
 		# Latex-specific
 		if( !$ok && $theline  =~ /’/ ) {
 			print "SERIOUS: the punctuation ’ should change to a ' (vertical) apostrophe on line $. in $input.\n";
@@ -1489,36 +1501,33 @@ sub READCODEFILE
 		}
 		
 		# close up sections at the *end* of testing, so that two-line tests work properly
-		if ( !$ok && $theline =~ /end\{equation/ || 
+		if ( $theline =~ /end\{equation/ || 
 			$theline =~ /end\{eqnarray/ || 
 			$theline =~ /end\{IEEEeqnarray/ || 
 			$theline =~ /end\{align/ || 
 			$theline =~ /end\{lstlisting}/ ) {
 			$inequation = 0;
 		}
-		if ( !$ok && $theline =~ /end\{figure}/ ) {
+		if ( $theline =~ /end\{figure}/ ) {
 			$infigure = 0;
 		}
-		if ( !$ok && $theline =~ /end\{gather}/ ) {
+		if ( $theline =~ /end\{gather}/ ) {
 			$inequation = 0;
 		}
-		if ( !$ok && $theline =~ /end\{tabbing}/ ) {
+		if ( $theline =~ /end\{tabbing}/ ) {
 			$inequation = 0;
 		}
-		if ( !$ok && $theline =~ /end\{tabular}/ ) {
-			$inequation = 0;
-			#print "tabular end line $.\n";
-		}
-		if ( !$ok && $theline =~ /end\{align}/ ) {
+		if ( $theline =~ /end\{align}/ ) {
 			$inequation = 0;
 		}
-		if ( !$ok && $theline =~ /end\{verbatim}/ ) {
+		if ( $theline =~ /end\{verbatim}/ ) {
 			$inequation = 0;
 		}
-		if ( !$ok && $theline =~ /end\{quote\}/ ) {
+		if ( $theline =~ /end\{quote\}/ ) {
 			$inquote = 0;
 		}
-		if ( !$ok && $theline =~ /end\{tabular/ ) {
+		if ( $theline =~ /end\{tabular/ ) {
+			$inequation = 0;
 			$intable = 0;
 		}
 		
@@ -1541,7 +1550,6 @@ sub READCODEFILE
 	undef %indexlong;
 }
 
-
 sub CONNECTOR_WORD
 {
 	my $testword = shift;
@@ -1562,9 +1570,6 @@ sub CONNECTOR_WORD
 		$testword eq "of" ||
 		$testword eq "with" ||
 		$testword eq "the" ) {
-		if ( $dump ) {
-			print "returning 1 for $testword\n";
-		}
 		return 1;
 	}
 	# capitalized and shouldn't be?
@@ -1584,14 +1589,41 @@ sub CONNECTOR_WORD
 		$testword eq "Of" ||
 		$testword eq "With" ||
 		$testword eq "The" )) {
-		if ( $dump ) {
-			print "returning 2 for $testword\n";
-		}
 		return 2;
 	}
-		if ( $dump ) {
-			print "returning 0 for $testword\n";
+	return 0;
+}
+
+sub SECTION_MISMATCH {
+	my $word = shift;
+	my $cap = CAPITALIZED($word);
+	my $ind;
+	if ( $theline =~ /\\chapter\{/ ) {
+		$ind = 0;
+		$title_type = '\chapter';
+	} elsif ( $theline =~ /\\section\{/ ) {
+		$ind = 1;
+		$title_type = '\section';
+	} elsif ( $theline =~ /\\subsection\{/ ) {
+		$ind = 2;
+		$title_type = '\subsection';
+	} elsif ( $theline =~ /\\subsubsection\{/ ) {
+		$ind = 3;
+		$title_type = '\subsubsection';
+	}
+	if ( $cap_title[$ind] ) {
+		# check if this chapter's/section's/etc. capitalization matches the first one's
+		if ( $cap_title[$ind] != ($cap ? 2 : 1 ) ) {
+			# mismatch
+			$caps_used = $cap_title[$ind] - 1;
+			$caps_loc = $cap_title_loc[$ind];
+			return 1;
 		}
+	} else {
+		# first encounter, so record whether second word is capitalized or not
+		$cap_title[$ind] = $cap ? 2 : 1;
+		$cap_title_loc[$ind] = "on line $. at word '$word' in $input";
+	}
 	return 0;
 }
 

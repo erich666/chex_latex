@@ -16,32 +16,34 @@ As an example, here is a snippet of a .tex file; look it over for problems yours
 Here's what chex_latex.pl finds in a fraction of a second:
 
 	file is testfile.tex
-	POSSIBLY SERIOUS: Section title has a word 'that' uncapitalized, on line 1 in ./testfile.tex.
-		Ignore if this word 'that' is a 'connector word' such as 'in' or 'and' -
-		you can test your title at https://capitalizemytitle.com/
-		Also, feel free to use the '-t' option or even go into the code and comment out this test.
-	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in ./testfile.tex.
-	SERIOUS: no contractions: ''ll' to ' will' on line 2 in ./testfile.tex.
-	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in ./testfile.tex.
-	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc\.' to avoid having a 'double-space'
-		appear after the period, on line 4 in ./testfile.tex.
+	SERIOUS: Title has a word 'Use' that is capitalized, on line 1 in .\testfile.tex.
+		This does not match the style in the first \section encountered
+		on line 1 at word 'that' in .\testfile.tex, which is an uncapitalized word.
+	SERIOUS: Title has a word 'Hardware' that is capitalized, on line 1 in .\testfile.tex.
+		This does not match the style in the first \section encountered
+		on line 1 at word 'that' in .\testfile.tex, which is an uncapitalized word.
+	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in .\testfile.tex.
+	SERIOUS: no contractions: ''ll' to ' will' on line 2 in .\testfile.tex.
+	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in .\testfile.tex.
+	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\' to avoid having a 'double-space'
+		appear after the period, on line 4 in .\testfile.tex.
 		(To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)
-	MISSPELLING: 'frustrum' to 'frustum' on line 4 in ./testfile.tex.
-	tip: you can probably remove 'basically' on line 4 in ./testfile.tex.
-	SERIOUS: '/index' should be \index, on line 5 in ./testfile.tex.
-	SERIOUS: change ' ,' to ',' (space in front of comma), on line 5 in ./testfile.tex.
-	Please change 'Javascript' to 'JavaScript' on line 5 in ./testfile.tex.
-	SERIOUS: change ' ,' to ',' (space in front of comma), on line 6 in ./testfile.tex.
-	tip: 'due to that' to 'because' on line 6 in ./testfile.tex.
-	tip: 'more specifically' to 'specifically' on line 6 in ./testfile.tex.
-	tip: you can probably not use 'literally' (and may mean 'figuratively'), on line 6 in ./testfile.tex.
+	MISSPELLING: 'frustrum' to 'frustum' on line 4 in .\testfile.tex.
+	tip: you can probably remove 'basically' on line 4 in .\testfile.tex.
+	SERIOUS: '/index' should be \index, on line 5 in .\testfile.tex.
+	SERIOUS: change ' ,' to ',' (space in front of comma), on line 5 in .\testfile.tex.
+	Please change 'Javascript' to 'JavaScript' on line 5 in .\testfile.tex.
+	SERIOUS: change ' ,' to ',' (space in front of comma), on line 6 in .\testfile.tex.
+	tip: 'due to that' to 'because' on line 6 in .\testfile.tex.
+	tip: 'more specifically' to 'specifically' on line 6 in .\testfile.tex.
+	tip: you can probably not use 'literally' (and may mean 'figuratively'), on line 6 in .\testfile.tex.
 		If you think it's OK, put on the end of the line the comment '% chex_latex'
-	SERIOUS: word duplication problem of word 'to' on line 7 in ./testfile.tex.
-	SERIOUS: change '--' (short dash) to '---' on line 7 in ./testfile.tex.
+	SERIOUS: word duplication problem of word 'to' on line 7 in .\testfile.tex.
+	SERIOUS: change '--' (short dash) to '---' on line 7 in .\testfile.tex.
+	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 7 in .\testfile.tex.
 	SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,
-		or use 'vs\.' on line 7 in ./testfile.tex.
-	Not capitalized at start of sentence (or the period should have a \ before it), on line 7 in ./testfile.tex.
-	==========================================================================================================
+		or use 'vs.\' on line 7 in .\testfile.tex.
+	Not capitalized at start of sentence (or the period should have a \ before it), on line 7 in .\testfile.tex.	==========================================================================================================
 
 You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of all of them. A few minutes wading through these can catch errors hard to notice otherwise.
 	
@@ -85,7 +87,6 @@ The options are:
 	-i - turn off formal writing check; allows contractions and other informal usage.
 	-p - turn ON picky style check, which looks for more style problems but is not so reliable.
 	-s - turn ON style check; looks for poor usage, punctuation, and consistency.
-	-t - turn off capitalization check for section titles.
 	-u - turn off U.S. style tests for putting commas and periods inside quotes.
 	
 So if you want all the tests, do:
