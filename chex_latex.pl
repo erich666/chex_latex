@@ -802,13 +802,13 @@ sub READCODEFILE
 		# If you use a ".", you need to do something like ".~" to avoid having the period treated
 		# as if it's the end of a sentence, which causes a bit of additional space to get added after it.
 		# Easiest is to just spell out vs.
-		if( !$twook && !$isref && $twoline  =~ / vs\./ && !$ok ) {
+		if( !$twook && !$isref && $twoline  =~ / vs\. / ) {
 			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs.\\' on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $twoline =~ / vs / ) {
 			print "SERIOUS: change 'vs' to 'versus' on line $. in $input\n";
 		}
-		if( !$twook && !$isref && $twoline  =~ / etc\. [a-z]/ && !$ok ) {
+		if( !$twook && !$isref && $twoline  =~ / etc\. [a-z]/ ) {
 			print "POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\\' to avoid having a 'double-space'\n    appear after the period, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
 			$period_problem = 1;
 		}
