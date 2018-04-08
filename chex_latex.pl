@@ -285,9 +285,10 @@ sub READCODEFILE
 		if ( $theline =~ /\\vfill/ ) { $theline = $`; }
 		if ( $theline =~ /\\subfloat/ ) { $theline = $`; }
 		if ( $theline =~ /\\input/ ) { $theline = $`; }
+		if ( $theline =~ /\\centering/ ) { $theline = $`; }
+		if ( $theline =~ /\\bibliography/ ) { $theline = $`; }
 		#if ( $theline =~ /\\begin/ ) { $theline = $`; }
 		#if ( $theline =~ /\\end/ ) { $theline = $`; }
-		if ( $theline =~ /\\centering/ ) { $theline = $`; }
 
 		
 		# if the line has chex_latex on it in the comments, can ignore certain flagged problems,
@@ -398,7 +399,7 @@ sub READCODEFILE
 						if ( $caps_used ) {
 							print "    Ignore if this word '$wds[$i]' is a 'connector word' such as 'in' or 'and' (and please report this bug).\n";
 							print "    To be sure, you can test your title at https://capitalizemytitle.com/\n";
-							print "    You could edit the code and comment out this test, or add the word to CONNECTOR_WORD.\n";
+							print "    You could edit the code and comment out this test, or add the word to CONNECTOR_WORD in the program.\n";
 						}
 					}
 				}
@@ -411,6 +412,7 @@ sub READCODEFILE
 			$theline =~ /begin\{eqnarray/ || 
 			$theline =~ /begin\{IEEEeqnarray/ || 
 			$theline =~ /begin\{align/ || 
+			$theline =~ /\\\[/ ||
 			$theline =~ /begin\{lstlisting}/ ) {
 			$inequation = 1;
 		}
@@ -629,8 +631,9 @@ sub READCODEFILE
 			# single dash should be ---
 			# test could be commented out because it could be an equation, e.g., 9 - 4
 			if( !$ok && $theline =~ / - / && !$inequation ) {
-				if ( !($` =~ /\$/) ) {
+				if ( !($twoline =~ /\$/) ) {
 					print "SERIOUS: change ' - ' to '---' on line $. in $input.\n";
+					print "++++++ DEBUG: >$`< is the prefix.\n";
 				}
 			}
 			# -- to ---, if words on both sides (otherwise this might be a page number range)
@@ -907,7 +910,7 @@ sub READCODEFILE
 			print "tip: replace 'a lot' with 'much' on line $. in $input.\n";
 		}
 		if( !$twook && $lctwoline =~ /and also / ) {
-			print "tip: you probably should replace 'and also' with 'and' on line $. in $input, or reword to 'along with' or similar.\n";
+			print "tip: you probably should replace 'and also' with 'and' on line $. in $input,\n    or reword to 'along with' or similar.\n";
 		}
 		if( !$twook && $lctwoline =~ /the reason why is because/ ) {
 			print "tip: 'the reason why is because' is crazy wordy, so rewrite, on line $. in $input.\n";
@@ -947,22 +950,22 @@ sub READCODEFILE
 			#	print "'can not' to 'cannot' on line $. in $input.\n";
 			#}
 			if( !$ok && $lctheline  =~ /n't/ && !$inquote && !$isref ) {
-				print "SERIOUS: no contractions: 'n't' to ' not' on line $. in $input.\n";
+				print "SERIOUS: For formal writing, no contractions: 'n't' to ' not' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline  =~ /let's/ && !$inquote && !$isref ) {	# don't check for in refs.tex
-				print "SERIOUS: no contractions: 'let's' to 'let us' or reword, on line $. in $input.\n";
+				print "SERIOUS: For formal writing, no contractions: 'let's' to 'let us' or reword, on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline  =~ /we've/ && !$inquote && !$isref ) {	# don't check for in refs.tex
-				print "SERIOUS: no contractions: 'we've' to 'we have' or reword, on line $. in $input.\n";
+				print "SERIOUS: For formal writing, no contractions: 'we've' to 'we have' or reword, on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline  =~ / it's/ && !$inquote && !$isref ) {
-				print "SERIOUS: no contractions: 'it's' to 'it is' on line $. in $input.\n";
+				print "SERIOUS: For formal writing, no contractions: 'it's' to 'it is' on line $. in $input.\n";
 			}
 			if( !$ok && $theline  =~ /'re/ && !$inquote ) {
-				print "SERIOUS: no contractions: ''re' to ' are' on line $. in $input.\n";
+				print "SERIOUS: For formal writing, no contractions: ''re' to ' are' on line $. in $input.\n";
 			}
 			if( !$ok && $theline  =~ /'ll/ && !$inquote ) {
-				print "SERIOUS: no contractions: ''ll' to ' will' on line $. in $input.\n";
+				print "SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $theline =~ /formulas/ ) {
 				print "Change 'formulas' to 'formulae' on line $. in $input, or rewrite.\n";
@@ -1505,6 +1508,7 @@ sub READCODEFILE
 			$theline =~ /end\{eqnarray/ || 
 			$theline =~ /end\{IEEEeqnarray/ || 
 			$theline =~ /end\{align/ || 
+			$theline =~ /\\\]/ ||
 			$theline =~ /end\{lstlisting}/ ) {
 			$inequation = 0;
 		}
