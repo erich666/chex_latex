@@ -53,6 +53,8 @@ my %label;
 my %ref;
 my %biborder;
 my %bibitem;
+my %emfound;
+my %eminput;
 my @codefiles;
 my @citeorder;
 my @citeloc;
@@ -425,7 +427,7 @@ sub READCODEFILE
 		if ( $theline =~ /begin\{tabbing}/ ) {
 			$inequation = 1;
 		}
-		if ( $theline =~ /begin\{align}/ ) {
+		if ( $theline =~ /begin\{align}/ || $theline =~ /begin\{falign}/ ) {
 			$inequation = 1;
 		}
 		if ( $theline =~ /begin\{verbatim}/ ) {
@@ -660,11 +662,48 @@ sub READCODEFILE
 			#if( !$ok && $theline  =~ /\’/ ) {
 			#	print "SERIOUS: the special right-leaning apostrophe '’' should be a normal apostrophe on line $. in $input.\n";
 			#}
+			# https://www.grammarly.com/blog/modeling-or-modelling/
+			if( !$ok && $lctheline  =~ /modelling/ && !$isref ) {
+				print "In the U.S., we prefer 'modelling' to 'modeling' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /towards/ ) {
+				print "In the U.S., 'towards' should change to 'toward' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /backwards/ ) {
+				print "In the U.S., 'backwards' should change to 'backward' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /forwards/ ) {
+				print "In the U.S., 'forwards' should probably change to 'forward' unless used as ''forwards mail'' etc., on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /upwards/ ) {
+				print "In the U.S., 'upwards' should change to 'upward' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /downwards/ ) {
+				print "In the U.S., 'downwards' should change to 'downward' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /grey/ ) { # http://www.dictionary.com/e/gray-or-grey/
+				print "In the U.S., change 'grey' to 'gray' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /haloes/ ) {
+				print "In the U.S., change 'haloes' to 'halos' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline  =~ /parametriz/ ) {
+				print "In the U.S., change 'parametrization' to 'parameterization' on line $. in $input.\n";
+			}
+			# see https://www.dailywritingtips.com/comma-after-i-e-and-e-g/ for example
+			if( !$twook && $twoline  =~ /i\.e\. / ) {
+				print "SERIOUS: in the U.S. 'i.e. ' should have a comma after it, not a space, on line $. in $input.\n";
+				$period_problem = 1;
+			}
+			if( !$twook && $twoline  =~ /e\.g\. / ) {
+				print "SERIOUS: in the U.S. 'e.g. ' should have a comma after it, not a space, on line $. in $input.\n";
+				$period_problem = 1;
+			}
 		}
 		
 		# see https://english.stackexchange.com/questions/34378/etc-with-postpositioned-brackets-at-the-end-of-a-sentence
 		if( !$twook && $twoline =~ / etc/ && !($' =~ /^\./) ) {
-			print "SERIOUS: 'etc' isn't followed by a . on line $. in $input.\n";
+			print "SERIOUS: 'etc' isn't followed by a '.' on line $. in $input.\n";
 		}
 		# we like to avoid ending a sentence with a preposition.
 		if( !$twook && $twoline  =~ / with\. / ) {
@@ -777,14 +816,8 @@ sub READCODEFILE
 		}		
 		# ----------------------------------
 		# Style: comma and period punctuation
-		# see https://www.dailywritingtips.com/comma-after-i-e-and-e-g/ for example
-		if( $usstyle && !$twook && $twoline  =~ /i\.e\. / ) {
-			print "SERIOUS: in the U.S. 'i.e. ' should have a comma after it, not a space, on line $. in $input.\n";
-			$period_problem = 1;
-		}
-		if( $usstyle && !$twook && $twoline  =~ /e\.g\. / ) {
-			print "SERIOUS: in the U.S. 'e.g. ' should have a comma after it, not a space, on line $. in $input.\n";
-			$period_problem = 1;
+		if( !$twook && $twoline  =~ /\w\se\.g\./ ) {
+			print "SERIOUS: ' e.g.' does not have a comma before it, on line $. in $input.\n";
 		}
 		if( !$twook && $lctwoline  =~ / et al/ ) {
 			my $post = $';
@@ -821,23 +854,6 @@ sub READCODEFILE
 		if( !$ok && !$ok && $theline  =~ /TODO/ ) {
 			print "Beware, there is a TODO in the text itself at line $. in $input.\n";
 		}
-		# OK: straight on, later on.
-		#if( !$twook && $twoline  =~ / on\. / ) {
-		#	print "SERIOUS: sentence finishes with 'on.' problem on line $. in $input.\n";
-		#}
-		if( !$twook && $twoline  =~ / at\. / ) {
-			print "SERIOUS: sentence finishes with 'at.' problem on line $. in $input.\n";
-		}
-		# some of these, not so terrible.
-		#if( !$twook && $twoline  =~ / in\. / ) {
-		#	print "SERIOUS: sentence finishes with 'in.' problem on line $. in $input.\n";
-		#}
-		if( !$twook && $twoline  =~ / of\. / ) {
-			print "SERIOUS: sentence finishes with 'of.' problem on line $. in $input.\n";
-		}
-		if( !$twook && $twoline  =~ / for\. / ) {
-			print "SERIOUS: sentence finishes with 'for.' problem on line $. in $input.\n";
-		}
 		if( !$twook && $twoline  =~ /\. [a-z]/ && !($twoline  =~ /a\.k\.a\./) && !$isref && !$inequation && !$period_problem ) {
 			print "Not capitalized at start of sentence (or the period should have a \\ before it), on line $. in $input.\n";
 		}
@@ -860,7 +876,7 @@ sub READCODEFILE
 			print "Please don't use 'necessitate' on line $. in $input.\n";
 		}
 		if( !$ok && !$isref && $lctheline  =~ /firstly/ && !$inquote ) {
-			print "Do not say 'firstly', say 'first' on line $. in $input.\n";
+			print "Do not say 'firstly' - say 'first' on line $. in $input.\n";
 		}
 		if( !$twook && $lctwoline  =~ /amongst/ ) {
 			print "Change 'amongst' to 'among' on line $. in $input.\n";
@@ -918,15 +934,58 @@ sub READCODEFILE
 		if( !$twook && $lctwoline  =~ /fairly straightforward/ ) {
 			print "shortening tip: replace 'fairly straightforward' with 'straightforward' on line $. in $input.\n";
 		}
-
+		# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp
+		if( !$isref && $lctwoline  =~ /physically-based/ ) {
+			print "'physically-based' should change to 'physically based' on line $. in $input.\n";
+		}
+		if( !$ok && $lctwoline  =~ /ly-used/ ) {
+			print "'*ly-used' should probably change to '*ly used' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /bottom-left/ ) {
+			print "'bottom-left' should change to 'bottom left' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /bottom-right/ ) {
+			print "'bottom-right' should change to 'bottom right' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /top-left/ ) {
+			print "'top-left' should change to 'top left' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /top-right/ ) {
+			print "'top-right' should change to 'top right' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /lower-left/ ) {
+			print "'lower-left' should change to 'lower left' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /lower-right/ ) {
+			print "'lower-right' should change to 'lower right' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /upper-left/ ) {
+			print "'upper-left' should change to 'upper left' on line $. in $input.\n";
+		}
+		if( $lctheline  =~ /upper-right/ ) {
+			print "'upper-right' should change to 'upper right' on line $. in $input.\n";
+		}
+		# always hyphenated
+		if( $lctwoline  =~ /view dependent/ ) {
+			print "'view dependent' should change to 'view-dependent' on line $. in $input.\n";
+		}
+		if( $lctwoline  =~ /view independent/ ) {
+			print "'view independent' should change to 'view-independent' on line $. in $input.\n";
+		}
+		if( $lctwoline  =~ /relatively to / ) {
+			print "'relatively to' probably wants to be 'relative to' on line $. in $input.\n";
+		}
 		if ( $formal ) {
 			# -----------------------------
 			# Formal style
 			# See https://www.vappingo.com/word-blog/when-is-it-okay-to-use-contractions-in-formal-writing/
 			# "Do not use contractions in documents that serve very formal purposes, such as legal contracts,
 			# [and] submissions to professional publications."
+			if( !$isref && $lctwoline  =~ / math / ) {
+				print "For formal writing, 'math' should change to 'mathematics' on line $. in $input.\n";
+			}
 			if( !$ok && !$isref && $lctwoline  =~ / got / && !$inquote ) {
-				print "Please don't use 'got' on line $. in $input.\n";
+				print "For formal writing, please do not use 'got' on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline =~ / lots of/ ) {
 				print "For formal writing, change 'lots of' to 'many' or 'much' on line $. in $input.\n";
@@ -935,15 +994,15 @@ sub READCODEFILE
 				print "For formal writing, change 'lots' to 'many' or 'much' on line $. in $input.\n";
 			}
 			if( !$ok && !$twook && !$isref && $lctwoline  =~ / cheap/ && !$inquote ) { # not the lennart quote
-				print "Please use 'less costly' instead of 'cheap', as 'cheap' implies poor quality, on line $. in $input.\n";
+				print "Please use 'less costly' instead of 'cheap' as 'cheap' implies poor quality, on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline  =~ /and\/or/ ) {
-				print "Please do not use 'and/or' on line $. in $input.\n";
+				print "For formal writing, please do not use 'and/or' on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline  =~ / a lot of / ) {
-				print "Avoid informal 'a lot of', change to 'many', 'much', 'considerable' or similar, on line $. in $input.\n";
+				print "Avoid informal 'a lot of' - change to 'many,' 'much,' 'considerable,' or similar, on line $. in $input.\n";
 			} elsif( !$twook && $lctwoline  =~ / a lot / ) {
-				print "Avoid informal 'a lot', change to 'much' on line $. in $input.\n";
+				print "Avoid informal 'a lot' - change to 'much' on line $. in $input.\n";
 			}
 			# left out because of "can not only provide", which is fine
 			#if( !$twook && $lctwoline  =~ /can not / ) {
@@ -988,14 +1047,14 @@ sub READCODEFILE
 				print "shortening tip: remove 'really' on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ / interesting/ ) {
-				print "tip: reconsider 'interesting' on line $. in $input, probably delete it\n    or change to 'key', 'noteworthy', 'notable', 'different', or 'worthwhile'.\n    Everything in your work should be interesting.\n    Say why something is of interest, and write so that it is indeed interesting.\n";
+				print "tip: reconsider 'interesting' on line $. in $input, probably delete it\n    or change to 'key,' 'noteworthy,' 'notable,' 'different,' or 'worthwhile'.\n    Everything in your work should be interesting.\n    Say why something is of interest, and write so that it is indeed interesting.\n";
 			}
 			if( !$twook && !$isref && !$twook && $lctwoline =~ /in terms of / ) {
 				print "tip: you probably should replace 'in terms of' with 'using' or 'by' or 'and' on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
 				print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			if( !$twook && !$isref && $twoline  =~ / etc\. / ) {
-				print "hint: try to avoid using etc., as it adds no real information; on line $. in $input.\n";
+				print "hint: try to avoid using etc., as it adds no real information; on line $. in $input.\n    If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\\\n";
 			}
 			if( !$twook && !$isref && !$twook && $lctwoline  =~ /data is/ ) {
 				print "possible tip: 'data' should be plural, not singular, on line $. in $input. Reword?\n    Sometimes it is fine, e.g., 'the analysis of the data is taking a long time.' since analysis is singular.\n";
@@ -1024,7 +1083,7 @@ sub READCODEFILE
 			if( !$ok && ($lctheline  =~ /parameterisation/) ) {
 				print "The British spelling 'parameterisation' should change to 'parameterization' on line $. in $input.\n";
 			}
-			if( !$twook && ($lctwoline  =~ /blackbody/) ) {
+			if( !$ok && ($lctheline  =~ /blackbody/) ) {
 				print "'blackbody' should change to 'black-body' on line $. in $input.\n";
 			}
 			if( !$ok && ($theline  =~ /black body/) ) {
@@ -1048,10 +1107,6 @@ sub READCODEFILE
 			}
 			if( !$ok && $lctheline  =~ /pre-process/ && !$isref ) {
 				print "'pre-process' to 'preprocess' on line $. in $input.\n";
-			}
-			# https://www.grammarly.com/blog/modeling-or-modelling/
-			if( !$ok && $lctheline  =~ /modelling/ && !$isref ) {
-				print "In the U.S., we prefer 'modelling' to 'modeling' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline  =~ /bandlimit/ && !$isref ) {
 				print "'bandlimit' to 'band-limit' on line $. in $input.\n";
@@ -1090,7 +1145,7 @@ sub READCODEFILE
 				&& !($twoline=~/Entrim/) ) {
 				print "'4D' to 'four-dimensional' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline  =~ /Ph.D./) {
+			if( !$twook && $twoline  =~ /Ph.D./) {
 				print "'Ph.D.' to 'PhD' on line $. in $input.\n";
 			}
 			if( !$twook && $twoline  =~ / id / && !($twoline  =~ / id Software/)) {
@@ -1267,14 +1322,8 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ / (pre-compute)/ ) {
 				print "change '$1' to 'precompute' on line $. in $input, or add '% chex_latex' to line.\n";
 			}
-			if( $usstyle && !$ok && !$isref && $lctheline  =~ /grey/ ) { # http://www.dictionary.com/e/gray-or-grey/
-				print "change 'grey' to 'gray' on line $. in $input.\n";
-			}
 			if( !$ok && !$isref && $lctheline  =~ /non-linear/ ) {
 				print "change 'non-linear' to 'nonlinear' on line $. in $input.\n";
-			}
-			if( $usstyle && !$ok && !$isref && $lctheline  =~ /haloes/ ) {
-				print "change 'haloes' to 'halos' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline  =~ /zeroes/ ) {
 				print "change 'zeroes' to 'zeros' on line $. in $input.\n";
@@ -1302,9 +1351,6 @@ sub READCODEFILE
 			}
 			if( !$ok && $theline  =~ /nvidia/  && !($theline =~ "bibitem" || $theline =~ "cite") ) {
 				print "'Nvidia' to 'NVIDIA' on line $. in $input.\n";
-			}
-			if( $usstyle && !$ok && !$isref && $lctheline  =~ /parametriz/ ) {
-				print "'parametrization' to 'parameterization' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline  =~ /tradeoff/ && !$isref ) {
 				print "'tradeoff' to 'trade-off' on line $. in $input.\n";
@@ -1343,17 +1389,17 @@ sub READCODEFILE
 				print "'biggest' to 'greatest' or similar, on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && $lctwoline  =~ /self intersect/ ) {
-				print "'self intersect' to 'self-intersect', as it's a common term, on line $. in $input.\n";
+				print "'self intersect' to 'self-intersect' as it's a common term, on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline  =~ /bidimensional/ ) {
-				print "'bidimensional' to 'two-dimensional', mr. fancy pants, on line $. in $input.\n";
+				print "'bidimensional' to 'two-dimensional' mr. fancy pants, on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline  =~ /fillrate/ ) {
 				print "'fillrate' to 'fill rate' on line $. in $input.\n";
 			}
 			# more popular on Google
 			if( !$twook && !$isref && $lctwoline  =~ /run time/ ) {
-				print "'run time' to 'runtime', for consistency, on line $. in $input.\n";
+				print "'run time' to 'runtime' for consistency, on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline  =~ /videogame/ ) {
 				print "'videogame' to 'video game' on line $. in $input.\n";
@@ -1440,11 +1486,36 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /[\s]discs[\s\.,:;?]/ ) {
 				print "Change 'discs' to 'disks' on line $. in $input.\n";
 			}
+			# slight google preference, 3.9 M vs. 3.1 M
+			if( !$ok && !$isref && $lctwoline  =~ /nonnegativ/ ) {
+				print "change 'nonnegativ' to the slightly-more-popular 'non-negativ' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctwoline  =~ /non-uniform/ ) {
+				print "'non-uniform' should change to 'nonuniform' on line $. in $input.\n";
+			}
 		}
-		# nice for a final check TODO END, but kind of crazed
+		# nice for a final check one time, but kind of crazed and generates false positives
 		if ( $picky ) {
-			# TODO this first one is good to check throughout TODO EAH
-			# done:
+			# Ending a sentence with a preposition is frowned on, but often without merit.
+			# The warnings are here just to tip you off to check the sentence, as sometimes the sentence can
+			# be reworded.
+			# https://blog.oxforddictionaries.com/2011/11/28/grammar-myths-prepositions/
+			#if( !$twook && $twoline  =~ / on\. / ) {
+			#	print "Noteworthy: sentence finishes with the preposition 'on.'  on line $. in $input.\n";
+			#}
+			if( !$twook && $twoline  =~ / at\. / ) {
+				print "Noteworthy: sentence finishes with the preposition 'at.' on line $. in $input.\n";
+			}
+			# some of these, not so terrible.
+			#if( !$twook && $twoline  =~ / in\. / ) {
+			#	print "Noteworthy: sentence finishes with the preposition 'in.' on line $. in $input.\n";
+			#}
+			if( !$twook && $twoline  =~ / of\. / ) {
+				print "Noteworthy: sentence finishes with the preposition 'of.' on line $. in $input.\n";
+			}
+			if( !$twook && $twoline  =~ / for\. / ) {
+				print "Noteworthy: sentence finishes with the preposition 'for.' on line $. in $input.\n";
+			}
 			#if( !$twook && $lctwoline  =~ / lets/ ) {	# don't check for in refs.tex
 			#	print "lets - maybe you mean 'let's' which should go to 'let us' or reword, on line $. in $input.\n";
 			#}
@@ -1476,12 +1547,25 @@ sub READCODEFILE
 				print "The word 'quite' is a cheat for 'very' - can we avoid it? Line $. in $input.\n";
 			}
 			if( !$twook && !$twook && $lctwoline =~ /kind of/ && !$twook ) {
-				print "If you don't mean 'type of', for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line $. in $input.\n";
+				print "If you don't mean 'type of' for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line $. in $input.\n";
 				print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			# finds some problems, but plenty of false positives:
 			if( !$ok && $isref && $theline  =~ /\w''/ ) {
 				print "ERROR: reference title does not have comma before closed quotes, on line $. in $input.\n";
+			}
+		}
+		# warn if an italicized term is repeated
+		if( !$ok && !$isref && !$infigure && $twoline =~ /{\\em ([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
+			# if there are capitals in the term, ignore it - probably a title
+			my $term = $1;
+			if ( lc($term) eq $term ) {
+				if ( exists($emfound{$term}) && $input eq $eminput{$term} ) {
+					print "Warning: term ''$1'' is emphasized a second time at line $. in $input.\n    First found at $emfound{$1}.\n";
+				} else {
+					$emfound{$term} = "line $. in $input";
+					$eminput{$term} = $input;
+				}
 			}
 		}
 
@@ -1521,7 +1605,7 @@ sub READCODEFILE
 		if ( $theline =~ /end\{tabbing}/ ) {
 			$inequation = 0;
 		}
-		if ( $theline =~ /end\{align}/ ) {
+		if ( $theline =~ /end\{align}/ || $theline =~ /end\{falign}/ ) {
 			$inequation = 0;
 		}
 		if ( $theline =~ /end\{verbatim}/ ) {
