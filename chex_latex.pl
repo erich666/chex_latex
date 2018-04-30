@@ -626,7 +626,10 @@ sub READCODEFILE
 		if( !$ok && $theline =~ /\d \d\d\d/ ) {
 			print "POSSIBLY SERIOUS: digits with space '$&' might be wrong\n    Use commas, e.g. '300 000' should be '300,000' on line $. in $input.\n";
 		}
-		
+		if ( !$twook && $twoline =~ /\textregistered / ) {
+			print "Spacing: you probably want to change `\textregistered ' to '\textregistered\ ' so that there is space after it, on line $. in $input.\n";
+		}
+
 		# ----------------------------------------------------------------
 		# Punctuation
 		if ( $dashes ) {
@@ -775,10 +778,10 @@ sub READCODEFILE
 		}
 
 		if( !$twook && $twoline && $twoline =~ / Corp\. / ) {
-			print "'Corp. ' needs backslash 'Corp.\\' to avoid wide space after period, on line $. in $input.\n";
+			print "'Corp. ' may need a backslash 'Corp.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
 		}
 		if( !$twook && $twoline =~ / Inc\. / ) {
-			print "'Inc. ' needs backslash 'Inc.\\' to avoid wide space after period, on line $. in $input.\n";
+			print "'Inc. ' may need a backslash 'Inc.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
 		}
 		if( !$twook && $twoline  =~ /\.\) / ) {
 			print "POSSIBLY SERIOUS: '.) ' needs a \\ after it to avoid extra space, on line $. in $input.\n";
@@ -829,7 +832,7 @@ sub READCODEFILE
 			print "POSSIBLY SERIOUS: change 'et al.' to 'et al.\\' if you are not ending a sentence, on line $. in $input.\n";
 			$period_problem = 1;
 		}
-		if( !$twook && $twoline  =~ / \. / ) {
+		if( !$twook && !$inequation && $twoline  =~ / \. / ) {
 			print "SERIOUS: change ' .' to '.' (space in front of period), on line $. in $input.\n";
 		}
 		if( !$twook && $twoline  =~ / \,/ ) {
@@ -887,7 +890,7 @@ sub READCODEFILE
 		if( !$twook && $twoline  =~ /relatively to / ) {
 			print "tip: 'relatively to' probably wants to be 'relative to' on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$twook && $lctwoline =~ /so as to / ) {
+		if( !$twook && !$isref && !$twook && $lctwoline =~ /so as to / ) {
 			print "tip: you probably should replace 'so as to' with 'to' or similar on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
 			print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 		}
@@ -900,7 +903,7 @@ sub READCODEFILE
 		if( !$twook && $lctwoline  =~ /made out of/ ) {
 			print "shortening tip: replace 'made out of' with 'made from' on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && $lctwoline =~ /due to the fact that/ && !$inquote ) {
+		if( !$twook && !$isref && $lctwoline =~ /due to the fact that/ && !$inquote ) {
 			print "tip: replace 'due to the fact that' with 'because' on line $. in $input.\n";
 		}
 		if( !$ok && !$isref && $lctheline  =~ /on account of/ && !$inquote ) {
@@ -915,7 +918,7 @@ sub READCODEFILE
 		if( !$ok && !$isref && $lctheline  =~ /thusly/ && !$inquote ) {
 			print "tip: change 'thusly' to 'thus' or 'therefore' on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && $lctwoline  =~ /point in time/ && !$inquote ) {
+		if( !$twook && !$isref && $lctwoline  =~ /point in time/ && !$inquote ) {
 			print "tip: avoid the wordy phrase 'point in time' at this point in time, on line $. in $input.\n";
 		}
 		if( !$ok && !$isref && !$ok && $lctheline  =~ /literally/ && !$inquote ) {
@@ -935,10 +938,10 @@ sub READCODEFILE
 			print "shortening tip: replace 'fairly straightforward' with 'straightforward' on line $. in $input.\n";
 		}
 		# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp
-		if( !$isref && $lctwoline  =~ /physically-based/ ) {
+		if( !$isref && $lctheline  =~ /physically-based/ ) {
 			print "'physically-based' should change to 'physically based' on line $. in $input.\n";
 		}
-		if( !$ok && $lctwoline  =~ /ly-used/ ) {
+		if( !$ok && $lctheline  =~ /ly-used/ ) {
 			print "'*ly-used' should probably change to '*ly used' on line $. in $input.\n";
 		}
 		if( $lctheline  =~ /bottom-left/ ) {
@@ -979,12 +982,12 @@ sub READCODEFILE
 			# -----------------------------
 			# Formal style
 			# See https://www.vappingo.com/word-blog/when-is-it-okay-to-use-contractions-in-formal-writing/
-			# "Do not use contractions in documents that serve very formal purposes, such as legal contracts,
+			# "Do not use contractions in documents that serve formal purposes, such as legal contracts,
 			# [and] submissions to professional publications."
 			if( !$isref && $lctwoline  =~ / math / ) {
 				print "For formal writing, 'math' should change to 'mathematics' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $lctwoline  =~ / got / && !$inquote ) {
+			if( !$twook && !$isref && $lctwoline  =~ / got / && !$inquote ) {
 				print "For formal writing, please do not use 'got' on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline =~ / lots of/ ) {
@@ -993,7 +996,7 @@ sub READCODEFILE
 			if( !$twook && $lctwoline =~ / lots / ) {
 				print "For formal writing, change 'lots' to 'many' or 'much' on line $. in $input.\n";
 			}
-			if( !$ok && !$twook && !$isref && $lctwoline  =~ / cheap/ && !$inquote ) { # not the lennart quote
+			if( !$twook && !$isref && $lctwoline  =~ / cheap/ && !$inquote ) { # not the lennart quote
 				print "Please use 'less costly' instead of 'cheap' as 'cheap' implies poor quality, on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline  =~ /and\/or/ ) {
@@ -1037,7 +1040,7 @@ sub READCODEFILE
 		if ( $style  ) {
 			# ------------------------------------------------
 			# Personal preferences, take them or leave them
-			# "Substitute 'damn' every time you’re inclined to write 'very,'" said Mark Twain. "Your editor will delete it and the writing will be just as it should be." https://lifehacker.com/replace-very-with-damn-to-improve-your-writing-1708460103
+			# Why no "very"? See https://www.forbes.com/sites/katelee/2012/11/30/mark-twain-on-writing-kill-your-adjectives and https://quoteinvestigator.com/2012/08/29/substitute-damn/
 			# Try to find a substitute, e.g., "very small" could become "minute" or "tiny"
 			# substitutes site here: https://www.grammarcheck.net/very/
 			if( !$twook && !$isref && (($lctwoline =~ / very/ && !$inquote ) || ($lctwoline =~ /^very/))) {
@@ -1080,8 +1083,11 @@ sub READCODEFILE
 			if( !$ok && $theline  =~ /LoD/ ) {
 				print "'LoD' to 'LOD' on line $. in $input.\n";
 			}
-			if( !$ok && ($lctheline  =~ /parameterisation/) ) {
+			if( !$ok && $lctheline  =~ /parameterisation/ ) {
 				print "The British spelling 'parameterisation' should change to 'parameterization' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline  =~ /rerender/ && !$isref ) {
+				print "'rerender' should change to 're-render', on line $. in $input.\n";
 			}
 			if( !$ok && ($lctheline  =~ /blackbody/) ) {
 				print "'blackbody' should change to 'black-body' on line $. in $input.\n";
@@ -1224,7 +1230,7 @@ sub READCODEFILE
 			if( !$twook && $lctwoline =~ /wire frame/ ) {
 				print "'wire frame' to 'wireframe' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $lctwoline =~ /sub-pixel/ ) {
+			if( !$twook && !$isref && $lctwoline =~ /sub-pixel/ ) {
 				print "'sub-pixel' to 'subpixel' on line $. in $input.\n";
 			}
 			# Good, but need to be done manually:
@@ -1487,11 +1493,11 @@ sub READCODEFILE
 				print "Change 'discs' to 'disks' on line $. in $input.\n";
 			}
 			# slight google preference, 3.9 M vs. 3.1 M
-			if( !$ok && !$isref && $lctwoline  =~ /nonnegativ/ ) {
-				print "change 'nonnegativ' to the slightly-more-popular 'non-negativ' on line $. in $input.\n";
+			if( !$twook && !$isref && $lctwoline  =~ /nonnegativ/ ) {
+				print "Change 'nonnegativ' to the slightly-more-popular 'non-negativ' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $lctwoline  =~ /non-uniform/ ) {
-				print "'non-uniform' should change to 'nonuniform' on line $. in $input.\n";
+			if( !$twook && !$isref && $lctwoline  =~ /non-uniform/ ) {
+				print "Change 'non-uniform' to 'nonuniform' on line $. in $input.\n";
 			}
 		}
 		# nice for a final check one time, but kind of crazed and generates false positives
