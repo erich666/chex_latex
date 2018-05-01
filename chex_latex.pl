@@ -777,11 +777,17 @@ sub READCODEFILE
 			print "SERIOUS: the double-apostrophe \" should change to a \'\' on line $. in $input.\n";
 		}
 
+		if( !$twook && !$isref && $twoline =~ /\. \d/ ) {
+			print "A sentence should not start with a numeral (unless it's a year), on line $. in $input.\n";
+		}
 		if( !$twook && $twoline && $twoline =~ / Corp\. / ) {
 			print "'Corp. ' may need a backslash 'Corp.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
 		}
 		if( !$twook && $twoline =~ / Inc\. / ) {
 			print "'Inc. ' may need a backslash 'Inc.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
+		}
+		if( !$twook && $twoline =~ / Ltd\. / ) {
+			print "'Ltd. ' may need a backslash 'Ltd.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
 		}
 		if( !$twook && $twoline  =~ /\.\) / ) {
 			print "POSSIBLY SERIOUS: '.) ' needs a \\ after it to avoid extra space, on line $. in $input.\n";
@@ -984,6 +990,7 @@ sub READCODEFILE
 			# See https://www.vappingo.com/word-blog/when-is-it-okay-to-use-contractions-in-formal-writing/
 			# "Do not use contractions in documents that serve formal purposes, such as legal contracts,
 			# [and] submissions to professional publications."
+			# http://grammar.ccc.commnet.edu/grammar/numbers.htm
 			if( !$isref && $lctwoline  =~ / math / ) {
 				print "For formal writing, 'math' should change to 'mathematics' on line $. in $input.\n";
 			}
@@ -1070,7 +1077,16 @@ sub READCODEFILE
 			}
 
 			# -----------------------------------------------------
-			# Words and phrases - definitely personal preferences, but based on common practice
+			# Words and phrases - definitely personal preferences, but mostly based on common practice
+			if( !$ok && !$isref && $theline =~ /internet/ ) {
+				print "'internet' should be capitalized, to 'Internet', on line $. in $input.\n";
+			}
+			# Unreal Engine should have "the" before it, unless it's "Unreal Engine 4"
+			# note that this test can fail, as the phrase has three words and, despite its name,
+			# lctwoline is really "lc this line plus the last word of the previous line"
+			if( !$twook && !$isref && $lctwoline =~ /unreal engine/ && !($lctwoline =~ /the unreal engine/) && !($lctwoline =~ /unreal engine \d/)) {
+				print "'Unreal Engine' should have 'the' before it, on line $. in $input.\n";
+			}
 			if( !$ok && !$isref && $lctheline  =~ /performant/ ) {
 				print "'performant' not fully accepted as a word, so change to 'efficient' or 'powerful' on line $. in $input.\n";
 			}
@@ -1495,6 +1511,9 @@ sub READCODEFILE
 			# slight google preference, 3.9 M vs. 3.1 M
 			if( !$twook && !$isref && $lctwoline  =~ /nonnegativ/ ) {
 				print "Change 'nonnegativ' to the slightly-more-popular 'non-negativ' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline  =~ /nongraphic/ ) {
+				print "Change 'nongraphic' to 'non-graphic' on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && $lctwoline  =~ /non-uniform/ ) {
 				print "Change 'non-uniform' to 'nonuniform' on line $. in $input.\n";
