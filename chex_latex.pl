@@ -325,7 +325,7 @@ sub READCODEFILE
 
 		# index searcher: find left |( and right |) index entries and make sure they match up.
 		my $str = $twoline;
-		my $newtwoline = '';
+		my $newtwoline = ' ';
 
 		# index test
 		while ( $str =~ /\\index\{([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
@@ -352,7 +352,7 @@ sub READCODEFILE
 				}
 			} 
 		}
-		$newtwoline .= $str;
+		$newtwoline .= $str . ' ';
 		#if ( !$twook && $twoline ne $newtwoline ) {
 		#	print "twoline $twoline\n and newline $newtwoline\n";
 		#}
@@ -834,6 +834,9 @@ sub READCODEFILE
 				print "'et al' is not followed by '.' or 'ia' on line $. in $input.\n";
 			}
 		}
+		if( $lctwoline =~ / et alia/ ) {
+			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
+		}
 		if( !$twook && $twoline =~ / al\. / ) {
 			print "POSSIBLY SERIOUS: change 'et al.' to 'et al.\\' if you are not ending a sentence, on line $. in $input.\n";
 			$period_problem = 1;
@@ -1085,13 +1088,37 @@ sub READCODEFILE
 			# note that this test can fail, as the phrase has three words and, despite its name,
 			# lctwoline is really "lc this line plus the last word of the previous line"
 			if( !$twook && !$isref && $lctwoline =~ /unreal engine/ && !($lctwoline =~ /the unreal engine/) && !($lctwoline =~ /unreal engine \d/)) {
-				print "'Unreal Engine' should have 'the' before it, on line $. in $input.\n";
+				print "'Unreal Engine' should have 'the' before it, on line $. in $input (note: test is flaky).\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /performant/ ) {
 				print "'performant' not fully accepted as a word, so change to 'efficient' or 'powerful' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ /six dimensional/ ) {
+			if( !$ok && !$isref && $theline =~ /Earth/ && !($twoline =~ /Google Earth/) && !($twoline =~ /Visible Earth/) ) {
+				print "'Earth' should be 'the earth' (or change this rule to what you like), on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $theline =~ /Moon / ) {
+				print "'Moon' probably wants to be 'the moon' (or change this rule to what you like), on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lcline =~ /dataset/ ) {
+				print "'dataset' to 'data set' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /six dimensional/ ) {
 				print "'six dimensional' to 'six-dimensional' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /five dimensional/ ) {
+				print "'five dimensional' to 'five-dimensional' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /four dimensional/ ) {
+				print "'four dimensional' to 'four-dimensional' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /three dimensional/ ) {
+				print "'three dimensional' to 'three-dimensional' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /two dimensional/ ) {
+				print "'two dimensional' to 'two-dimensional' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /one dimensional/ ) {
+				print "'one dimensional' to 'one-dimensional' on line $. in $input.\n";
 			}
 			if( !$ok && $theline =~ /fps/ ) {
 				print "'fps' to 'FPS' on line $. in $input.\n";
@@ -1517,6 +1544,9 @@ sub READCODEFILE
 			}
 			if( !$twook && !$isref && $lctwoline =~ /non-uniform/ ) {
 				print "Change 'non-uniform' to 'nonuniform' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /nonphysical/ ) {
+				print "Change 'nonphysical' to 'non-physical' on line $. in $input.\n";
 			}
 		}
 		# nice for a final check one time, but kind of crazed and generates false positives
