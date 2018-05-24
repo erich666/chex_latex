@@ -644,7 +644,7 @@ sub READCODEFILE
 			# -- to ---, if words on both sides (otherwise this might be a page number range)
 			if( !$twook && !$isref && !$inequation && $lctwoline =~ /[a-z]--\w/ ) {
 				if ( !($` =~ /\$/) ) {
-					print "SERIOUS: change '--' (short dash) to '---' on line $. in $input.\n";
+					print "possibly serious: change '--' (short dash) to '---' on line $. in $input, unless you are specifying a range.\n";
 				}
 			}
 		}
@@ -875,6 +875,10 @@ sub READCODEFILE
 		if( !$ok && $lctheline =~ /frustrum/ ) {
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
 		}
+		# leading space to avoid "n-bit mask" which would be fine
+		if( !$twook && $lctwoline =~ / bit mask/ ) {
+			print "'bit mask' to 'bitmask', on line $. in $input.\n";
+		}
 		
 		# -----------------------------
 		# Clunky or wrong
@@ -946,6 +950,12 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ /fairly straightforward/ ) {
 			print "shortening tip: replace 'fairly straightforward' with 'straightforward' on line $. in $input.\n";
 		}
+		if( !$ok && $lctheline =~ /as-is/ ) {
+			print "'as-is' should be 'as is' on line $. in $input.\n";
+		}
+		if( !$ok && $lctheline =~ /well-suited/ ) {
+			print "'well-suited' should be 'well suited' on line $. in $input.\n";
+		}
 		# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp
 		if( !$isref && $lctheline =~ /physically-based/ ) {
 			print "'physically-based' should change to 'physically based' on line $. in $input.\n";
@@ -983,9 +993,6 @@ sub READCODEFILE
 		}
 		if( $lctwoline =~ /view independent/ ) {
 			print "'view independent' should change to 'view-independent' on line $. in $input.\n";
-		}
-		if( $lctwoline =~ /relatively to / ) {
-			print "'relatively to' probably wants to be 'relative to' on line $. in $input.\n";
 		}
 		if ( $formal ) {
 			# -----------------------------
@@ -1099,7 +1106,7 @@ sub READCODEFILE
 			if( !$ok && !$isref && $theline =~ /Moon / ) {
 				print "'Moon' probably wants to be 'the moon' (or change this rule to what you like), on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $lcline =~ /dataset/ ) {
+			if( !$ok && !$isref && $lctheline =~ /dataset/ ) {
 				print "'dataset' to 'data set' on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ /six dimensional/ ) {
@@ -1181,6 +1188,45 @@ sub READCODEFILE
 			#if( !$twook && $twoline =~ /similarly to / ) {
 			#	print "'similarly to' probably wants to be 'similar to' on line $; better yet, reword, as #it's generally awkward. in $input.\n";
 			#}
+			# things like "1:1" should be "$1:1$"
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ /:1 / ) {
+				print "'X:1' should be of form '\$X:1\$', on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ / : 1/ ) {
+				print "'X : 1' should be of form '\$X:1\$' (no spaces), on line $. in $input.\n";
+			}
+			# MSAA
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ / 2x / ) {
+				print "'2x' to '2\$\\times\$', on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ / 4x / ) {
+				print "'4x' to '4\$\\times\$', on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ / 8x / ) {
+				print "'8x' to '8\$\\times\$', on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ / 16x / ) {
+				print "'16x' to '16\$\\times\$', on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ / 32x / ) {
+				print "'32x' to '32\$\\times\$', on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $theline =~ /DX9/ ) {
+				print "'DX9' to 'DirectX~9' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $theline =~ /DX10/ ) {
+				print "'DX10' to 'DirectX~10' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $theline =~ /DX11/ ) {
+				print "'DX11' to 'DirectX~11' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $theline =~ /DX12/ ) {
+				print "'DX12' to 'DirectX~12' on line $. in $input.\n";
+			}
+			# "2-degree color-matching" is how that phrase is always presented
+			if( !$ok && !$isref && $theline =~ /\d-degree/ && !($theline =~ /color-matching/) ) {
+				print "'N-degree' to 'N degree' on line $. in $input.\n";
+			}
 			if( !$twook && $lctwoline =~ /five dimensional/ ) {
 				print "'five dimensional' to 'five-dimensional' on line $. in $input.\n";
 			}
@@ -1275,6 +1321,9 @@ sub READCODEFILE
 			}
 			if( !$twook && !$isref && $lctwoline =~ /sub-pixel/ ) {
 				print "'sub-pixel' to 'subpixel' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /mis-categorize/ ) {
+				print "'mis-categorize' to 'miscategorize', on line $. in $input.\n";
 			}
 			# Good, but need to be done manually:
 			#if( !$twook && $twoline =~ /On the left / && $infigure ) {
