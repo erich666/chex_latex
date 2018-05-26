@@ -1514,6 +1514,9 @@ sub READCODEFILE
 			if( !$ok && $isref && $theline =~ /February/ ) {
 				print "change February to Feb. in line $. in $input.\n";
 			}
+			if( !$ok && $isref && ($twoline =~ /March \d/ || $twoline =~ /March,/) ) {
+				print "change March to Mar. in line $. in $input.\n";
+			}
 			if( !$ok && $isref && $theline =~ /September/ ) {
 				print "change September to Sept. in line $. in $input.\n";
 			}
