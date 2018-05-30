@@ -19,11 +19,12 @@ use strict;
 
 use File::Find;
 # options for tests. You can set these to whatever defaults you like
-my $style = 0;
+my $style = 1;
 my $picky = 0;
 my $formal = 1;
 my $dashes = 1;
 my $usstyle = 1;
+my $textonly = 0;
 
 # If this phrase is found in the comment on a line, ignore that line for various tests.
 # Feel free to add your own "$ok &&" for the various tests below, I didn't go nuts with it.
@@ -76,7 +77,7 @@ while (@ARGV) {
 			if ( $char eq 'd' ) {
 				# set $dashes to false, to ignore dash tests
 				$dashes = 0;
-			} elsif ( $char eq 'i' ) {
+			} elsif ( $char eq 'f' ) {
 				# set $formal to false, to allow informal bits such as contractions
 				$formal = 0;
 			} elsif ( $char eq 'p' ) {
@@ -85,9 +86,6 @@ while (@ARGV) {
 			} elsif ( $char eq 's' ) {
 				# set $style to TRUE to catch a number of style problems
 				$style = 1;
-			} elsif ( $char eq 't' ) {
-				# set $titles to false, to allow section titles to be lowercase
-				print "NOTE: the -t titles option is no longer needed, as titles are tested for self-consistency. Option ignored.\n";
 			} elsif ( $char eq 'u' ) {
 				# set $usstyle to false, to ignore U.S. punctuation style tests for period or comma outside quotes
 				$usstyle = 0;
@@ -104,7 +102,7 @@ while (@ARGV) {
 				# instead of refs.tex, set your own bibitem file.
 				$refstex = shift(@ARGV);
 				if ( length($refstex) == 0 || $i+1 < length($chars) ) {
-					printf STDOUT "reference tex file unset\n";
+					printf STDOUT "Reference tex file unset.\n";
 					$refstex = '';
 				}
 			} else {
@@ -114,20 +112,41 @@ while (@ARGV) {
 			}
 		}
 	} else {
-		# we assume the argument must then be a directory - add it there
-		push @dirs, $arg;
+		# we assume the argument must then be a directory or file - add it appropriately
+		if ( -e $arg ) {
+			if ( -d $arg) {
+				# directory
+				push @dirs, $arg;
+			} else {
+				$codefiles[$cfnum] = $arg;
+				$cfnum++;
+				if ( !($arg =~ /.tex$/) ) {
+					if ( $textonly != 1) {
+						printf STDOUT "Files will be treated as plain text.\n";
+					}
+					$textonly = 1;
+				}
+			}
+		} else {
+			printf STDERR "The argument >$arg< is neither a valid file nor an option.\n";
+			&USAGE();
+			exit 0;
+		}
 	}
 }
 
-if ( scalar @dirs == 0 ) { 
-	$dirs[0] = '.';	# default is current directory
+# if specific files were listed, don't recurse directories
+if ( $cfnum == 0 ) {
+	if ( scalar @dirs == 0 ) { 
+		$dirs[0] = '.';	# default is current directory
+	}
+	my $dirchop = 0 ;
+	# silly hack to remove "./" from front of string.
+	if ( $dirs[0] eq '.' ) {
+		$dirchop = 2 ;
+	}
+	find( \&READRECURSIVEDIR, @dirs, );
 }
-my $dirchop = 0 ;
-# silly hack to remove "./" from front of string.
-if ( $dirs[0] eq '.' ) {
-	$dirchop = 2 ;
-}
-find( \&READRECURSIVEDIR, @dirs, );
 
 &PROCESSFILES();
 
@@ -137,9 +156,9 @@ exit 0;
 
 sub USAGE
 {
-	print "Usage: perl chex_latex.pl [-dipstu] [-O okword] [-R refs.tex] [directory [directory...]]\n";
+	print "Usage: perl chex_latex.pl [-dfpsu] [-O okword] [-R refs.tex] [directory [directory...]]\n";
 	print "  -d - turn off dash tests for '-' or '--' flagged as needing to be '...'.\n";
-	print "  -i - turn off formal writing check; allows contractions and other informal usage.\n";
+	print "  -f - turn off formal writing check; allows contractions and other informal usage.\n";
 	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
 	print "  -s - turn ON style check; looks for poor usage, punctuation, and consistency.\n";
 	print "  -u - turn off U.S. style tests for putting commas and periods inside quotes.\n";
@@ -328,7 +347,7 @@ sub READCODEFILE
 		my $newtwoline = ' ';
 
 		# index test
-		while ( $str =~ /\\index\{([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
+		while ( !$textonly && $str =~ /\\index\{([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
 			my $indexname = $1;
 
 			$str = $';
@@ -361,7 +380,7 @@ sub READCODEFILE
 		my $lctwoline = lc($twoline);
 		
 		$str = $theline;
-		if ( $str =~ /see\{([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
+		if ( !$textonly && $str =~ /see\{([\d\w_".'\~\-\$& !^()\/\|\\@]+)}/ ) {
 			my $seestr = $1;
 			if ( $seestr =~ /!/ ) {
 				print "Error: ''$seestr'', replace exclamation point with comma and space, on line $.\n";
@@ -635,14 +654,14 @@ sub READCODEFILE
 		if ( $dashes ) {
 			# single dash should be ---
 			# test could be commented out because it could be an equation, e.g., 9 - 4
-			if( !$ok && $theline =~ / - / && !$inequation ) {
+			if( !$ok && !$textonly && $theline =~ / - / && !$inequation ) {
 				if ( !($twoline =~ /\$/) ) {
 					print "SERIOUS: change ' - ' to '---' on line $. in $input.\n";
-					print "++++++ DEBUG: >$`< is the prefix.\n";
+					#print "++++++ DEBUG: >$`< is the prefix.\n";
 				}
 			}
 			# -- to ---, if words on both sides (otherwise this might be a page number range)
-			if( !$twook && !$isref && !$inequation && $lctwoline =~ /[a-z]--\w/ ) {
+			if( !$twook && !$textonly && !$isref && !$inequation && $lctwoline =~ /[a-z]--\w/ ) {
 				if ( !($` =~ /\$/) ) {
 					print "possibly serious: change '--' (short dash) to '---' on line $. in $input, unless you are specifying a range.\n";
 				}
@@ -708,6 +727,9 @@ sub READCODEFILE
 		if( !$twook && $twoline =~ / etc/ && !($' =~ /^\./) ) {
 			print "SERIOUS: 'etc' isn't followed by a '.' on line $. in $input.\n";
 		}
+		if( !$twook && !$isref && $twoline =~ /\. \d/ ) {
+			print "A sentence should not start with a numeral (unless it's a year), on line $. in $input.\n";
+		}
 		# we like to avoid ending a sentence with a preposition.
 		if( !$twook && $twoline =~ / with\. / ) {
 			print "consider: 'with.' at end of sentence on line $. in $input. Reword if it's not convoluted to do so.\n";
@@ -722,10 +744,10 @@ sub READCODEFILE
 		#if( !$twook && $lctwoline =~ /\w\\footnote/ ) {
 		#	print "SERIOUS: 'w\\footnote' to ' \\footnote' on line $. in $input.\n";
 		#}
-		if( !$ok && $dashes && $theline =~ / -- / ) {
+		if( !$ok && !$textonly && $dashes && $theline =~ / -- / ) {
 			print "POTENTIALLY SERIOUS: change ' -- ' to the full dash '---' on line $. in $input.\n";
 		}
-		if( $dashes && !$intable && !$twook ) {
+		if( $dashes && !$intable && !$twook && !$textonly ) {
 			if ( $twoline =~ / --- / ) {
 				print "SERIOUS: ' --- ' should not have spaces before and after it, on line $. in $input.\n";
 			} elsif( $twoline =~ /--- / ) {
@@ -734,20 +756,17 @@ sub READCODEFILE
 				print "SERIOUS: ' ---' should not have a space before it, on line $. in $input.\n";
 			}
 		}
-		if( !$twook && $isref && $twoline =~ /pp. \d+-\d+/ ) {
+		if( !$twook && $isref && !$textonly && $twoline =~ /pp. \d+-\d+/ ) {
 			print "ERROR: '$&' page number has only one dash, on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && $twoline =~ / \[\d+-\d+\]/) {
+		if( !$twook && !$isref && !$textonly && $twoline =~ / \[\d+-\d+\]/) {
 			print "ERROR: '$&' date range has only one dash, needs two, on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && $twoline =~ / \(\d+-\d+\)/) {
+		if( !$twook && !$isref && !$textonly && $twoline =~ / \(\d+-\d+\)/) {
 			print "ERROR: '$&' date range needs to use brackets, [], not parentheses, and\n    has only one dash, needs two, on line $. in $input.\n";
 		}
 		if ( !$ok && $theline =~ /\?\-/ && $isref ) {
 			print "There's a ?- page reference (how do these get there? I think it's a hidden character before the first - from copy and paste of Computer Graphics Forum references), on line $. in $input.\n";
-		}
-		if ( !$ok && $theline =~ /\-\?/ && $isref ) {
-			print "There's a -? page reference (how do these get there? I think it's a hidden character before the first - from copy and paste of Computer Graphics Forum references), on line $. in $input.\n";
 		}
 		if( !$ok && $theline =~ /\/times/ ) {
 			print "SERIOUS: change '/times' to '\\times' on line $. in $input.\n";
@@ -770,29 +789,27 @@ sub READCODEFILE
 		#}
 
 		# Latex-specific
-		if( !$ok && $theline =~ /’/ ) {
+		if( !$ok && !$textonly && $theline =~ /’/ ) {
 			print "SERIOUS: the punctuation ’ should change to a ' (vertical) apostrophe on line $. in $input.\n";
 		}
-		if( !$ok && !$inequation && $theline =~ /"/ && !($theline =~ /\\"/) ) {
-			print "SERIOUS: the double-apostrophe \" should change to a \'\' on line $. in $input.\n";
+		if( !$ok && !$textonly && !$inequation && $theline =~ /"/ && !($theline =~ /\\"/) ) {
+			print "SERIOUS: the double apostrophe \" should change to a \'\' on line $. in $input.\n";
 		}
 
-		if( !$twook && !$isref && $twoline =~ /\. \d/ ) {
-			print "A sentence should not start with a numeral (unless it's a year), on line $. in $input.\n";
-		}
-		if( !$twook && $twoline && $twoline =~ / Corp\. / ) {
+		if( !$twook && !$textonly && $twoline && $twoline =~ / Corp\. / ) {
 			print "'Corp. ' may need a backslash 'Corp.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
 		}
-		if( !$twook && $twoline =~ / Inc\. / ) {
+		if( !$twook && !$textonly && $twoline =~ / Inc\. / ) {
 			print "'Inc. ' may need a backslash 'Inc.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
 		}
-		if( !$twook && $twoline =~ / Ltd\. / ) {
+		if( !$twook && !$textonly && $twoline =~ / Ltd\. / ) {
 			print "'Ltd. ' may need a backslash 'Ltd.\\' to avoid a wide space after period\n    (unless it's the end of a sentence), on line $. in $input.\n";
 		}
-		if( !$twook && $twoline =~ /\.\) / ) {
+		if( !$twook && !$textonly && $twoline =~ /\.\) / ) {
 			print "POSSIBLY SERIOUS: '.) ' needs a \\ after it to avoid extra space, on line $. in $input.\n";
 		}
-		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !$inequation ) {
+		# last bit on this line: if text, then ignore "..."
+		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !$inequation && (!$textonly || !$twoline =~ /\.\.\./)  ) {
 			print "Doubled periods, on line $. in $input.\n";
 		}
 		if( !$twook && $twoline =~ /,,/ ) {
@@ -802,7 +819,7 @@ sub READCODEFILE
 		# Latex will by default make a "short space" after a capital letter followed by a period.
 		# For example: Franklin D. Roosevelt. For longer sets of capital letters, e.g. GPU, DNA,
 		# we want to have a "long space," as in: "There are many types of DNA.  We will discuss..."
-		if( !$ok && !$inequation && $theline =~ /([A-Z][A-Z]+)\./ ) {
+		if( !$ok && !$textonly && !$inequation && $theline =~ /([A-Z][A-Z]+)\./ ) {
 			print "Sentence ending in the capital letters $1 should have a '\\@.' for spacing, on line $. in $input.\n";
 		}
 
@@ -811,16 +828,16 @@ sub READCODEFILE
 		if( !$ok && $infigure && $theline =~ /\w\)}/ ) {
 			print "Credit needs period at end, on line $. in $input.\n";
 		}
-		if( !$twook && $twoline =~ /Image Courtesy/ || $twoline =~ /Images Courtesy/ ) {
+		if( !$twook && !$textonly && $twoline =~ /Image Courtesy/ || $twoline =~ /Images Courtesy/ ) {
 			print "Change 'Courtesy' to 'courtesy' on line $. in $input.\n";
 		}
-		if( !$twook && $lctwoline =~ /[\d+] ms/ ) {
+		if( !$twook && !$textonly && $lctwoline =~ /[\d+] ms/ ) {
 			print "' ms' to '~ms' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
-		if( !$twook && $lctwoline =~ /[\d+] fps/ ) {
+		if( !$twook && !$textonly && $lctwoline =~ /[\d+] fps/ ) {
 			print "' FPS' to '~FPS' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
-		if( !$twook && $lctwoline =~ /[\d+] Hz/ ) {
+		if( !$twook && !$textonly && $lctwoline =~ /[\d+] Hz/ ) {
 			print "' Hz' to '~Hz' to avoid having the number separated from its units, on line $. in $input.\n";
 		}		
 		# ----------------------------------
@@ -834,10 +851,10 @@ sub READCODEFILE
 				print "'et al' is not followed by '.' or 'ia' on line $. in $input.\n";
 			}
 		}
-		if( $lctwoline =~ / et alia/ ) {
+		if( !$twook && $lctwoline =~ / et alia/ ) {
 			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
 		}
-		if( !$twook && $twoline =~ / al\. / ) {
+		if( !$twook && !$textonly && $twoline =~ / al\. / ) {
 			print "POSSIBLY SERIOUS: change 'et al.' to 'et al.\\' if you are not ending a sentence, on line $. in $input.\n";
 			$period_problem = 1;
 		}
@@ -850,13 +867,13 @@ sub READCODEFILE
 		# If you use a ".", you need to do something like ".~" to avoid having the period treated
 		# as if it's the end of a sentence, which causes a bit of additional space to get added after it.
 		# Easiest is to just spell out vs.
-		if( !$twook && !$isref && $twoline =~ / vs\. / ) {
+		if( !$twook && !$isref && !$textonly && $twoline =~ / vs\. / ) {
 			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs.\\' on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $twoline =~ / vs / ) {
 			print "SERIOUS: change 'vs' to 'versus' on line $. in $input\n";
 		}
-		if( !$twook && !$isref && $twoline =~ / etc\. [a-z]/ ) {
+		if( !$twook && !$isref && !$textonly && $twoline =~ / etc\. [a-z]/ ) {
 			print "POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\\' to avoid having a 'double-space'\n    appear after the period, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
 			$period_problem = 1;
 		}
@@ -893,6 +910,12 @@ sub READCODEFILE
 		}
 		if( !$ok && !$isref && $lctheline =~ /firstly/ && !$inquote ) {
 			print "Do not say 'firstly' - say 'first' on line $. in $input.\n";
+		}
+		if( !$ok && !$isref && $lctheline =~ /secondly/ && !$inquote ) {
+			print "Do not say 'secondly' - say 'second' on line $. in $input.\n";
+		}
+		if( !$ok && !$isref && $lctheline =~ /thirdly/ && !$inquote ) {
+			print "Do not say 'thirdly' - say 'third' on line $. in $input.\n";
 		}
 		if( !$twook && $lctwoline =~ /amongst/ ) {
 			print "Change 'amongst' to 'among' on line $. in $input.\n";
@@ -1081,9 +1104,54 @@ sub READCODEFILE
 				print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
 			}
 			# see http://www.quickanddirtytips.com/education/grammar/use-versus-utilize?page=1
-			if( !$ok && !$inquote && !$isref && $lctheline =~ /utiliz/ && !($lctheline =~ /utilization/) ) {
-				print "Change the 'utiliz-' form to 'use' or similar, on line $. in $input.\n    'Utiliz-' sounds big and looks impressive but isn't needed - keep it simple.\n";
-				print "    If you think it's truly OK (use it maybe once a chapter), put on the end of the line the comment '% chex_latex'\n";
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /utiliz/ ) {
+				print "Probably needlessly complex: change 'utiliz-' to 'use' or similar, on line $. in $input.\n";
+				&SAYOK();
+			}
+			# from the book "The Craft of Scientific Writing" by Michael Alley
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /familiarization/ ) {
+				print "Needlessly complex: change 'familiarization' to 'familiarity' on line $. in $input.\n";
+			}
+			if( !$twook && !$inquote && !$isref && $lctwoline =~ /has the functionability/ ) {
+				print "Needlessly complex: change 'has the functionability' to 'can function' on line $. in $input.\n";
+			}
+			if( !$twook && !$inquote && !$isref && $lctwoline =~ /has the operationability/ ) {
+				print "Needlessly complex: change 'has the operationability' to 'can operate' on line $. in $input.\n";
+			}
+			if( !$twook && !$inquote && !$isref && $lctwoline =~ /has the functionability/ ) {
+				print "Needlessly complex: change 'has the functionability' to 'can function' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /facilitat/ ) {
+				print "Possibly needlessly complex: change 'facilitat-' to 'cause' or 'ease' or 'simplify' or 'help along' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /finaliz/ ) {
+				print "Needlessly complex: change 'finaliz-' to 'end' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /prioritiz/ ) {
+				print "Perhaps needlessly complex: change 'prioritiz-' to 'assess' or 'first choose' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /aforementioned/ ) {
+				print "Needlessly complex: change 'aforementioned' to 'mentioned' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /discretized/ ) {
+				print "Possibly needlessly complex if used as an adjective: consider 'discretized' to 'discrete' on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /individualized/ ) {
+				print "Needlessly complex: change 'individualized' to 'individual' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /personalized/ ) {
+				print "Possibly needlessly complex if used as an adjective: consider 'personalized' to 'personal' on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /heretofore/ ) {
+				print "Needlessly complex: change 'heretofore' to 'previous' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /hitherto/ ) {
+				print "Needlessly complex: change 'hitherto' to 'until now' on line $. in $input.\n";
+			}
+			if( !$ok && !$inquote && !$isref && $lctheline =~ /therewith/ ) {
+				print "Needlessly complex: change 'therewith' to 'with' on line $. in $input.\n";
 			}
 
 			# -----------------------------------------------------
@@ -1743,6 +1811,12 @@ sub READCODEFILE
 		print "ERROR: index entry started, not ended: {$elem|( in $input.\n";
 	}
 	undef %indexlong;
+}
+
+sub SAYOK
+{
+	print "    If you think it's truly OK (e.g., it's part of a technical term),\n";
+	print "    put on the end of this line the comment '% chex_latex'\n";
 }
 
 sub CONNECTOR_WORD

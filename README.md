@@ -1,9 +1,9 @@
 # chex_latex
 LaTeX file checking tool.
 
-This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and a lot of other problems. Put it in your directory of .tex files and run it to look for common mistakes.
+This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and many other bugs. Put it in your directory of .tex files and run it to look for common mistakes. You can also use it on raw text files, just use the -r option to disable LaTeX-specific warnings.
 
-As an example, here is a snippet of a .tex file; look it over for problems yourself:
+As an example, here is a snippet of a .tex file; first, look it over yourself:
 
 	\section{Algorithms that Use Hardware}
 	Here we'll discuss the very many algorithms that can be implemented on the GPU. For more information, Castelli
@@ -84,20 +84,26 @@ The "chex_latex" says the line is OK and won't be tested. Beware, though: if you
 The options are:
 
 	-d - turn off dash tests for '-' or '--' flagged as needing to be '...'.
-	-i - turn off formal writing check; allows contractions and other informal usage.
+	-f - turn off formal writing check; allows contractions and other informal usage.
 	-p - turn ON picky style check, which looks for more style problems but is not so reliable.
-	-s - turn ON style check; looks for poor usage, punctuation, and consistency.
+	-s - turn off style check; looks for poor usage, punctuation, and consistency.
 	-u - turn off U.S. style tests for putting commas and periods inside quotes.
 	
 So if you want all the tests, do:
 
-	perl chex_latex.pl -ps [directory or files]
+	perl chex_latex.pl -p [directory or files]
 	
 If you want the bare minimum, do:
 
-    perl chex_latex.pl -ditu [directory or files]
+    perl chex_latex.pl -dfsu [directory or files]
 
 If a message confuses you, look in the Perl script itself, as there are comments about some of the issues.
+
+To run this checker against plain text files, just specify the files, as normal:
+
+	perl chex_latex.pl my_text_file.txt another_text_file.txt
+	
+If any file is found that does not end in ".tex," the LaTeX-specific tests will be disabled (for all files, so don't mix .tex with .txt).
 
 Two other more obscure options:
 
@@ -129,7 +135,7 @@ Say that file is now in C:\temp. I then run Aspell on this file by going to the 
 
     bin\aspell list -t < C:\temp\alltext.txt > C:\temp\alltypos.txt
 
-This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, other code bits and whatnot will show up, etc. I find it much faster to look at a sorted list of typos, showing each word just once.
+This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, code bits will get listed again and again, and other spurious problems flagged. I find it much faster to look at a sorted list of typos, showing each word just once.
 
 To make such a list, use the script aspell_sorter.pl:
 
@@ -137,6 +143,6 @@ To make such a list, use the script aspell_sorter.pl:
 	
 which simply sorts the words in the alltypos.txt file, removing duplicates and giving a count. The file produced first lists all capitalized words (it is easy to skim past authors that way), then all lowercase.
 
-That's it - nothing fancy, but it has saved me a lot of time and a lot of "oh, wait, was that an error?" but the interactive spell checker can't go backwards, so I have to start again somewhere earlier and possibly miss something. I can also save the results file, change .tex files, and then make a new spell_check.txt and do a "diff" to see if I've introduced any new errors.
+That's it - nothing fancy, but it has saved me a considerable amount of time. I can also save the results file, change .tex files, and then make a new spell_check.txt and do a "diff" to see if I've introduced any new errors.
 
 Aspell also works on plaintext files, so if you can extract your text into a simple text file you can use this process to perform batch spell checking on anything.
