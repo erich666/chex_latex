@@ -884,7 +884,7 @@ sub READCODEFILE
 			print "Beware, there is a TODO in the text itself at line $. in $input.\n";
 		}
 		if( !$twook && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !$isref && !$inequation && !$period_problem ) {
-			print "Not capitalized at start of sentence (or the period should have a \\ before it), on line $. in $input.\n";
+			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : "(or the period should have a \\ before it)";
 		}
 		if( !$ok && $theline =~ /Javascript/) {
 			print "Please change 'Javascript' to 'JavaScript' on line $. in $input.\n";
@@ -928,7 +928,7 @@ sub READCODEFILE
 		}
 		if( !$twook && !$isref && $lctwoline =~ /so as to / ) {
 			print "tip: you probably should replace 'so as to' with 'to' or similar on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
-			print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
+			&SAYOK();
 		}
 		if( !$twook && $lctwoline =~ /due to that/ ) {
 			print "tip: 'due to that' to 'because' on line $. in $input.\n";
@@ -959,7 +959,7 @@ sub READCODEFILE
 		}
 		if( !$ok && !$isref && $lctheline =~ /literally/ && !$inquote ) {
 			print "tip: you can probably not use 'literally' (and may mean 'figuratively'), on line $. in $input.\n";
-			print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
+			&SAYOK();
 		}
 		if( !$twook && $lctwoline =~ / a lot more/ ) {
 			print "tip: replace 'a lot' with 'much' on line $. in $input.\n";
@@ -1080,7 +1080,9 @@ sub READCODEFILE
 		if ( $style  ) {
 			# ------------------------------------------------
 			# Personal preferences, take them or leave them
-			# Why no "very"? See https://www.forbes.com/sites/katelee/2012/11/30/mark-twain-on-writing-kill-your-adjectives and https://quoteinvestigator.com/2012/08/29/substitute-damn/
+			# Why no "very"?
+			# See https://www.forbes.com/sites/katelee/2012/11/30/mark-twain-on-writing-kill-your-adjectives
+			# (though it's not a Mark Twain quote, see https://quoteinvestigator.com/2012/08/29/substitute-damn/ )
 			# Try to find a substitute, e.g., "very small" could become "minute" or "tiny"
 			# substitutes site here: https://www.grammarcheck.net/very/
 			if( !$twook && !$isref && (($lctwoline =~ / very/ && !$inquote ) || ($lctwoline =~ /^very/))) {
@@ -1094,14 +1096,14 @@ sub READCODEFILE
 			}
 			if( !$twook && !$isref && $lctwoline =~ /in terms of / ) {
 				print "tip: you probably should replace 'in terms of' with 'using' or 'by' or 'and' on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
-				print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $twoline =~ / etc\. / ) {
 				print "hint: try to avoid using etc., as it adds no real information; on line $. in $input.\n    If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\\\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ /data is/ ) {
 				print "possible tip: 'data' should be plural, not singular, on line $. in $input. Reword?\n    Sometimes it is fine, e.g., 'the analysis of the data is taking a long time.' since analysis is singular.\n";
-				print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			# see http://www.quickanddirtytips.com/education/grammar/use-versus-utilize?page=1
 			if( !$ok && !$inquote && !$isref && $lctheline =~ /utiliz/ ) {
@@ -1462,31 +1464,40 @@ sub READCODEFILE
 				print "'mip-map' to 'mipmap' (no hyphen), on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (cubemap)/ || ($style && $lctheline =~ /(cube-map)/)) ) {
-				print "change '$1' to 'cube map' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'cube map' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (lightmap)/ || ($style && $lctheline =~ /(light-map)/)) ) {
-				print "change '$1' to 'light map' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'light map' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (screenspace)/ || ($style && $lctheline =~ /(screen-space)/)) ) {
-				print "change '$1' to 'screen space' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'screen space' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (raytrac)/ || ($style && $lctheline =~ /(ray-trac)/)) ) {
-				print "change '$1' to 'ray trac*' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'ray trac*' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (pathtrac)/ || ($style && $lctheline =~ /(path-trac)/)) ) {
-				print "change '$1' to 'path trac*' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'path trac*' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && $lctheline =~ / (sub-surface)/ ) {
-				print "change '$1' to 'subsurface' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'subsurface' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && $lctheline =~ / (preintegrate)/ ) {
-				print "change '$1' to 'pre-integrate' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'pre-integrate' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && $lctheline =~ / (pre-calculate)/ ) { # slight google preference for this, but we'll go precalculate
-				print "change '$1' to 'precalculate' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'precalculate' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && $lctheline =~ / (pre-compute)/ ) {
-				print "change '$1' to 'precompute' on line $. in $input, or add '% chex_latex' to line.\n";
+				print "change '$1' to 'precompute' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && !$isref && $lctheline =~ /non-linear/ ) {
 				print "change 'non-linear' to 'nonlinear' on line $. in $input.\n";
@@ -1696,34 +1707,34 @@ sub READCODEFILE
 			#}
 			if( !$twook && !$isref && $lctwoline =~ /a number of/ ) {
 				print "shortening tip: replace 'a number of' with 'several' (or possibly even remove), on line $. in $input.\n";
-				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /in particular/ ) {
 				print "shortening tip: perhaps remove 'in particular' on line $. in $input.\n";
-				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /similar to/ ) {
 				print "shortening tip: perhaps replace 'similar to' with 'like' on line $. in $input.\n";
-				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /in order to/ ) {
 				print "shortening tip: perhaps replace 'in order to' with 'to' on line $. in $input.\n";
-				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ / all of the/ && !($lctwoline =~ /or all of the/) ) {
 				print "shortening tip: replace 'all of' with 'all' on line $. in $input.\n";
-				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /the majority of/ ) {
 				print "shortening tip: replace 'the majority of' with 'most' on line $. in $input.\n";
-				print "    If you think it's truly OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ / quite/ ) {
 				print "The word 'quite' is a cheat for 'very' - can we avoid it? Line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline =~ /kind of/ ) {
 				print "If you don't mean 'type of' for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line $. in $input.\n";
-				print "    If you think it's OK, put on the end of the line the comment '% chex_latex'\n";
+				&SAYOK();
 			}
 			# finds some problems, but plenty of false positives:
 			if( !$ok && $isref && $theline =~ /\w''/ ) {
@@ -1815,8 +1826,12 @@ sub READCODEFILE
 
 sub SAYOK
 {
-	print "    If you think it's truly OK (e.g., it's part of a technical term),\n";
-	print "    put on the end of this line the comment '% chex_latex'\n";
+	print "    If you think it's truly OK (e.g., it's part of a technical term, or you just like it),\n";
+	if ($textonly) {
+		print "    you can ignore it, or edit this perl script and comment out the warning.\n";
+	} else {
+		print "    either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'\n";
+	}
 }
 
 sub CONNECTOR_WORD
