@@ -1828,7 +1828,7 @@ sub SAYOK
 {
 	print "    If you think it's truly OK (e.g., it's part of a technical term, or you just like it),\n";
 	if ($textonly) {
-		print "    you can ignore it, or edit this perl script and comment out the warning.\n";
+		print "    you can ignore this warning, or edit this perl script and comment it out.\n";
 	} else {
 		print "    either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'\n";
 	}
