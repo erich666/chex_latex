@@ -1535,16 +1535,16 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /absorbtion/ ) {
 				print "'absorbtion' to 'absorption' on line $. in $input.\n";
 			}
-			if( !$twook && $twoline =~ / gauss/ ) {
+			if( !$twook && !$inequation && $twoline =~ / gauss/ ) {
 				print "'gauss' to 'Gauss' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ / gbuffer/ ) {
-				print "'gbuffer' to 'G-buffer' on line $. in $input.\n";
+			if( !$twook && !$inequation && $lctwoline =~ / gbuffer/ ) {
+				print "'gbuffer' to 'g-buffer' on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline =~ /ad-hoc/ ) {
 				print "'ad-hoc' to 'ad hoc' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ /lowpass/ ) {
+			if( !$twook && !$inequation && $lctwoline =~ /lowpass/ ) {
 				print "'lowpass' to 'low-pass' on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline =~ /highpass/ ) {
