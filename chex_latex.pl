@@ -1209,16 +1209,19 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /rerender/ && !$isref ) {
 				print "'rerender' should change to 're-render', on line $. in $input.\n";
 			}
-			if( !$ok && ($lctheline =~ /blackbody/) ) {
+			if( !$ok && $lctheline =~ /retro-reflect/ && !$isref ) {
+				print "'retro-reflect' should change to 'retroreflect', on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /blackbody/ ) {
 				print "'blackbody' should change to 'black-body' on line $. in $input.\n";
 			}
-			if( !$ok && ($theline =~ /black body/) ) {
+			if( !$ok && $theline =~ /black body/ ) {
 				print "'black body' should change to 'black-body' on line $. in $input.\n";
 			}
-			if( !$twook && ($lctwoline =~ /spot light/) ) {
+			if( !$twook && $lctwoline =~ /spot light/ ) {
 				print "'spot light' should change to 'spotlight' on line $. in $input.\n";
 			}
-			if( !$ok && ($theline =~ /spot-light/) ) {
+			if( !$ok && $theline =~ /spot-light/ ) {
 				print "'spot-light' should change to 'spotlight' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /frame buffer/ && !$isref ) {
@@ -1251,6 +1254,9 @@ sub READCODEFILE
 			}
 			if( !$ok && $lctheline =~ /frustums/ && !$isref ) {
 				print "'frustums' to 'frusta' on line $. in $input.\n";
+			}
+			if( !$ok && $theline =~ /\$Z/ ) {
+				print "Consistency check: \$Z should be \$z (or change this test), on line $. in $input.\n";
 			}
 			if( !$twook && $twoline =~ / 6D/ ) {
 				print "'6D' to 'six-dimensional' on line $. in $input.\n";
