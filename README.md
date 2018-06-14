@@ -83,7 +83,7 @@ The "chex_latex" says the line is OK and won't be tested. Beware, though: if you
 
 The options are:
 
-	-d - turn off dash tests for '-' or '--' flagged as needing to be '...'.
+	-d - turn off dash tests for '-' or '--' flagged as needing to be '---'.
 	-f - turn off formal writing check; allows contractions and other informal usage.
 	-p - turn ON picky style check, which looks for more style problems but is not so reliable.
 	-s - turn off style check; looks for poor usage, punctuation, and consistency.

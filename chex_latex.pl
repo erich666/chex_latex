@@ -157,7 +157,7 @@ exit 0;
 sub USAGE
 {
 	print "Usage: perl chex_latex.pl [-dfpsu] [-O okword] [-R refs.tex] [directory [directory...]]\n";
-	print "  -d - turn off dash tests for '-' or '--' flagged as needing to be '...'.\n";
+	print "  -d - turn off dash tests for '-' or '--' flagged as needing to be '---'.\n";
 	print "  -f - turn off formal writing check; allows contractions and other informal usage.\n";
 	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
 	print "  -s - turn ON style check; looks for poor usage, punctuation, and consistency.\n";
