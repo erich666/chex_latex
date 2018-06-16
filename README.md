@@ -141,7 +141,6 @@ To make such a list, use the script aspell_sorter.pl:
 
     perl aspell_sorter.pl alltypos.txt > spell_check.txt
 	
-which simply sorts the words in the alltypos.txt file, removing duplicates and giving a count. The file produced first lists all capitalized words (it is easy to skim past authors that way), then all lowercase.
 
 That's it - nothing fancy, but it has saved me a considerable amount of time. I can also save the results file, change .tex files, and then make a new spell_check.txt and do a "diff" to see if I've introduced any new errors.
 
