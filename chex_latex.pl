@@ -721,6 +721,12 @@ sub READCODEFILE
 				print "SERIOUS: in the U.S. 'e.g. ' should have a comma after it, not a space, on line $. in $input.\n";
 				$period_problem = 1;
 			}
+			if( !$ok && $lctheline =~ /parameterisation/ ) {
+				print "The British spelling 'parameterisation' should change to 'parameterization' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /signalled/ ) {
+				print "The British spelling 'signalled' should change to 'signaled', on line $. in $input.\n";
+			}
 		}
 		
 		# see https://english.stackexchange.com/questions/34378/etc-with-postpositioned-brackets-at-the-end-of-a-sentence
@@ -889,8 +895,17 @@ sub READCODEFILE
 		if( !$ok && $theline =~ /Javascript/) {
 			print "Please change 'Javascript' to 'JavaScript' on line $. in $input.\n";
 		}
-		if( !$ok && $lctheline =~ /frustrum/ ) {
+		if( $lctheline =~ /frustrum/ ) {
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
+		}
+		if( !$inequation && $twoline =~ / hermite/ ) {
+			print "MISSPELLING: 'hermite' to 'Hermite', on line $. in $input.\n";
+		}
+		if( !$inequation && $twoline =~ / phong/ ) {
+			print "MISSPELLING: 'phong' to 'Phong', on line $. in $input.\n";
+		}
+		if( !$inequation && $twoline =~ / gouraud/ ) {
+			print "MISSPELLING: 'gouraud' to 'Gouraud', on line $. in $input.\n";
 		}
 		# leading space to avoid "n-bit mask" which would be fine
 		if( !$twook && $lctwoline =~ / bit mask/ ) {
@@ -1016,6 +1031,9 @@ sub READCODEFILE
 		}
 		if( $lctwoline =~ /view independent/ ) {
 			print "'view independent' should change to 'view-independent' on line $. in $input.\n";
+		}
+		if( $lctwoline =~ /defacto / ) {
+			print "SERIOUS: change 'defacto' to 'de facto', on line $. in $input.\n";
 		}
 		if ( $formal ) {
 			# -----------------------------
@@ -1202,9 +1220,6 @@ sub READCODEFILE
 			}
 			if( !$ok && $theline =~ /LoD/ ) {
 				print "'LoD' to 'LOD' on line $. in $input.\n";
-			}
-			if( !$ok && $lctheline =~ /parameterisation/ ) {
-				print "The British spelling 'parameterisation' should change to 'parameterization' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /rerender/ && !$isref ) {
 				print "'rerender' should change to 're-render', on line $. in $input.\n";
