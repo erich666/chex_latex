@@ -252,6 +252,7 @@ sub READCODEFILE
 	my @fld;
 	my $isref = 0;
 	my $prev_line = '';
+	my $lcprev_line = '';
 	my $prev_real_line = '';
 	if ( $input =~ /$refstex/ ) { $isref = 1; } else { $isref = 0; }
 	my $infigure = 0;
@@ -932,7 +933,7 @@ sub READCODEFILE
 		if( !$ok && !$isref && $lctheline =~ /thirdly/ && !$inquote ) {
 			print "Do not say 'thirdly' - say 'third' on line $. in $input.\n";
 		}
-		if( !$twook && $lctwoline =~ /amongst/ ) {
+		if( !$ok && $lctheline =~ /amongst/ ) {
 			print "Change 'amongst' to 'among' on line $. in $input.\n";
 		}
 		if( !$twook && $lctwoline =~ / try and/ ) {
@@ -1032,7 +1033,7 @@ sub READCODEFILE
 		if( $lctwoline =~ /view independent/ ) {
 			print "'view independent' should change to 'view-independent' on line $. in $input.\n";
 		}
-		if( $lctwoline =~ /defacto / ) {
+		if( &WORDTEST($lctwoline,"defacto ",$lcprev_line,"defacto") ) {
 			print "SERIOUS: change 'defacto' to 'de facto', on line $. in $input.\n";
 		}
 		if ( $formal ) {
@@ -1042,27 +1043,26 @@ sub READCODEFILE
 			# "Do not use contractions in documents that serve formal purposes, such as legal contracts,
 			# [and] submissions to professional publications."
 			# http://grammar.ccc.commnet.edu/grammar/numbers.htm
-			if( !$isref && $lctwoline =~ / math / ) {
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," math ",$lcprev_line,"math") ) {
 				print "For formal writing, 'math' should change to 'mathematics' on line $. in $input.\n";
 			}
-			if( !$twook && !$isref && $lctwoline =~ / got / && !$inquote ) {
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," got ",$lcprev_line,"got") ) {
 				print "For formal writing, please do not use 'got' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ / lots of/ ) {
+			if( !$twook && $lctwoline =~ / lots of/ && !$inquote && (lc($prev_line) ne "lots") ) {
 				print "For formal writing, change 'lots of' to 'many' or 'much' on line $. in $input.\n";
-			}
-			if( !$twook && $lctwoline =~ / lots / ) {
+			} elsif( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," lots ",$lcprev_line,"lots") ) {
 				print "For formal writing, change 'lots' to 'many' or 'much' on line $. in $input.\n";
 			}
-			if( !$twook && !$isref && $lctwoline =~ / cheap/ && !$inquote ) { # not the lennart quote
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," cheap ",$lcprev_line,"cheap") ) {
 				print "Please use 'less costly' instead of 'cheap' as 'cheap' implies poor quality, on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ /and\/or/ ) {
+			if( !$ok && $lctheline =~ /and\/or/ && !$inquote ) {
 				print "For formal writing, please do not use 'and/or' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ / a lot of / ) {
+			if( !$twook && $lctwoline =~ / a lot of / && !$inquote ) {
 				print "Avoid informal 'a lot of' - change to 'many,' 'much,' 'considerable,' or similar, on line $. in $input.\n";
-			} elsif( !$twook && $lctwoline =~ / a lot / ) {
+			} elsif( !$twook && $lctwoline =~ / a lot / && !$inquote ) {
 				print "Avoid informal 'a lot' - change to 'much' on line $. in $input.\n";
 			}
 			# left out because of "can not only provide", which is fine
@@ -1078,7 +1078,7 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /we've/ && !$inquote && !$isref ) {	# don't check for in refs.tex
 				print "SERIOUS: For formal writing, no contractions: 'we've' to 'we have' or reword, on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ / it's/ && !$inquote && !$isref ) {
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," it's ",$lcprev_line,"it's") ) {
 				print "SERIOUS: For formal writing, no contractions: 'it's' to 'it is' on line $. in $input.\n";
 			}
 			if( !$ok && $theline =~ /'re/ && !$inquote ) {
@@ -1087,10 +1087,10 @@ sub READCODEFILE
 			if( !$ok && $theline =~ /'ll/ && !$inquote ) {
 				print "SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $theline =~ /formulas/ ) {
+			if( !$ok && !$isref && $theline =~ /formulas/ && !$inquote ) {
 				print "Change 'formulas' to 'formulae' on line $. in $input, or rewrite.\n";
 			}
-			if( !$twook && $twoline =~ /Generally / ) {
+			if( !$twook && !$twook && !$isref && !$inquote && &WORDTEST($twoline," Generally",$prev_line,"Generally")) {
 				print "add comma: after 'Generally' on line $. in $input.\n";
 			}
 		}
@@ -1103,21 +1103,26 @@ sub READCODEFILE
 			# (though it's not a Mark Twain quote, see https://quoteinvestigator.com/2012/08/29/substitute-damn/ )
 			# Try to find a substitute, e.g., "very small" could become "minute" or "tiny"
 			# substitutes site here: https://www.grammarcheck.net/very/
-			if( !$twook && !$isref && (($lctwoline =~ / very/ && !$inquote ) || ($lctwoline =~ /^very/))) {
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," very",$lcprev_line,"very") )  {
 				print "tip: remove or replace 'very' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $lctheline =~ /really/ && !$inquote ) { # not the lennart quote
+			if( !$ok && !$isref && !$inquote && $lctheline =~ /really/ ) {
 				print "shortening tip: remove 'really' on line $. in $input.\n";
 			}
-			if( !$twook && !$isref && $lctwoline =~ / interesting/ ) {
+			# This extra test at the end is not foolproof, e.g. if the line ended "Interestingly" or "interesting,"
+			# A better test would be to pass in the phrase, 
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," interesting",$lcprev_line,"interesting") ) {
 				print "tip: reconsider 'interesting' on line $. in $input, probably delete it\n    or change to 'key,' 'noteworthy,' 'notable,' 'different,' or 'worthwhile'.\n    Everything in your work should be interesting.\n    Say why something is of interest, and write so that it is indeed interesting.\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ /in terms of / ) {
 				print "tip: you probably should replace 'in terms of' with 'using' or 'by' or 'and' on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
 				&SAYOK();
 			}
-			if( !$twook && !$isref && $twoline =~ / etc\. / ) {
-				print "hint: try to avoid using etc., as it adds no real information; on line $. in $input.\n    If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\\\n";
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," etc. ",$lcprev_line,"etc.") ) {
+				print "hint: try to avoid using etc., as it adds no real information; on line $. in $input.\n";
+				if ( !$textonly ) {
+				    print "    If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\\\n";
+				}
 			}
 			if( !$twook && !$isref && $lctwoline =~ /data is/ ) {
 				print "possible tip: 'data' should be plural, not singular, on line $. in $input. Reword?\n    Sometimes it is fine, e.g., 'the analysis of the data is taking a long time.' since analysis is singular.\n";
@@ -1834,6 +1839,7 @@ sub READCODEFILE
 				$prev_line = '';
 			}
 		}
+		$lcprev_line = lc($prev_line);
 	}
 
 	close DATAFILE;
@@ -1843,6 +1849,24 @@ sub READCODEFILE
 		print "ERROR: index entry started, not ended: {$elem|( in $input.\n";
 	}
 	undef %indexlong;
+}
+
+sub WORDTEST
+{
+	my $pstring = shift;
+	my $phrase = shift;
+	my $estring = shift;
+	my $end = shift;
+	if ( index($estring, $end) != -1 ) {
+		# last word token contains previous word, so ignore error for this line - was caught last line.
+		return 0;
+	}
+	if ( index($pstring, $phrase) != -1 ) {
+		# problem found in this line, and not previously
+		return 1;
+	}
+	# phrase not found
+	return 0;
 }
 
 sub SAYOK
