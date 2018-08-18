@@ -687,7 +687,7 @@ sub READCODEFILE
 			#}
 			# https://www.grammarly.com/blog/modeling-or-modelling/
 			if( !$ok && $lctheline =~ /modelling/ && !$isref ) {
-				print "In the U.S., we prefer 'modelling' to 'modeling' on line $. in $input.\n";
+				print "In the U.S., we prefer 'modeling' to 'modelling' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /towards/ ) {
 				print "In the U.S., 'towards' should change to 'toward' on line $. in $input.\n";
