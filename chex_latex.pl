@@ -891,7 +891,7 @@ sub READCODEFILE
 			print "Beware, there is a TODO in the text itself at line $. in $input.\n";
 		}
 		if( !$twook && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !$isref && !$inequation && !$period_problem ) {
-			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : "(or the period should have a \\ before it)";
+			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : "(or the period should have a \\ after it)";
 		}
 		if( !$ok && $theline =~ /Javascript/) {
 			print "Please change 'Javascript' to 'JavaScript' on line $. in $input.\n";
