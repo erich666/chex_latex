@@ -564,6 +564,9 @@ sub READCODEFILE
 		if( !$ok && $theline =~ /~cite\{/ ) {
 			print "'cite' is missing a leading \\ for '\\cite' on line $. in $input.\n";
 		}
+		if( $theline =~ /see~\\cite\{/ ) {
+			print "do not use `see~\\cite', on line $. in $input - do not consider citations something you can point at.\n";
+		}
 		# ref should have a \ before this keyword
 		if( !$ok && $theline =~ /~ref\{/ ) {
 			print "'ref' is missing a leading \\ for '\\ref' on line $. in $input.\n";
@@ -899,6 +902,9 @@ sub READCODEFILE
 		if( $lctheline =~ /frustrum/ ) {
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
 		}
+		if( $lctheline =~ /hierarchal/ ) {
+			print "MISSPELLING: 'hierarchal' to 'hierarchical' on line $. in $input.\n";
+		}
 		if( !$inequation && $twoline =~ / hermite/ ) {
 			print "MISSPELLING: 'hermite' to 'Hermite', on line $. in $input.\n";
 		}
@@ -1093,6 +1099,22 @@ sub READCODEFILE
 			if( !$twook && !$twook && !$isref && !$inquote && &WORDTEST($twoline," Generally",$prev_line,"Generally")) {
 				print "add comma: after 'Generally' on line $. in $input.\n";
 			}
+			# But, And, Also are possible to use correctly, but hard: https://www.quickanddirtytips.com/education/grammar/can-i-start-a-sentence-with-a-conjunction
+			# Some avoidance strategies: http://www.bookpromotionhub.com/6341/5-ways-to-avoid-starting-a-sentence-with-but-or-and/
+			if( !$twook && !$isref && !$inquote && 
+				( &WORDTEST($twoline," But ",$prev_line,"but") || &WORDTEST($twoline," But,",$prev_line,"but,") ) ) {
+				print "Usually avoid starting sentences with the informal `But', on line $. in $input.\n";
+			}
+			# usually annoying, a run-on sentence
+			if( !$twook && !$isref && !$inquote && 
+				( &WORDTEST($twoline," And ",$prev_line,"and") || &WORDTEST($twoline," And,",$prev_line,"and,") ) ) {
+				print "Avoid starting sentences with the informal `And', on line $. in $input.\n";
+			}
+			# can be OK, your call...
+			if( !$twook && !$isref && !$inquote && 
+				( &WORDTEST($twoline," Also ",$prev_line,"also") || &WORDTEST($twoline," Also,",$prev_line,"also,") ) ) {
+				print "Usually avoid starting sentences with the informal `Also', on line $. in $input.\n";
+			}			
 		}
 		
 		if ( $style  ) {
@@ -1108,6 +1130,9 @@ sub READCODEFILE
 			}
 			if( !$ok && !$isref && !$inquote && $lctheline =~ /really/ ) {
 				print "shortening tip: remove 'really' on line $. in $input.\n";
+			}
+			if( !$isref && !$twook && $lctwoline =~ / in fact / && !$inquote ) {
+				print "Are you sure you want to use `in fact', on line $. in $input? It's often superfluous, in fact.\n";
 			}
 			# This extra test at the end is not foolproof, e.g. if the line ended "Interestingly" or "interesting,"
 			# A better test would be to pass in the phrase, 
