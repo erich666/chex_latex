@@ -1288,12 +1288,6 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ / raycast/ && !$isref ) {
 				print "'raycast' to 'ray cast' on line $. in $input.\n";
 			}
-			if( !$ok && $lctheline =~ / raytrace/ && !$isref ) {
-				print "'raytrace' to 'ray trace' on line $. in $input.\n";
-			}
-			if( !$ok && $lctheline =~ / raytracing/ && !$isref ) {
-				print "'raytracing' to 'ray tracing' on line $. in $input.\n";
-			}
 			if( !$twook && $lctwoline =~ / lob / ) {
 				print "'lob' to 'lobe' on line $. in $input.\n";
 			}
@@ -1528,6 +1522,10 @@ sub READCODEFILE
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (raytrac)/ || ($style && $lctheline =~ /(ray-trac)/)) ) {
 				print "change '$1' to 'ray trac*' on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$ok && !$isref && ($lctheline =~ / (raymarch)/ || ($style && $lctheline =~ /(ray-march)/)) ) {
+				print "change '$1' to 'ray march*' on line $. in $input.\n";
 				&SAYOK();
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (pathtrac)/ || ($style && $lctheline =~ /(path-trac)/)) ) {
