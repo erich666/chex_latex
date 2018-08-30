@@ -520,6 +520,9 @@ sub READCODEFILE
 		if( !$twook && $twoline =~ /\s~\\cite\{/ ) {
 			print "\\cite - remove the space before the tilde ~\\cite, on line $. in $input.\n";
 		}
+		if( !$ok && $theline =~ /\\cite\{\}/ ) {
+			print "SERIOUS: \\cite is empty, on line $. in $input.\n";
+		}
 		if( !$ok && $theline =~ /\/cite/ ) {
 			print "SERIOUS: '/cite' $& problem, should use backslash, on line $. in $input.\n";
 		}
@@ -918,6 +921,9 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ / bit mask/ ) {
 			print "'bit mask' to 'bitmask', on line $. in $input.\n";
 		}
+		if( !$twook && $lctwoline =~ /screen space ambient/ ) {
+			print "'screen space ambient' to 'screen-space ambient', on line $. in $input.\n";
+		}
 		
 		# -----------------------------
 		# Clunky or wrong
@@ -960,6 +966,10 @@ sub READCODEFILE
 		}
 		if( !$twook && $lctwoline =~ /made out of/ ) {
 			print "shortening tip: replace 'made out of' with 'made from' on line $. in $input.\n";
+		}
+		# optionally, add $infigure && 
+		if( !$twook && $lctwoline =~ /as can be seen/ ) {
+			print "shortening tip: remove 'as can be seen', since we are looking at a figure, on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $lctwoline =~ /due to the fact that/ && !$inquote ) {
 			print "tip: replace 'due to the fact that' with 'because' on line $. in $input.\n";
