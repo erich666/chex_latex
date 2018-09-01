@@ -961,6 +961,9 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ /due to that/ ) {
 			print "tip: 'due to that' to 'because' on line $. in $input.\n";
 		}
+		if( !$twook && $lctwoline =~ /more optimal/ ) {
+			print "tip: 'more optimal' is illogical - 'optimal' means the best;\n    maybe try 'better optimized' on line $. in $input.\n";
+		}
 		if( !$twook && $lctwoline =~ /more specifically/ ) {
 			print "tip: 'more specifically' to 'specifically' on line $. in $input.\n";
 		}
