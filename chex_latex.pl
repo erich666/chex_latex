@@ -867,6 +867,9 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ / et alia/ ) {
 			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
 		}
+		# see https://english.stackexchange.com/questions/121054/which-one-is-correct-et-al-s-or-et-al
+		# and https://forum.wordreference.com/threads/how-to-use-the-possessive-s-with-et-al.1621357/
+		# Typical rewrite of "Marquando et al.'s work" is "The work by Marquando et al."
 		if( $lctwoline =~ /et al.'s/ ) {
 			print "Rewrite to avoid 'et al.'s', which is half Latin, half English, on line $. in $input.\n";
 		}
