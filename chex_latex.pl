@@ -867,6 +867,9 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ / et alia/ ) {
 			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
 		}
+		if( $lctwoline =~ /et al.'s/ ) {
+			print "Rewrite to avoid 'et al.'s', which is half Latin, half English, on line $. in $input.\n";
+		}
 		if( !$twook && !$textonly && $twoline =~ / al\. / ) {
 			print "POSSIBLY SERIOUS: change 'et al.' to 'et al.\\' if you are not ending a sentence, on line $. in $input.\n";
 			$period_problem = 1;
@@ -904,6 +907,16 @@ sub READCODEFILE
 		}
 		if( $lctheline =~ /frustrum/ ) {
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
+		}
+		# your mileage may vary, depending on how you index, e.g. we do \index{k-d tree@$k$-d tree}
+		if( !$twook && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
+			print "'k-d' to the more proper '\$k\$-d', on line $. in $input.\n";
+		}
+		if( !$ok && !$isref && $lctheline =~ /kd-tree/ ) {
+			print "'kd-tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /kd tree/ && !($lctheline =~ /kd tree@/) ) {
+			print "'kd tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
 		}
 		if( $lctheline =~ /hierarchal/ ) {
 			print "MISSPELLING: 'hierarchal' to 'hierarchical' on line $. in $input.\n";
