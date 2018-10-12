@@ -61,7 +61,7 @@ my @citeorder;
 my @citeloc;
 my @cap_title;
 my @cap_title_loc;
-
+my $ok;
 
 # scan command line arguments
 my @dirs;
@@ -276,6 +276,16 @@ sub READCODEFILE
 		my $skip = 0;
 		my $period_problem = 0;
 		
+		# if the line has chex_latex on it in the comments, can ignore certain flagged problems,
+		# and ignore figure names.
+		if ( $theline =~ /$okword/ ) { # TODO - look only in comments for okword
+			$ok = 1;
+		} else {
+			$ok = 0;
+		}
+#printf "OK is $ok $. $theline\n";
+		my $twook |= $ok;
+
 		# cut rest of any line with includegraphics and trim= on it
 		if ( $theline =~ /\\includegraphics\[/ ) {
 			if ( $theline =~ /trim=/ ) {
@@ -313,10 +323,6 @@ sub READCODEFILE
 		#if ( $theline =~ /\\end/ ) { $theline = $`; }
 
 		
-		# if the line has chex_latex on it in the comments, can ignore certain flagged problems,
-		# and ignore figure names.
-		my $ok = ( $theline =~ /$okword/ ); # TODO - look only in comments
-		my $twook |= $ok;
 		# hit a new paragraph?
 		my $newpara = (length($theline) == 0);
 		# convert \% to Pct so we don't confuse it with a comment.
@@ -396,17 +402,18 @@ sub READCODEFILE
 			$theline =~ /\\chapter\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\section\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\subsection\{([A-Za-z| -]+)\}/ ||
-			$theline =~ /\\subsubsection\{([A-Za-z| -]+)\}/ ) {
+			$theline =~ /\\subsubsection\{([A-Za-z| -]+)\}/ ||
+			$theline =~ /\\title\{([A-Za-z| -\\,]+)\}/ ) {
 			my @wds = split(/[ -]/,$1);	# split
 			for ($i = 0; $i <= $#wds; $i++ ) {
 				if ( $i == 0 ) {
 					# first word - just check for capitalization, which should always be true for any form of title
-					if ( !CAPITALIZED($wds[$i]) ) {
+					if ( CAPITALIZED($wds[$i]) == 0 ) {
 						printf "LIKELY SERIOUS: Chapter or Section's first word '$wds[$i]' is not capitalized, on line $. in $input.\n";
 					}
 				} else {
 					my $sw = &CONNECTOR_WORD($wds[$i], $i);
-					if ( $sw == 2 ) {
+					if ( !$ok && $sw == 2 ) {
 						# This test is always good, you should never capitalize connector words. Really.
 						print "LIKELY SERIOUS: Chapter or Section title has a word '$wds[$i]' that should not be capitalized, on line $. in $input.\n";
 						print "    You can test your title at https://capitalizemytitle.com/\n";
@@ -432,13 +439,15 @@ sub READCODEFILE
 		# check if we're in an equation or verbatim section
 		if ( $theline =~ /begin\{equation/ || 
 			$theline =~ /begin\{eqnarray/ || 
+			$theline =~ /begin\{comment/ || 
 			$theline =~ /begin\{IEEEeqnarray/ || 
 			$theline =~ /begin\{align/ || 
 			$theline =~ /\\\[/ ||
 			$theline =~ /begin\{lstlisting}/ ) {
 			$inequation = 1;
 		}
-		if ( $theline =~ /begin\{figure}/ ) {
+		if ( $theline =~ /begin\{figure}/ ||
+			$theline =~ /begin\{tikzpicture}/ ) {
 			$infigure = 1;
 		}
 		if ( $theline =~ /begin\{gather}/ ) {
@@ -447,7 +456,7 @@ sub READCODEFILE
 		if ( $theline =~ /begin\{tabbing}/ ) {
 			$inequation = 1;
 		}
-		if ( $theline =~ /begin\{align}/ || $theline =~ /begin\{falign}/ ) {
+		if ( $theline =~ /begin\{falign}/ ) {
 			$inequation = 1;
 		}
 		if ( $theline =~ /begin\{verbatim}/ ) {
@@ -467,7 +476,7 @@ sub READCODEFILE
 		# ------------------------------------------
 		# Check doubled words. Possibly the most useful test in the whole script
 		# the crazy one, from https://stackoverflow.com/questions/23001408/perl-regular-expression-matching-repeating-words, catches all duplicate words such as "the the"
-		if( !$twook && !$intable && !$inequation && $lctwoline =~ /(?:\b(\w+)\b) (?:\1(?: |$))+/ && $1 ne 'em' ) {
+		if( !$twook && !$infigure && !$intable && !$inequation && $lctwoline =~ /(?:\b(\w+)\b) (?:\1(?: |$))+/ && $1 ne 'em' ) {
 			print "SERIOUS: word duplication problem of word '$1' on line $. in $input.\n";
 		}
 		# surprisingly common
@@ -513,7 +522,7 @@ sub READCODEFILE
 
 		# ---------------------------------------------------------
 		# citation problem: use a ~ instead of a space so that the citation is connected with the content before it.
-		if( !$twook && $twoline =~ /[\s\w\.,}]\\cite\{/ ) {
+		if( !$twook && !$infigure && $twoline =~ /[\s\w\.,}]\\cite\{/ ) {
 			print "\\cite needs a tilde ~\\cite before citation to avoid separation, on line $. in $input.\n";
 		}
 		# has the tilde, but there's a space before the tilde
@@ -832,7 +841,7 @@ sub READCODEFILE
 		# Latex will by default make a "short space" after a capital letter followed by a period.
 		# For example: Franklin D. Roosevelt. For longer sets of capital letters, e.g. GPU, DNA,
 		# we want to have a "long space," as in: "There are many types of DNA.  We will discuss..."
-		if( !$ok && !$textonly && !$inequation && $theline =~ /([A-Z][A-Z]+)\./ ) {
+		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\./ ) {
 			print "Sentence ending in the capital letters $1 should have a '\\@.' for spacing, on line $. in $input.\n";
 		}
 
@@ -861,11 +870,14 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ / et al/ ) {
 			my $post = $';
 			if ( !($post =~ /^\./ || $post =~ /^ia/) ) {
-				print "'et al' is not followed by '.' or 'ia' on line $. in $input.\n";
+				print "'et al' is not followed by '.', i.e., 'et al.', on line $. in $input.\n";
 			}
 		}
 		if( !$twook && $lctwoline =~ / et alia/ ) {
 			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
+		}
+		if ( !$twook && $twoline =~ /et al.~\\cite\{\w+\}\s+[A-Z]/ ) { # \{\w+\} [A-Z]
+			printf "et al. citation looks like it needs a period after the citation, on line $. in $input.\n";
 		}
 		# see https://english.stackexchange.com/questions/121054/which-one-is-correct-et-al-s-or-et-al
 		# and https://forum.wordreference.com/threads/how-to-use-the-possessive-s-with-et-al.1621357/
@@ -912,13 +924,13 @@ sub READCODEFILE
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
 		}
 		# your mileage may vary, depending on how you index, e.g. we do \index{k-d tree@$k$-d tree}
-		if( !$twook && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
+		if( !$twook && !$textonly && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
 			print "'k-d' to the more proper '\$k\$-d', on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && $lctheline =~ /kd-tree/ ) {
+		if( !$ok && !$textonly && !$isref && $lctheline =~ /kd-tree/ ) {
 			print "'kd-tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && $lctwoline =~ /kd tree/ && !($lctheline =~ /kd tree@/) ) {
+		if( !$twook && !$textonly && !$isref && $lctwoline =~ /kd tree/ && !($lctheline =~ /kd tree@/) ) {
 			print "'kd tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
 		}
 		if( $lctheline =~ /hierarchal/ ) {
@@ -1169,7 +1181,7 @@ sub READCODEFILE
 				print "tip: reconsider 'interesting' on line $. in $input, probably delete it\n    or change to 'key,' 'noteworthy,' 'notable,' 'different,' or 'worthwhile'.\n    Everything in your work should be interesting.\n    Say why something is of interest, and write so that it is indeed interesting.\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ /in terms of / ) {
-				print "tip: you probably should replace 'in terms of' with 'using' or 'by' or 'and' on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
+				print "tip: 'in terms of' is a wordy phrase, on line $. in $input. Use it sparingly.\n    You might consider instead using 'regarding' or 'concerning', or rewrite.\n    For example, 'In terms of memory, algorithm XYZ uses less' could be 'Algorithm XYZ uses less memory.'\n";
 				&SAYOK();
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," etc. ",$lcprev_line,"etc.") ) {
@@ -1237,6 +1249,9 @@ sub READCODEFILE
 			# Words and phrases - definitely personal preferences, but mostly based on common practice
 			if( !$ok && !$isref && $theline =~ /internet/ ) {
 				print "'internet' should be capitalized, to 'Internet', on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $twoline =~ /monte carlo/ ) {
+				print "'monte carlo' should be capitalized, to 'Monte Carlo', on line $. in $input.\n";
 			}
 			# Unreal Engine should have "the" before it, unless it's "Unreal Engine 4"
 			# note that this test can fail, as the phrase has three words and, despite its name,
@@ -1510,6 +1525,11 @@ sub READCODEFILE
 			if( !$twook && $lctwoline =~ /off-screen/ ) {
 				print "'off-screen' to 'offscreen' on line $. in $input.\n";
 			}
+			if( !$twook && $lctwoline =~ /straight forward/ ) {
+				print "You likely want to change 'straight forward' to 'straightforward' on line $. in $input.\n";
+				print "    See https://www.englishforums.com/English/StraightForwardStraightforward/bcjwmp/post.htm\n";
+				&SAYOK();
+			}
 			if( !$twook && $lctwoline =~ /view point/ ) {
 				print "'view point' to 'viewpoint' on line $. in $input.\n";
 			}
@@ -1532,7 +1552,7 @@ sub READCODEFILE
 			#	print "colon problem '$&' on line $. in $input.\n";
 			#}
 			if( !$ok && !$isref && $lctheline =~ /pre-comput/ ) {
-				print "'pre-comput*' to 'pre-comput*' (no hyphen), on line $. in $input.\n";
+				print "'pre-comput*' to 'precomput*' (no hyphen), on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /mip-map/ ) {
 				print "'mip-map' to 'mipmap' (no hyphen), on line $. in $input.\n";
@@ -1549,8 +1569,12 @@ sub READCODEFILE
 				print "change '$1' to 'screen space' on line $. in $input.\n";
 				&SAYOK();
 			}
-			if( !$ok && !$isref && ($lctheline =~ / (raytrac)/ || ($style && $lctheline =~ /(ray-trac)/)) ) {
+			if( !$ok && !$isref && ($lctheline =~ / (raytrac)/) ) {
 				print "change '$1' to 'ray trac*' on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$ok && !$isref && $style && $lctheline =~ /(ray-trac)/ ) {
+				print "if not used as adjective, perhaps change '$1' to 'ray trac*' on line $. in $input.\n";
 				&SAYOK();
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (raymarch)/ || ($style && $lctheline =~ /(ray-march)/)) ) {
@@ -1799,6 +1823,10 @@ sub READCODEFILE
 				print "shortening tip: perhaps replace 'in order to' with 'to' on line $. in $input.\n";
 				&SAYOK();
 			}
+			if( !$twook && !$isref && $lctwoline =~ /a large number of/ ) {
+				print "shortening tip: perhaps replace 'a large number of' with 'many' on line $. in $input.\n";
+				&SAYOK();
+			}
 			if( !$twook && !$isref && $lctwoline =~ / all of the/ && !($lctwoline =~ /or all of the/) ) {
 				print "shortening tip: replace 'all of' with 'all' on line $. in $input.\n";
 				&SAYOK();
@@ -1854,6 +1882,7 @@ sub READCODEFILE
 		# close up sections at the *end* of testing, so that two-line tests work properly
 		if ( $theline =~ /end\{equation/ || 
 			$theline =~ /end\{eqnarray/ || 
+			$theline =~ /end\{comment/ || 
 			$theline =~ /end\{IEEEeqnarray/ || 
 			$theline =~ /end\{align/ || 
 			$theline =~ /\\\]/ ||
@@ -1863,13 +1892,16 @@ sub READCODEFILE
 		if ( $theline =~ /end\{figure}/ ) {
 			$infigure = 0;
 		}
+		if ( $theline =~ /end\{tikzpicture}/ ) {
+			$infigure = 0;
+		}
 		if ( $theline =~ /end\{gather}/ ) {
 			$inequation = 0;
 		}
 		if ( $theline =~ /end\{tabbing}/ ) {
 			$inequation = 0;
 		}
-		if ( $theline =~ /end\{align}/ || $theline =~ /end\{falign}/ ) {
+		if ( $theline =~ /end\{falign}/ ) {
 			$inequation = 0;
 		}
 		if ( $theline =~ /end\{verbatim}/ ) {
@@ -1927,7 +1959,7 @@ sub SAYOK
 	if ($textonly) {
 		print "    you can ignore this warning, or edit this perl script and comment it out.\n";
 	} else {
-		print "    either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'\n";
+		print "    either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.\n";
 	}
 }
 
@@ -1978,6 +2010,10 @@ sub CONNECTOR_WORD
 sub SECTION_MISMATCH {
 	my $word = shift;
 	my $cap = CAPITALIZED($word);
+	# ignore word?
+	if ( $cap == -1 ) {
+		return 0;
+	}
 	my $ind;
 	if ( $theline =~ /\\chapter\{/ ) {
 		$ind = 0;
@@ -1991,7 +2027,14 @@ sub SECTION_MISMATCH {
 	} elsif ( $theline =~ /\\subsubsection\{/ ) {
 		$ind = 3;
 		$title_type = '\subsubsection';
+	} elsif ( $theline =~ /\\title\{/ ) {
+		$ind = 4;
+		$title_type = '\title';
 	}
+	# to force title to be capitalized (as in GPU Gems), set to 2 here;
+	# else comment out this line, to check consistency between this title and other titles of the same type.
+	$cap_title[$ind] = 2;
+
 	if ( $cap_title[$ind] ) {
 		# check if this chapter's/section's/etc. capitalization matches the first one's
 		if ( $cap_title[$ind] != ($cap ? 2 : 1 ) ) {
@@ -2012,6 +2055,9 @@ sub CAPITALIZED
 {
 	my $testword = shift;
 	my $fc = substr( $testword, 0, 1 );
+	if ( $fc =~ /\\/ ) {
+		return -1;	# ignore word, e.g. \small
+	}
 	if ( $fc =~ /[A-Z]/ ) {
 		return 1;
 	}
