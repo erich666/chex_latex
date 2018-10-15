@@ -697,8 +697,8 @@ sub READCODEFILE
 			}
 
 			# This doesn't actually work, though I wish it would - I want to detect a "true" right-leaning apostrophe
-			#if( !$ok && $theline =~ /\’/ ) {
-			#	print "SERIOUS: the special right-leaning apostrophe '’' should be a normal apostrophe on line $. in $input.\n";
+			#if( !$ok && $theline =~ /\ï¿½/ ) {
+			#	print "SERIOUS: the special right-leaning apostrophe 'ï¿½' should be a normal apostrophe on line $. in $input.\n";
 			#}
 			# https://www.grammarly.com/blog/modeling-or-modelling/
 			if( !$ok && $lctheline =~ /modelling/ && !$isref ) {
@@ -817,8 +817,8 @@ sub READCODEFILE
 		#}
 
 		# Latex-specific
-		if( !$ok && !$textonly && $theline =~ /’/ ) {
-			print "SERIOUS: the punctuation ’ should change to a ' (vertical) apostrophe on line $. in $input.\n";
+		if( !$ok && !$textonly && $theline =~ /ï¿½/ ) {
+			print "SERIOUS: the punctuation ï¿½ should change to a ' (vertical) apostrophe on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && !$inequation && $theline =~ /"/ && !($theline =~ /\\"/) ) {
 			print "SERIOUS: the double apostrophe \" should change to a \'\' on line $. in $input.\n";
@@ -876,6 +876,9 @@ sub READCODEFILE
 		}
 		if( !$twook && $lctwoline =~ / et alia/ ) {
 			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
+		}
+		if ( !$twook && $twoline =~ /et al.~\\cite\{\w+\}\s+[A-Z]/ ) { # \{\w+\} [A-Z]
+			printf "et al. citation looks like it needs a period after the citation, on line $. in $input.\n";
 		}
 		# see https://english.stackexchange.com/questions/121054/which-one-is-correct-et-al-s-or-et-al
 		# and https://forum.wordreference.com/threads/how-to-use-the-possessive-s-with-et-al.1621357/
@@ -2028,7 +2031,7 @@ sub SECTION_MISMATCH {
 	}
 	# to force title to be capitalized (as in GPU Gems), set to 2 here;
 	# else comment out this line, to check consistency between this title and other titles of the same type.
-	#$cap_title[$ind] = 2;
+	$cap_title[$ind] = 2;
 
 	if ( $cap_title[$ind] ) {
 		# check if this chapter's/section's/etc. capitalization matches the first one's
