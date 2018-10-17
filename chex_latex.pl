@@ -183,7 +183,7 @@ sub PROCESSFILES
 		my @subfld;
 		@subfld = split('\.',$nextfile);
 		#my $path = substr($codefiles[$i],$dirchop,length($codefiles[$i])-length($nextfile)-$dirchop);
-		print "file is $nextfile\n";
+		print "\nFile is $nextfile\n";
 		if ( exists($filenames_found{$nextfile}) ) {
 			print "BEWARE: two .tex files with same name $nextfile found in directory or subdirectory.\n";
 		}
@@ -837,7 +837,7 @@ sub READCODEFILE
 			print "POSSIBLY SERIOUS: '.) ' needs a \\ after it to avoid extra space, on line $. in $input.\n";
 		}
 		# last bit on this line: if text, then ignore "..."
-		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !$inequation && (!$textonly || !($twoline =~ /\.\.\./))  ) {
+		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && (!$textonly || !($twoline =~ /\.\.\./))  ) {
 			print "Doubled periods, on line $. in $input.\n";
 		}
 		if( !$twook && !$infigure && $twoline =~ /,,/ ) {
@@ -939,6 +939,9 @@ sub READCODEFILE
 		if( $lctheline =~ /frustrum/ ) {
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
 		}
+		if( $lctheline =~ /octtree/ ) {
+			print "MISSPELLING: 'octtree' to 'octree' on line $. in $input.\n";
+		}
 		# your mileage may vary, depending on how you index, e.g., we do \index{k-d tree@$k$-d tree}
 		if( !$twook && !$textonly && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
 			print "'k-d' to the more proper '\$k\$-d', on line $. in $input.\n";
@@ -951,6 +954,9 @@ sub READCODEFILE
 		}
 		if( $lctheline =~ /hierarchal/ ) {
 			print "MISSPELLING: 'hierarchal' to 'hierarchical' on line $. in $input.\n";
+		}
+		if( $lctheline =~ /hierarchial/ ) {
+			print "MISSPELLING: 'hierarchial' to 'hierarchical' on line $. in $input.\n";
 		}
 		if( !$inequation && $twoline =~ / hermite/ ) {
 			print "MISSPELLING: 'hermite' to 'Hermite', on line $. in $input.\n";
@@ -1014,8 +1020,8 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ /made out of/ ) {
 			print "shortening tip: replace 'made out of' with 'made from' on line $. in $input.\n";
 		}
-		# optionally, add $infigure && 
-		if( !$twook && $lctwoline =~ /as can be seen/ ) {
+		# optionally, remove $infigure && 
+		if( !$twook && $infigure && $lctwoline =~ /as can be seen/ ) {
 			print "shortening tip: remove 'as can be seen', since we are looking at a figure, on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $lctwoline =~ /due to the fact that/ && !$inquote ) {
@@ -1120,7 +1126,8 @@ sub READCODEFILE
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," cheap ",$lcprev_line,"cheap") ) {
 				print "Please use 'less costly' instead of 'cheap' as 'cheap' implies poor quality, on line $. in $input.\n";
 			}
-			if( !$ok && $lctheline =~ /and\/or/ && !$inquote ) {
+			# see http://www.slaw.ca/2011/07/27/grammar-legal-writing/ for various style guides opinions (all against)
+			if( !$ok && !$isref && $lctheline =~ /and\/or/ && !$inquote ) {
 				print "For formal writing, please do not use 'and/or' on line $. in $input.\n";
 			}
 			if( !$twook && $lctwoline =~ / a lot of / && !$inquote ) {
@@ -1632,6 +1639,13 @@ sub READCODEFILE
 			if( !$ok && !$isref && !($theline =~ /GeForce/) && $lctheline =~ /geforce/ ) {
 				print "change 'Geforce' to 'GeForce' on line $. in $input.\n";
 			}
+			# https://www.nvidia.com/en-us/geforce/graphics-cards/rtx-2080-ti/
+			if( !$ok && !$isref && $theline =~ /080Ti/ ) {
+				print "change '*080Ti' to '*080 Ti' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /gtx 2080/ ) {
+				print "change 'GTX' to 'RTX' on line $. in $input.\n";
+			}
 			if ( !$ok && $theline =~ /Game Developer Conference/ ) {
 				print "change 'Game Developer Conference' to 'Game Developers Conference' on line $. in $input.\n";
 			}
@@ -1934,7 +1948,7 @@ sub READCODEFILE
 			$inequation = 0;
 			$intable = 0;
 		}
-		
+
 		$twook = $ok;
 
 		} else {
@@ -1995,14 +2009,17 @@ sub CONNECTOR_WORD
 		$testword eq "by" ||
 		$testword eq "on" ||
 		$testword eq "in" ||
+		$testword eq "is" ||
 		$testword eq "as" ||
 		$testword eq "about" ||
+		$testword eq "over" ||
 		$testword eq "an" ||
 		$testword eq "to" ||
 		$testword eq "for" ||
 		$testword eq "of" ||
 		$testword eq "with" ||
 		$testword eq "via" ||
+		$testword eq "and/or" ||
 		$testword eq "the" ) {
 		return 1;
 	}
@@ -2015,14 +2032,18 @@ sub CONNECTOR_WORD
 		$testword eq "A" ||
 		$testword eq "By" ||
 		$testword eq "On" ||
+		$testword eq "In" ||
+		$testword eq "Is" ||
 		$testword eq "As" ||
 		$testword eq "About" ||
+		$testword eq "Over" ||
 		$testword eq "An" ||
 		$testword eq "To" ||
 		$testword eq "For" ||
 		$testword eq "Of" ||
 		$testword eq "With" ||
 		$testword eq "Via" ||
+		$testword eq "And/Or" ||
 		$testword eq "The" )) {
 		return 2;
 	}
