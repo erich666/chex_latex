@@ -889,7 +889,7 @@ sub READCODEFILE
 		if( !$twook && $lctwoline =~ / et alia/ ) {
 			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
 		}
-		if( !$twook && $twoline =~ /et. al/ ) {
+		if( !$twook && $twoline =~ /et\. al/ ) {
 			print "Change 'et. al.' to 'et al.' (no first period), on line $. in $input.\n";
 		}
 		if ( !$twook && $twoline =~ /et al.~\\cite\{\w+\}\s+[A-Z]/ ) { # \{\w+\} [A-Z]
