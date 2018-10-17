@@ -659,7 +659,7 @@ sub READCODEFILE
 
 		# digits with space, some european style, use commas instead
 		if( !$ok && !$infigure && $theline =~ /\d \d\d\d/ ) {
-			print "POSSIBLY SERIOUS: digits with space '$&' might be wrong\n    Use commas, e.g. '300 000' should be '300,000' on line $. in $input.\n";
+			print "POSSIBLY SERIOUS: digits with space '$&' might be wrong\n    Use commas, e.g., '300 000' should be '300,000' on line $. in $input.\n";
 		}
 		if ( !$twook && $twoline =~ /\textregistered / ) {
 			print "Spacing: you probably want to change `\textregistered ' to '\textregistered\ ' so that there is space after it, on line $. in $input.\n";
@@ -729,11 +729,11 @@ sub READCODEFILE
 				print "In the U.S., change 'parametrization' to 'parameterization' on line $. in $input.\n";
 			}
 			# see https://www.dailywritingtips.com/comma-after-i-e-and-e-g/ for example
-			if( !$twook && $twoline =~ /i\.e\. / ) {
+			if( !$twook && ($twoline =~ /i\.e\. / || $twoline =~ /i\.e\.~/) ) {
 				print "SERIOUS: in the U.S. 'i.e. ' should have a comma after it, not a space, on line $. in $input.\n";
 				$period_problem = 1;
 			}
-			if( !$twook && $twoline =~ /e\.g\. / ) {
+			if( !$twook && ($twoline =~ /e\.g\. / || $twoline =~ /e\.g\.~/) ) {
 				print "SERIOUS: in the U.S. 'e.g. ' should have a comma after it, not a space, on line $. in $input.\n";
 				$period_problem = 1;
 			}
@@ -755,7 +755,7 @@ sub READCODEFILE
 		if( !$twook && $twoline =~ / etc/ && !($' =~ /^\./) ) {
 			print "SERIOUS: 'etc' isn't followed by a '.' on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && $twoline =~ /\. \d/ ) {
+		if( !$twook && !$isref && !$inequation && $twoline =~ /\. \d/ ) {
 			print "A sentence should not start with a numeral (unless it's a year), on line $. in $input.\n";
 		}
 		# we like to avoid ending a sentence with a preposition.
@@ -837,7 +837,7 @@ sub READCODEFILE
 			print "POSSIBLY SERIOUS: '.) ' needs a \\ after it to avoid extra space, on line $. in $input.\n";
 		}
 		# last bit on this line: if text, then ignore "..."
-		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !$inequation && (!$textonly || !$twoline =~ /\.\.\./)  ) {
+		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !$inequation && (!$textonly || !($twoline =~ /\.\.\./))  ) {
 			print "Doubled periods, on line $. in $input.\n";
 		}
 		if( !$twook && !$infigure && $twoline =~ /,,/ ) {
@@ -845,7 +845,7 @@ sub READCODEFILE
 		}
 		# experimental...
 		# Latex will by default make a "short space" after a capital letter followed by a period.
-		# For example: Franklin D. Roosevelt. For longer sets of capital letters, e.g. GPU, DNA,
+		# For example: Franklin D. Roosevelt. For longer sets of capital letters, e.g., GPU, DNA,
 		# we want to have a "long space," as in: "There are many types of DNA.  We will discuss..."
 		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\./ ) {
 			print "Sentence ending in the capital letters $1 should have a '\\@.' for spacing, on line $. in $input.\n";
@@ -857,12 +857,24 @@ sub READCODEFILE
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] ms/ ) {
 			print "' ms' to '~ms' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
+		if( !$ok && !$isref && !$inequation && $theline =~ /([\.\d]+)ms/ ) {
+			print "Change '$1ms' to '$1~ms' (i.e., add a space), on line $. in $input.\n";
+		}
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] fps/ ) {
 			print "' FPS' to '~FPS' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
+		if( !$ok && !$isref && !$inequation && $theline =~ /(\d+)fps/ ) {
+			print "Change '$1FPS' to '$1~FPS' (i.e., add a space), on line $. in $input.\n";
+		}
+		if( !$ok && $theline =~ /fps/ ) {
+			print "'fps' to 'FPS' on line $. in $input.\n";
+		}
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] Hz/ ) {
 			print "' Hz' to '~Hz' to avoid having the number separated from its units, on line $. in $input.\n";
-		}		
+		}
+		if( !$ok && !$isref && !$inequation && $lctheline =~ /(\d+)hz/ ) {
+			print "Change '$1Hz' to '$1~Hz' (i.e., add a space), on line $. in $input.\n";
+		}
 		# ----------------------------------
 		# Style: comma and period punctuation
 		if( !$twook && $twoline =~ /\w\se\.g\./ ) {
@@ -876,6 +888,9 @@ sub READCODEFILE
 		}
 		if( !$twook && $lctwoline =~ / et alia/ ) {
 			print "Use 'et al.\\' instead of 'et alia', on line $. in $input.\n";
+		}
+		if( !$twook && $twoline =~ /et. al/ ) {
+			print "Change 'et. al.' to 'et al.' (no first period), on line $. in $input.\n";
 		}
 		if ( !$twook && $twoline =~ /et al.~\\cite\{\w+\}\s+[A-Z]/ ) { # \{\w+\} [A-Z]
 			printf "et al. citation looks like it needs a period after the citation, on line $. in $input.\n";
@@ -893,7 +908,7 @@ sub READCODEFILE
 		if( !$twook && !$inequation && $twoline =~ / \. / ) {
 			print "SERIOUS: change ' .' to '.' (space in front of period), on line $. in $input.\n";
 		}
-		if( !$twook && $twoline =~ / \,/ ) {
+		if( !$twook && !$inequation && $twoline =~ / \,/ ) {
 			print "SERIOUS: change ' ,' to ',' (space in front of comma), on line $. in $input.\n";
 		}
 		# If you use a ".", you need to do something like ".~" to avoid having the period treated
@@ -916,7 +931,7 @@ sub READCODEFILE
 			print "Beware, there is a TODO in the text itself at line $. in $input.\n";
 		}
 		if( !$twook && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !$isref && !$inequation && !$period_problem ) {
-			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : "(or the period should have a \\ after it)";
+			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : " (or the period should have a \\ after it)";
 		}
 		if( !$ok && $theline =~ /Javascript/) {
 			print "Please change 'Javascript' to 'JavaScript' on line $. in $input.\n";
@@ -924,7 +939,7 @@ sub READCODEFILE
 		if( $lctheline =~ /frustrum/ ) {
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
 		}
-		# your mileage may vary, depending on how you index, e.g. we do \index{k-d tree@$k$-d tree}
+		# your mileage may vary, depending on how you index, e.g., we do \index{k-d tree@$k$-d tree}
 		if( !$twook && !$textonly && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
 			print "'k-d' to the more proper '\$k\$-d', on line $. in $input.\n";
 		}
@@ -1176,15 +1191,15 @@ sub READCODEFILE
 			if( !$isref && !$twook && $lctwoline =~ / in fact / && !$inquote ) {
 				print "Are you sure you want to use `in fact', on line $. in $input? It's often superfluous, in fact.\n";
 			}
-			# This extra test at the end is not foolproof, e.g. if the line ended "Interestingly" or "interesting,"
+			# This extra test at the end is not foolproof, e.g., if the line ended "Interestingly" or "interesting,"
 			# A better test would be to pass in the phrase, 
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," interesting",$lcprev_line,"interesting") ) {
 				print "tip: reconsider 'interesting' on line $. in $input, probably delete it\n    or change to 'key,' 'noteworthy,' 'notable,' 'different,' or 'worthwhile'.\n    Everything in your work should be interesting.\n    Say why something is of interest, and write so that it is indeed interesting.\n";
 			}
-			if( !$twook && !$isref && $lctwoline =~ /in terms of / ) {
-				print "tip: 'in terms of' is a wordy phrase, on line $. in $input. Use it sparingly.\n    You might consider instead using 'regarding' or 'concerning', or rewrite.\n    For example, 'In terms of memory, algorithm XYZ uses less' could be 'Algorithm XYZ uses less memory.'\n";
-				&SAYOK();
-			}
+			#if( !$twook && !$isref && $lctwoline =~ /in terms of / ) {
+			#	print "tip: 'in terms of' is a wordy phrase, on line $. in $input. Use it sparingly.\n    You might consider instead using 'regarding' or 'concerning', or rewrite.\n    For example, 'In terms of memory, algorithm XYZ uses less' could be 'Algorithm XYZ uses less memory.'\n";
+			#	&SAYOK();
+			#}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," etc. ",$lcprev_line,"etc.") ) {
 				print "hint: try to avoid using etc., as it adds no real information; on line $. in $input.\n";
 				if ( !$textonly ) {
@@ -1289,9 +1304,6 @@ sub READCODEFILE
 			}
 			if( !$twook && !$isref && $lctwoline =~ /one dimensional/ ) {
 				print "'one dimensional' to 'one-dimensional' on line $. in $input.\n";
-			}
-			if( !$ok && $theline =~ /fps/ ) {
-				print "'fps' to 'FPS' on line $. in $input.\n";
 			}
 			if( !$ok && $theline =~ /LoD/ ) {
 				print "'LoD' to 'LOD' on line $. in $input.\n";
@@ -1567,7 +1579,7 @@ sub READCODEFILE
 				print "change '$1' to 'screen space' on line $. in $input.\n";
 				&SAYOK();
 			}
-			if( !$ok && !$isref && ($lctheline =~ / (raytrac)/) ) {
+			if( !$ok && !$isref && !($theline =~ /DXR/) && !($theline =~ /DirectX/) && ($lctheline =~ / (raytrac)/)) {
 				print "change '$1' to 'ray trac*' on line $. in $input.\n";
 				&SAYOK();
 			}
@@ -1580,7 +1592,7 @@ sub READCODEFILE
 				&SAYOK();
 			}
 			if( !$ok && !$isref && ($lctheline =~ / (pathtrac)/ || ($style && $lctheline =~ /(path-trac)/)) ) {
-				print "change '$1' to 'path trac*' on line $. in $input.\n";
+				print "if not used as an adjective, change '$1' to 'path trac*' on line $. in $input.\n";
 				&SAYOK();
 			}
 			if( !$ok && !$isref && $lctheline =~ / (sub-surface)/ ) {
@@ -1617,6 +1629,9 @@ sub READCODEFILE
 			if( !$ok && !$isref && $theline =~ /Renderman/ ) {
 				print "change 'Renderman' to 'RenderMan' on line $. in $input.\n";
 			}
+			if( !$ok && !$isref && !($theline =~ /GeForce/) && $lctheline =~ /geforce/ ) {
+				print "change 'Geforce' to 'GeForce' on line $. in $input.\n";
+			}
 			if ( !$ok && $theline =~ /Game Developer Conference/ ) {
 				print "change 'Game Developer Conference' to 'Game Developers Conference' on line $. in $input.\n";
 			}
@@ -1641,17 +1656,24 @@ sub READCODEFILE
 			if( !$twook && !$inequation && $lctwoline =~ / gbuffer/ ) {
 				print "'gbuffer' to 'g-buffer' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ /ad-hoc/ ) {
+			if( !$ok && $lctheline =~ /ad-hoc/ ) {
 				print "'ad-hoc' to 'ad hoc' on line $. in $input.\n";
 			}
-			if( !$twook && !$inequation && $lctwoline =~ /lowpass/ ) {
+			if( !$ok && !$inequation && $lctheline =~ /lowpass/ ) {
 				print "'lowpass' to 'low-pass' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ /highpass/ ) {
+			if( !$ok && $lctheline =~ /highpass/ ) {
 				print "'highpass' to 'high-pass' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ /nonboundary/ ) {
+			if( !$ok && $lctheline =~ /nonboundary/ ) {
 				print "'nonboundary' to 'non-boundary' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /multi bounce/ ) {
+				print "'multi bounce' to 'multi-bounce' on line $. in $input.\n";
+			}
+			# searching the ACM Digital Library, 47 entries use "tone mapping" as two words, none as a single word
+			if( !$twook && $lctwoline =~ /tonemap/ ) {
+				print "'tonemap' to 'tone map' if a noun, 'tone-map' if an adjective, on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && !($twoline =~ /\\subsection/) && $twoline =~ /n-Patch/ ) {
 				print "'N-Patch' to 'N-patch' on line $. in $input.\n";
@@ -1980,6 +2002,7 @@ sub CONNECTOR_WORD
 		$testword eq "for" ||
 		$testword eq "of" ||
 		$testword eq "with" ||
+		$testword eq "via" ||
 		$testword eq "the" ) {
 		return 1;
 	}
@@ -1999,6 +2022,7 @@ sub CONNECTOR_WORD
 		$testword eq "For" ||
 		$testword eq "Of" ||
 		$testword eq "With" ||
+		$testword eq "Via" ||
 		$testword eq "The" )) {
 		return 2;
 	}
@@ -2054,9 +2078,9 @@ sub CAPITALIZED
 	my $testword = shift;
 	my $fc = substr( $testword, 0, 1 );
 	if ( $fc =~ /\\/ ) {
-		return -1;	# ignore word, e.g. \small
+		return -1;	# ignore word, e.g., \small
 	}
-	if ( $fc =~ /[A-Z]/ ) {
+	if ( $fc =~ /[A-Z0-9]/ ) {
 		return 1;
 	}
 	return 0;
