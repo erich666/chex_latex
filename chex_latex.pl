@@ -598,7 +598,10 @@ sub READCODEFILE
 		}
 		$str = $theline;
 		# record the refs for later comparison
-		while ( $str =~ /\\ref\{([\w_]+)}/ ) {
+		# we add the !$ok here in order to be able to mask off \refs for code listings:
+		# e.g. Listing~\ref{lst_kernelcode}
+		#which we don't detect currently.
+		while ( !$ok && $str =~ /\\ref\{([\w_]+)}/ ) {
 			$str = $';
 			$ref{$1} = $nextfile;
 		}
@@ -772,7 +775,7 @@ sub READCODEFILE
 		#if( !$twook && $lctwoline =~ /\w\\footnote/ ) {
 		#	print "SERIOUS: 'w\\footnote' to ' \\footnote' on line $. in $input.\n";
 		#}
-		if( !$ok && !$textonly && $dashes && $theline =~ / -- / ) {
+		if( !$ok && !$textonly && $dashes && ($theline =~ / -- / || $theline =~ / --~/) ) {
 			print "POTENTIALLY SERIOUS: change ' -- ' to the full dash '---' on line $. in $input.\n";
 		}
 		if( $dashes && !$intable && !$twook && !$textonly ) {
@@ -1213,10 +1216,12 @@ sub READCODEFILE
 				    print "    If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\\\n";
 				}
 			}
-			if( !$twook && !$isref && $lctwoline =~ /data is/ ) {
-				print "possible tip: 'data' should be plural, not singular, on line $. in $input. Reword?\n    Sometimes it is fine, e.g., 'the analysis of the data is taking a long time.' since analysis is singular.\n";
-				&SAYOK();
-			}
+			# nah, don't care about "data is" any more, the language has changed:
+			# https://www.theguardian.com/news/datablog/2010/jul/16/data-plural-singular
+			#if( !$twook && !$isref && $lctwoline =~ /data is/ ) {
+			#	print "possible tip: 'data' should be plural, not singular, on line $. in $input. Reword?\n    Sometimes it is fine, e.g., 'the analysis of the data is taking a long time.' since analysis is singular.\n";
+			#	&SAYOK();
+			#}
 			# see http://www.quickanddirtytips.com/education/grammar/use-versus-utilize?page=1
 			if( !$ok && !$inquote && !$isref && $lctheline =~ /utiliz/ ) {
 				print "Probably needlessly complex: change 'utiliz-' to 'use' or similar, on line $. in $input.\n";
@@ -1235,7 +1240,7 @@ sub READCODEFILE
 			if( !$twook && !$inquote && !$isref && $lctwoline =~ /has the functionability/ ) {
 				print "Needlessly complex: change 'has the functionability' to 'can function' on line $. in $input.\n";
 			}
-			if( !$ok && !$inquote && !$isref && $lctheline =~ /facilitat/ ) {
+			if( !$ok && !$inquote && !$isref && !$inequation && $lctheline =~ /facilitat/ ) {
 				print "Possibly needlessly complex: change 'facilitat-' to 'cause' or 'ease' or 'simplify' or 'help along' on line $. in $input.\n";
 			}
 			if( !$ok && !$inquote && !$isref && $lctheline =~ /finaliz/ ) {
@@ -1574,7 +1579,7 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /mip-map/ ) {
 				print "'mip-map' to 'mipmap' (no hyphen), on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && ($lctheline =~ / (cubemap)/ || ($style && $lctheline =~ /(cube-map)/)) ) {
+			if( !$ok && !$isref && !$inequation && ($lctheline =~ / (cubemap)/ || ($style && $lctheline =~ /(cube-map)/)) ) {
 				print "change '$1' to 'cube map' on line $. in $input.\n";
 				&SAYOK();
 			}
@@ -1582,10 +1587,15 @@ sub READCODEFILE
 				print "change '$1' to 'light map' on line $. in $input.\n";
 				&SAYOK();
 			}
-			if( !$ok && !$isref && ($lctheline =~ / (screenspace)/ || ($style && $lctheline =~ /(screen-space)/)) ) {
+			if( !$ok && !$isref && $lctheline =~ / (screenspace)/ ) {
 				print "change '$1' to 'screen space' on line $. in $input.\n";
 				&SAYOK();
 			}
+			# commented out, as it gets used as an adjective a lot
+			#if( !$ok && !$isref && $style && $lctheline =~ /(screen-space)/ ) {
+			#	print "if not used as an adjective, change '$1' to 'screen space' on line $. in $input.\n";
+			#	&SAYOK();
+			#}
 			if( !$ok && !$isref && !($theline =~ /DXR/) && !($theline =~ /DirectX/) && ($lctheline =~ / (raytrac)/)) {
 				print "change '$1' to 'ray trac*' on line $. in $input.\n";
 				&SAYOK();
