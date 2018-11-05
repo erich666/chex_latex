@@ -699,10 +699,6 @@ sub READCODEFILE
 				print "SERIOUS: U.S. punctuation rules state that '', should be ,'' on line $. in $input.\n";
 			}
 
-			# This doesn't actually work, though I wish it would - I want to detect a "true" right-leaning apostrophe
-			#if( !$ok && $theline =~ /\�/ ) {
-			#	print "SERIOUS: the special right-leaning apostrophe '�' should be a normal apostrophe on line $. in $input.\n";
-			#}
 			# https://www.grammarly.com/blog/modeling-or-modelling/
 			if( !$ok && $lctheline =~ /modelling/ && !$isref ) {
 				print "In the U.S., we prefer 'modeling' to 'modelling' on line $. in $input.\n";
@@ -733,13 +729,25 @@ sub READCODEFILE
 			}
 			# see https://www.dailywritingtips.com/comma-after-i-e-and-e-g/ for example
 			if( !$twook && ($twoline =~ /i\.e\. / || $twoline =~ /i\.e\.~/) ) {
-				print "SERIOUS: in the U.S. 'i.e. ' should have a comma after it, not a space, on line $. in $input.\n";
+				print "SERIOUS: in the U.S. 'i.e.' should have a comma after it, not a space, on line $. in $input.\n";
+				$period_problem = 1;
+			}
+			if( !$ok && $theline =~ /i\.e\.:/ ) {
+				print "SERIOUS: in the U.S. 'i.e.' should have a comma after it, not a colon, on line $. in $input.\n";
 				$period_problem = 1;
 			}
 			if( !$twook && ($twoline =~ /e\.g\. / || $twoline =~ /e\.g\.~/) ) {
-				print "SERIOUS: in the U.S. 'e.g. ' should have a comma after it, not a space, on line $. in $input.\n";
+				print "SERIOUS: in the U.S. 'e.g.' should have a comma after it, not a space, on line $. in $input.\n";
 				$period_problem = 1;
 			}
+			if( !$ok && $theline =~ /e\.g\.:/ ) {
+				print "SERIOUS: in the U.S. 'e.g.' should have a comma after it, not a colon, on line $. in $input.\n";
+				$period_problem = 1;
+			}
+			#if( !$twook && $twoline =~ /for example / ) {
+			#	print "In the U.S. 'for example' typically should have a comma after it, not a space, on line $. in $input.\n";
+			#	$period_problem = 1;
+			#}
 			if( !$ok && $lctheline =~ /parameterisation/ ) {
 				print "The British spelling 'parameterisation' should change to 'parameterization' on line $. in $input.\n";
 			}
@@ -820,11 +828,20 @@ sub READCODEFILE
 		#}
 
 		# Latex-specific
-		if( !$ok && !$textonly && $theline =~ /�/ ) {
-			print "SERIOUS: the punctuation � should change to a ' (vertical) apostrophe on line $. in $input.\n";
+		if( !$ok && !$textonly && $theline =~ /’/ ) {
+			print "SERIOUS: change non-standard apostrophe to a proper LaTeX ' (vertical) apostrophe on line $. in $input.\n";
+		}
+		elsif( !$ok && !$textonly && $theline =~ /‘/ ) {
+			print "SERIOUS: change non-standard single-quote mark to a proper LaTeX ` (vertical) apostrophe on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && !$inequation && $theline =~ /"/ && !($theline =~ /\\"/) ) {
 			print "SERIOUS: the double apostrophe \" should change to a \'\' on line $. in $input.\n";
+		}
+		if( !$ok && !$textonly && !$inequation && $theline =~ /“/ && !($theline =~ /\\"/) ) {
+			print "SERIOUS: the double apostrophe should change to a \'\' on line $. in $input.\n";
+		}
+		elsif( !$ok && !$textonly && !$inequation && $theline =~ /”/ && !($theline =~ /\\"/) ) {
+			print "SERIOUS: the double apostrophe should change to a '' on line $. in $input.\n";
 		}
 
 		if( !$twook && !$textonly && $twoline && $twoline =~ / Corp\. / ) {
