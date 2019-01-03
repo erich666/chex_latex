@@ -135,7 +135,7 @@ Say that file is now in C:\temp. I then run Aspell on this file by going to the 
 
     bin\aspell list -t < C:\temp\alltext.txt > C:\temp\alltypos.txt
 
-This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, code bits will get listed again and again, and other spurious problems flagged. I find it much faster to look at a sorted list of typos, showing each word just once.
+This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, code bits will get listed again and again, and other spurious problems flagged. I find it much faster to look at a sorted list of typos, showing each word just once. This can cut down the number of words you need to examine by [a factor of five](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/).
 
 To make such a list, use the script aspell_sorter.pl:
 
@@ -143,6 +143,8 @@ To make such a list, use the script aspell_sorter.pl:
 	
 which simply sorts the words in the alltypos.txt file, removing duplicates and giving a count. The file produced first lists all capitalized words (it is easy to skim past authors that way), then all lowercase. Sometimes the Aspell dictionaries leave words out, flagging false positives. You can avoid many of these by taking this output spell_check.txt file and pasting its contents into MS Word, for example, which will give a red underline only to words it thinks are misspelled.
 
-That's it - nothing fancy, but it has saved me a considerable amount of time. I can also save the results file, change .tex files, and then make a new spell_check.txt and do a "diff" to see if I've introduced any new errors.
+There are lots of false positives, such as authors names, so I'll usually start by looking at the end of the spell_check.txt file, where the lowercase words hang out. Also, you can modify the script itself by setting $spellcount = 1 (or any other value, for the maximum number of repeats). If set, only words "misspelled" one time will be listed. You risk missing some word that is consistently misspelled, but the list is often considerably shorter (I've found it [2-3 times shorter](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/)), as false positives found more than once are culled out.
 
-Aspell also works on plaintext files, so if you can extract your text into a simple text file you can use this process to perform batch spell checking on anything.
+That's it - nothing fancy, but it has saved me a considerable amount of time and turned up some typos I would probably not have found otherwise. I can also save the results file, so if I later change .tex files, I can make a new spell_check.txt and do a "diff" to see if I've introduced any new errors.
+
+Aspell also works on plaintext files, so if you can extract your text into a simple text file you can use this process to perform batch spell checking on anything. For other free tools, see [my blog post](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/).
