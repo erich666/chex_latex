@@ -1423,11 +1423,33 @@ sub READCODEFILE
 			# (though it's not a Mark Twain quote, see https://quoteinvestigator.com/2012/08/29/substitute-damn/ )
 			# Try to find a substitute, e.g., "very small" could become "minute" or "tiny"
 			# substitutes site here: https://www.grammarcheck.net/very/
+			# Most of the others are from Chapter 1 of "Dreyer's English".
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," very",$lcprev_line,"very") )  {
-				print "tip: remove or replace 'very' on line $. in $input.\n";
+				print "tip: consider removing or replacing 'very' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," actually",$lcprev_line,"actually") )  {
+				print "tip: remove the never-needed word 'actually' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," rather",$lcprev_line,"rather") )  {
+				print "tip: consider removing or replacing 'rather' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," quite",$lcprev_line,"quite") )  {
+				print "tip: consider removing or replacing 'quite' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," in fact",$lcprev_line,"in fact") )  {
+				print "tip: consider removing 'in fact' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," surely",$lcprev_line,"surely") )  {
+				print "tip: consider removing 'surely' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," of course",$lcprev_line,"of course") )  {
+				print "tip: if it's obvious, why say it? Remove 'of course' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," pretty",$lcprev_line,"pretty") )  {
+				print "tip: unless you mean something is pretty, replace or remove the modifier 'pretty' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && !$inquote && $lctheline =~ /really/ ) {
-				print "shortening tip: remove 'really' on line $. in $input.\n";
+				print "tip: consider removing or replacing 'really' on line $. in $input.\n";
 			}
 			if( !$isref && !$twook && $lctwoline =~ / in fact / && !$inquote ) {
 				print "Are you sure you want to use `in fact', on line $. in $input? It's often superfluous, in fact.\n";
@@ -1673,7 +1695,7 @@ sub READCODEFILE
 				print "'Direct X' to 'DirectX' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $theline =~ /™/ ) {
-				print "Put \trademark instead of the TM symbol directly, if actually needed at all, on line $. in $input.\n";
+				print "Put \trademark instead of the TM symbol directly, if needed at all, on line $. in $input.\n";
 			}
 			# "2-degree color-matching" is how that phrase is always presented
 			if( !$ok && !$isref && $theline =~ /\d-degree/ && !($theline =~ /color-matching/) ) {
