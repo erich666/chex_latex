@@ -1732,6 +1732,15 @@ sub READCODEFILE
 			if( !$ok && $theline =~ /B\.Sc\./) {
 				print "'B.Sc.' to 'BSc' on line $. in $input.\n";
 			}
+			if( !$twook && $lctwoline =~ /masters thesis/ ) {
+				print "'masters' to 'master's' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /masters degree/ ) {
+				print "'masters' to 'master's' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /bachelors degree/ ) {
+				print "'bachelors' to 'bachelor's' on line $. in $input.\n";
+			}
 			if( !$twook && $twoline =~ / id / && !($twoline =~ / id Software/)) {
 				print "Please change 'id' to 'ID' on line $. in $input.\n";
 			}
