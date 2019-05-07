@@ -1187,6 +1187,9 @@ sub READCODEFILE
 		if( $lctheline =~ /hierarchial/ ) {
 			print "MISSPELLING: 'hierarchial' to 'hierarchical' on line $. in $input.\n";
 		}
+		if( $lctheline =~ /descendent/ ) {
+			print "Likely misspelled, unless used as an adjective: 'descendent' to 'descendant' on line $. in $input.\n";
+		}
 		if( !$inequation && $twoline =~ / hermite/ ) {
 			print "MISSPELLING: 'hermite' to 'Hermite', on line $. in $input.\n";
 		}
@@ -1338,6 +1341,208 @@ sub READCODEFILE
 		}
 		if( &WORDTEST($lctwoline,"defacto ",$lcprev_line,"defacto") ) {
 			print "SERIOUS: change 'defacto' to 'de facto', on line $. in $input.\n";
+		}
+		# from Dreyer's English, a great book, from "The Trimmables", phrases that can be shortened without loss
+		if( !$twook && !$isref && $lctwoline =~ /absolutely certain/ ) {
+			print "'absolutely certain' can shorten to 'certain' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /absolutely certain/ ) {
+			print "'absolute certainty' can shorten to 'certainty' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /absolutely essential/ ) {
+			print "'absolutely essential' can shorten to 'essential' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /all-time record/ ) {
+			print "'all-time record' can shorten to 'record' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /advance planning/ ) {
+			print "'advance planning' can shorten to 'planning' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /advance warning/ ) {
+			print "'advance warning' can shorten to 'warning' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /blend together/ ) {
+			print "'blend together' can shorten to 'blend' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /close proximity/ ) {
+			print "'close proximity' can shorten to 'proximity' (yes, 'close proximity' is a common phrase, but you might want to use a less redundant way to reword this sentence) on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /blend together/ ) {
+			print "'blend together' can shorten to 'blend' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /general consensus/ ) {
+			print "'general consensus' can shorten to 'consensus' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /continue on / ) {
+			print "'continue on' can shorten to 'continue' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /disappear from sight/ ) {
+			print "'disappear from sight' can shorten to 'disappear' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /earlier in time/ ) {
+			print "'earlier in time' can shorten to 'earlier' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /end product/ ) {
+			print "'end product' can shorten to 'product' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /end result/ ) {
+			print "'end result' can shorten to 'result' (if you are comparing to an intermediate result, how about 'ultimate result'?) on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /equally as / ) {
+			print "'equally as' can shorten to 'equally' or 'as' - don't use both, on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /exact same/ ) {
+			print "'exact same' can shorten to 'same' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /fall down / ) {
+			print "'fall down' can shorten to 'fall' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /fetch back / ) {
+			print "'fetch back' can shorten to 'fetch' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /few in number/ ) {
+			print "'few in number' can shorten to 'few' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /final outcome/ ) {
+			print "'final outcome' can shorten to 'outcome' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /follow after/ ) {
+			print "'follow after' can shorten to 'follow' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /from whence/ ) {
+			print "'from whence' can shorten to 'whence' (since 'whence' means 'from where') on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /full gamut/ ) {
+			print "'full gamut' can shorten to 'gamut' ('gamut' is a full range of something) on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /full extent/ ) {
+			print "'full extent' can shorten to 'extent' ('extent' is its own range) on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /broad spectrum/ ) {
+			print "'broad spectrum' can shorten to 'spectrum' ('spectrum' means a full range) on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /complete range/ ) {
+			print "'complete range' can shorten to 'range' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /future plans/ ) {
+			print "'future plans' can shorten to 'plans' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /gather together/ ) {
+			print "'gather together' can shorten to 'gather' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /briefly glance/ ) {
+			print "'briefly glance' can shorten to 'glance' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /glance briefly/ ) {
+			print "'glance briefly' can shorten to 'glance' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /hollow tube/ ) {
+			print "'hollow tube' can shorten to 'tube' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /on an hourly basis/ ) {
+			print "'on an hourly basis' can shorten to 'hourly' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /on a daily basis/ ) {
+			print "'on a daily basis' can shorten to 'daily' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /on a monthly basis/ ) {
+			print "'on a monthly basis' can shorten to 'monthly' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /on a yearly basis/ ) {
+			print "'on a yearly basis' can shorten to 'yearly' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /join together/ ) {
+			print "'join together' can shorten to 'join' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /last of all/ ) {
+			print "'last of all' might shorten to 'last' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /lift up/ ) {
+			print "'lift up' can shorten to 'lift' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /merge together/ ) {
+			print "'merge together' can shorten to 'merge' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /might possibly/ ) {
+			print "'might possibly' can shorten to 'might' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /moment in time/ ) {
+			print "'moment in time' can shorten to 'moment' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /more superior/ ) {
+			print "'more superior' can shorten to 'superior' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /mutual cooperation/ ) {
+			print "'mutual cooperation' can shorten to 'cooperation' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /orbit around/ ) {
+			print "'orbit around' can shorten to 'orbit' on line $. in $input.\n";
+		}
+		if( !$ok && !$isref && $lctheline =~ /overexaggerate/ && !$inquote ) {
+			print "Do not say 'overexaggerate' - say 'exaggerate' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /past history/ ) {
+			print "'past history' can shorten to 'history' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /personal opinion/ ) {
+			print "'personal opinion' can shorten to 'opinion' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /plan ahead/ ) {
+			print "'plan ahead' can shorten to 'plan' on line $. in $input.\n";
+		}
+		if( !$ok && !$isref && $lctheline =~ /preplan/ && !$inquote ) {
+			print "Do not say 'preplan' - say 'plan' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /raise up / ) {
+			print "'raise up' can shorten to 'raise' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ / reason why/ ) {
+			print "'reason why' can shorten to 'reason', if you like, on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /regular routine/ ) {
+			print "'regular routine' can shorten to 'routine' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /recall back/ ) {
+			print "'recall back' can shorten to 'recall' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /return back/ ) {
+			print "'return back' can shorten to 'return' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /revert back/ ) {
+			print "'revert back' can shorten to 'revert' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ / rise up /  && !$inquote ) {
+			print "'rise up' can shorten to 'rise' (Hamilton notwithstanding) on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /short in length/  && !$inquote ) {
+			print "'short in length' can shorten to 'short' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /shuttle back and forth/  && !$inquote ) {
+			print "'shuttle back and forth' can shorten to 'shuttle' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /sink down /  && !$inquote ) {
+			print "'sink down' can shorten to 'sink' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /skirt around/  && !$inquote ) {
+			print "'skirt around' can shorten to 'skirt' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /sudden impulse/  && !$inquote ) {
+			print "'sudden impulse' can shorten to 'impulse' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /surrounded on all sides/  && !$inquote ) {
+			print "'surrounded on all sides' can shorten to 'surrounded' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /undergraduate student/  && !$inquote ) {
+			print "'undergraduate student' can shorten to 'undergraduate' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /unexpected surprise/  && !$inquote ) {
+			print "'unexpected surprise' can shorten to 'surprise' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /unsolved myster/  && !$inquote ) {
+			print "'unsolved mystery' can shorten to 'mystery' on line $. in $input.\n";
+		}
+		if( !$twook && !$isref && $lctwoline =~ /usual custom/  && !$inquote ) {
+			print "'usual custom' can shorten to 'custom' on line $. in $input.\n";
 		}
 		if ( $formal ) {
 			# -----------------------------
