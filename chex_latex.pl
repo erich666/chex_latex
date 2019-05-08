@@ -938,7 +938,7 @@ sub READCODEFILE
 		if( !$twook && !$isref && !$inequation && $twoline =~ /\. \d/ ) {
 			print "A sentence should not start with a numeral (unless it's a year), on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$inequation && $lctheline =~ /(\d+)x/ && !($lctheline =~ / 0x/) && !($lctheline =~ /\$/) ) {
+		if( !$ok && !$isref && !$textonly && !$inequation && $lctheline =~ /(\d+)x/ && !($lctheline =~ / 0x/) && !($lctheline =~ /\$/) ) {
 			print "Do not use $1x, use \$$1 \\times\$, on line $. in $input.\n";
 		}
 		# we like to avoid ending a sentence with a preposition.
@@ -1097,10 +1097,10 @@ sub READCODEFILE
 		if( !$ok && !$isref && !$inequation && $lctheline =~ /(\d+)hz/ ) {
 			print "Change '$1Hz' to '$1~Hz' (i.e., add a space), on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$inequation && $theline =~ /(\d+)K/ ) {
+		if( !$ok && !$isref && !$inequation && $theline =~ /(\d+)K / ) {
 			print "Change '$1K' to '$1k' (i.e., lowercase 'k'), on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && !$inequation && $lctwoline =~ /(\d+) k/ ) {
+		if( !$twook && !$isref && !$inequation && $lctwoline =~ /(\d+) k / ) {
 			print "Change '$1 k' to '$1k' (i.e., lowercase 'k'), on line $. in $input.\n";
 		}
 		# ----------------------------------
@@ -1635,7 +1635,7 @@ sub READCODEFILE
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," actually",$lcprev_line,"actually") )  {
 				print "tip: remove the never-needed word 'actually' on line $. in $input.\n";
 			}
-			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," rather",$lcprev_line,"rather") )  {
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," rather",$lcprev_line,"rather") && !($lctwoline =~ /rather than/) )  {
 				print "tip: consider removing or replacing 'rather' on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," quite",$lcprev_line,"quite") )  {
@@ -1736,9 +1736,10 @@ sub READCODEFILE
 
 			# -----------------------------------------------------
 			# Words and phrases - definitely personal preferences, but mostly based on common practice
-			if( !$ok && !$isref && $theline =~ /internet/ ) {
-				print "'internet' should be capitalized, to 'Internet', on line $. in $input.\n";
-			}
+			# looks like the Internet got lowercased: https://blog.oxforddictionaries.com/2016/04/05/should-you-capitalize-internet/
+			#if( !$ok && !$isref && $theline =~ /internet/ ) {
+			#	print "'internet' should be capitalized, to 'Internet', on line $. in $input.\n";
+			#}
 			if( !$twook && !$isref && $twoline =~ /monte carlo/ ) {
 				print "'monte carlo' should be capitalized, to 'Monte Carlo', on line $. in $input.\n";
 			}
@@ -2254,7 +2255,7 @@ sub READCODEFILE
 				print "Change 'spatio-temporal' to 'spatiotemporal', on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /close-up/ ) {
-				print "Change 'close-up' to 'closeup', on line $. in $input.\n";
+				print "Could change 'close-up' to the more modern 'closeup', on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ /multi channel/ ) {
 				print "Change 'multi channel' to 'multichannel', on line $. in $input.\n";
