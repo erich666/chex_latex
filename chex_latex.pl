@@ -2288,7 +2288,10 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /reexecute/ ) {
 				print "Change 'reexecute' to 're-execute', on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $theline =~ /XBox/ || $theline =~ /XBOX/ ) {
+			if( !$ok && !$isref && ($theline =~ /XBox/ || $theline =~ /XBOX/) ) {
+				print "Change 'XBox' to 'Xbox' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /x-box/ ) {
 				print "Change 'XBox' to 'Xbox' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $theline =~ /Renderman/ ) {
@@ -2327,8 +2330,8 @@ sub READCODEFILE
 			if( !$ok && !$inequation && $theline =~ /Direct3D/ && !$isref ) {
 				print "Just our own preference: 'Direct3D' to 'DirectX' on line $. in $input.\n";
 			}
-			if( !$ok && !($theline =~ /PLAYSTATION/) && ($theline =~ /Playstation/ || $theline =~ /PlayStation/) && !$isref ) {
-				print "'Playstation' to 'PLAYSTATION' on line $. in $input.\n";
+			if( !$ok && $theline =~ /Playstation/ && !$isref ) {
+				print "'Playstation' to 'PlayStation' on line $. in $input.\n";
 			}
 			if( !$ok && $theline =~ /nvidia/  && !($theline =~ "bibitem" || $theline =~ "cite") ) {
 				print "'nvidia' to 'NVIDIA' on line $. in $input.\n";
