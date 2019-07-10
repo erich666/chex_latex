@@ -1876,13 +1876,13 @@ sub READCODEFILE
 			#	print "'similarly to' probably wants to be 'similar to' on line $; better yet, reword, as #it's generally awkward. in $input.\n";
 			#}
 			# things like "1:1" should be "$1:1$"
-			if( !$twook && !$isref && !$inequation && $lctwoline =~ /:1 / ) {
-				print "'X:1' should be of form '\$X:1\$', on line $. in $input.\n";
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ /:1 / && $textonly != 1) {
+				print "'X:1' should be of the form '\$X:1\$', on line $. in $input.\n";
 			}
-			if( !$twook && !$isref && !$inequation && $lctwoline =~ / : 1/ ) {
-				print "'X : 1' should be of form '\$X:1\$' (no spaces), on line $. in $input.\n";
+			if( !$twook && !$isref && !$inequation && $lctwoline =~ / : 1/ && $textonly != 1 ) {
+				print "'X : 1' should be of the form '\$X:1\$' (no spaces), on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $twoline =~ / PBRT/ ) {
+			if( !$ok && !$isref && $twoline =~ / PBRT/ && $textonly != 1 ) {
 				print "'PBRT' to '{\\em pbrt}', or cite the book or author, on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $theline =~ /DX9/ ) {
@@ -1900,7 +1900,7 @@ sub READCODEFILE
 			if( !$twook && !$isref && $twoline =~ /Direct X/ ) {
 				print "'Direct X' to 'DirectX' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $theline =~ /™/ ) {
+			if( !$ok && !$isref && $theline =~ /™/ && $textonly != 1 ) {
 				print "Put \trademark instead of the TM symbol directly, if needed at all, on line $. in $input.\n";
 			}
 			# "2-degree color-matching" is how that phrase is always presented
@@ -2628,6 +2628,7 @@ sub READCODEFILE
 		if( !$twook && !$isref && $lctwoline =~ / all of / && 
 			!($lctwoline =~ / all of which/) &&
 			!($lctwoline =~ / all of this/) &&
+			!($lctwoline =~ / all of these/) &&
 			!($lctwoline =~ / all of it/)
 			) {
 			print "shortening tip: replace 'all of' with 'all' on line $. in $input.\n";
