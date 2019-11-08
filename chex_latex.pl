@@ -890,6 +890,9 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /haloes/ ) {
 				print "In the U.S., change 'haloes' to 'halos' on line $. in $input.\n";
 			}
+			if( !$ok && !$isref && $lctheline =~ /focuss/ ) {
+				print "In the U.S., change 'focuss*' to 'focus*', don't double the s's, on line $. in $input.\n";
+			}
 			if( !$ok && !$isref && $lctheline =~ /parametriz/ ) {
 				print "In the U.S., change 'parametrization' to 'parameterization' on line $. in $input.\n";
 			}
@@ -1160,7 +1163,7 @@ sub READCODEFILE
 			print "Beware, there is a TODO in the text itself at line $. in $input.\n";
 			print "    the line says: $theline\n";
 		}
-		if( !$twook && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !$isref && !$inequation && !$period_problem ) {
+		if( !$twook && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !($twoline =~ /\.\.\./) && !$isref && !$inequation && !$period_problem ) {
 			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : " (or the period should have a \\ after it)";
 		}
 		if( !$ok && $theline =~ /Javascript/) {
@@ -1651,7 +1654,7 @@ sub READCODEFILE
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," of course",$lcprev_line,"of course") )  {
 				print "tip: if it's obvious, why say it? Remove 'of course' on line $. in $input.\n";
 			}
-			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," pretty",$lcprev_line,"pretty") )  {
+			if( !$twook && !$isref && !$inquote && $formal && &WORDTEST($lctwoline," pretty",$lcprev_line,"pretty") )  {
 				print "tip: unless you mean something is pretty, replace or remove the modifier 'pretty' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && !$inquote && $lctheline =~ /really/ ) {
@@ -2438,10 +2441,10 @@ sub READCODEFILE
 			if( !$twook && $lctwoline =~ /fill-rate/ ) {
 				print "'fill-rate' to 'fill rate' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $lctheline =~ /bigger/ ) {
+			if( !$ok && !$isref && $formal && $lctheline =~ /bigger/ ) {
 				print "'bigger' to 'larger' on line $. in $input.\n";
 			}
-			if( !$ok && !$isref && $lctheline =~ /biggest/ ) {
+			if( !$ok && !$isref && $formal && $lctheline =~ /biggest/ ) {
 				print "'biggest' to 'greatest' or similar, on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ /self intersect/ && !($lctwoline =~ /self intersection/) ) {
