@@ -1056,7 +1056,8 @@ sub READCODEFILE
 		#	print "POSSIBLY SERIOUS: '.)\\' - remove the \\ after it to avoid 'short' space, on line $. in $input.\n";
 		#}
 		# last bit on this line: if text, then ignore "..."
-		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && (!$textonly || !($twoline =~ /\.\.\./))  ) {
+		# also ignore "../" as this could be an "include" path in an .html file
+		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && (!$textonly || !($twoline =~ /\.\.\./)) && ($textonly || !($twoline =~ /\.\.\//))  ) {
 			print "Doubled periods, on line $. in $input.\n";
 		}
 		if( !$twook && !$infigure && $twoline =~ /,,/ ) {
@@ -1642,7 +1643,7 @@ sub READCODEFILE
 				print "tip: consider removing or replacing 'quite' on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," in fact",$lcprev_line,"in fact") )  {
-				print "tip: consider removing 'in fact' on line $. in $input.\n";
+				print "tip: consider removing 'in fact' on line $. in $input. It's often superfluous, in fact.\n";
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," surely",$lcprev_line,"surely") )  {
 				print "tip: consider removing 'surely' on line $. in $input.\n";
@@ -1655,9 +1656,6 @@ sub READCODEFILE
 			}
 			if( !$ok && !$isref && !$inquote && $lctheline =~ /really/ ) {
 				print "tip: consider removing or replacing 'really' on line $. in $input.\n";
-			}
-			if( !$isref && !$twook && $lctwoline =~ / in fact / && !$inquote ) {
-				print "Are you sure you want to use `in fact', on line $. in $input? It's often superfluous, in fact.\n";
 			}
 			if ( !$twook && $lctwoline =~ /\(see figure/ ) {
 				print "Try to avoid `(see Figure', make it a full sentence, on line $. in $input.\n";
@@ -2626,9 +2624,11 @@ sub READCODEFILE
 			&SAYOK();
 		}
 		if( !$twook && !$isref && $lctwoline =~ / all of / && 
+			# these phrases are usually better as "all of," not just "all"
 			!($lctwoline =~ / all of which/) &&
 			!($lctwoline =~ / all of this/) &&
 			!($lctwoline =~ / all of these/) &&
+			!($lctwoline =~ / all of space/) &&
 			!($lctwoline =~ / all of it/)
 			) {
 			print "shortening tip: replace 'all of' with 'all' on line $. in $input.\n";
