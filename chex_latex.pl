@@ -1601,7 +1601,7 @@ sub READCODEFILE
 				print "SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $theline =~ /formulas/ && !$inquote ) {
-				print "Change 'formulas' to 'formulae' on line $. in $input, or rewrite.\n";
+				print "For formal writing, change 'formulas' to 'formulae' on line $. in $input.\n  But, it's your choice, see https://www.lexico.com/definition/formula\n  and https://www.grammar-monster.com/plurals/plural_of_formula.htm\n";
 			}
 			if( !$twook && !$twook && !$isref && !$inquote && &WORDTEST($twoline," Generally ",$prev_line,"Generally")) {
 				print "add comma: after 'Generally' on line $. in $input.\n";
@@ -2399,9 +2399,6 @@ sub READCODEFILE
 			}
 			if( !$ok && $lctheline =~ /nonboundary/ ) {
 				print "'nonboundary' to 'non-boundary' on line $. in $input.\n";
-			}
-			if( !$ok && $lctheline =~ /formulae/ ) {
-				print "'formulae' to 'formulas' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /penumbrae/ ) {
 				print "'penumbrae' to 'penumbras' on line $. in $input.\n";
