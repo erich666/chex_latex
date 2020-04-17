@@ -941,7 +941,8 @@ sub READCODEFILE
 		if( !$twook && !$isref && !$inequation && $twoline =~ /\. \d/ ) {
 			print "A sentence should not start with a numeral (unless it's a year), on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$textonly && !$inequation && $lctheline =~ /(\d+)x/ && !($lctheline =~ / 0x/) && !($lctheline =~ /\$/) ) {
+		# look for 3x and so on. Ignore if in something like ObjectToWorld3x4
+		if( !$ok && !$isref && !$textonly && !$inequation && $lctheline =~ /(\d+)x/ && !($lctheline =~ /\w(\d+)x/) && !($lctheline =~ / 0x/) && !($lctheline =~ /\$/) ) {
 			print "Do not use $1x, use \$$1 \\times\$, on line $. in $input.\n";
 		}
 		# we like to avoid ending a sentence with a preposition.
@@ -1788,22 +1789,28 @@ sub READCODEFILE
 				print "'near-field' to 'near field' on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && $lctwoline =~ /six dimensional/ ) {
-				print "'six dimensional' to 'six-dimensional' on line $. in $input.\n";
+				print "if used as an adjective, 'six dimensional' to 'six-dimensional' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /five dimensional/ ) {
-				print "'five dimensional' to 'five-dimensional' on line $. in $input.\n";
+				print "if used as an adjective, 'five dimensional' to 'five-dimensional' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /four dimensional/ ) {
-				print "'four dimensional' to 'four-dimensional' on line $. in $input.\n";
+				print "if used as an adjective, 'four dimensional' to 'four-dimensional' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /three dimensional/ ) {
-				print "'three dimensional' to 'three-dimensional' on line $. in $input.\n";
+				print "if used as an adjective, 'three dimensional' to 'three-dimensional' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /two dimensional/ ) {
-				print "'two dimensional' to 'two-dimensional' on line $. in $input.\n";
+				print "if used as an adjective, 'two dimensional' to 'two-dimensional' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /one dimensional/ ) {
-				print "'one dimensional' to 'one-dimensional' on line $. in $input.\n";
+				print "if used as an adjective, 'one dimensional' to 'one-dimensional' on line $. in $input.\n";
+				&SAYOK();
 			}
 			if( !$ok && $theline =~ /LoD/ ) {
 				print "'LoD' to 'LOD' on line $. in $input.\n";
@@ -1872,6 +1879,13 @@ sub READCODEFILE
 			if( !$twook && $twoline =~ / 6D/ ) {
 				print "'6D' to 'six-dimensional' on line $. in $input.\n";
 			}
+			#if( !$twook && $twoline =~ / 5D/ ) {
+			#	print "'5D' to 'five-dimensional' on line $. in $input.\n";
+			#}
+			#if( !$twook && $twoline =~ / 4D/
+			#	&& !($twoline=~/Entrim/) ) {
+			#	print "'4D' to 'four-dimensional' on line $. in $input.\n";
+			#}
 			# too common, and "similar to" often feels more precise in technical papers
 			#if( !$twook && $twoline =~ /similarly to / ) {
 			#	print "'similarly to' probably wants to be 'similar to' on line $; better yet, reword, as #it's generally awkward. in $input.\n";
@@ -1908,19 +1922,6 @@ sub READCODEFILE
 			if( !$ok && !$isref && $theline =~ /\d-degree/ && !($theline =~ /color-matching/) ) {
 				print "'N-degree' to 'N degree' on line $. in $input.\n";
 			}
-			if( !$twook && $lctwoline =~ /five dimensional/ ) {
-				print "'five dimensional' to 'five-dimensional' on line $. in $input.\n";
-			}
-			#if( !$twook && $twoline =~ / 5D/ ) {
-			#	print "'5D' to 'five-dimensional' on line $. in $input.\n";
-			#}
-			#if( !$twook && $lctwoline =~ /four dimensional/ ) {
-			#	print "'four dimensional' to 'four-dimensional' on line $. in $input.\n";
-			#}
-			#if( !$twook && $twoline =~ / 4D/
-			#	&& !($twoline=~/Entrim/) ) {
-			#	print "'4D' to 'four-dimensional' on line $. in $input.\n";
-			#}
 			if( !$ok && $theline =~ /Ph\.D/) {
 				print "'Ph.D.' to 'PhD' on line $. in $input.\n";
 			}
@@ -2334,7 +2335,8 @@ sub READCODEFILE
 			if( !$ok && $theline =~ /Playstation/ && !$isref ) {
 				print "'Playstation' to 'PlayStation' on line $. in $input.\n";
 			}
-			if( !$ok && $theline =~ /nvidia/  && !($theline =~ "bibitem" || $theline =~ "cite") ) {
+			# NVIDIA in caps; ignore in a URL
+			if( !$ok && $theline =~ /nvidia/  && !($theline =~ /\.nvidia/) && !($theline =~ "bibitem" || $theline =~ "cite") ) {
 				print "'nvidia' to 'NVIDIA' on line $. in $input.\n";
 			}
 			if( !$ok && $theline =~ /Nvidia/  && !($theline =~ "bibitem" || $theline =~ "cite") ) {
