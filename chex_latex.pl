@@ -2336,7 +2336,7 @@ sub READCODEFILE
 				print "'Playstation' to 'PlayStation' on line $. in $input.\n";
 			}
 			# NVIDIA in caps; ignore in a URL
-			if( !$ok && $theline =~ /nvidia/  && !($theline =~ /\.nvidia/) && !($theline =~ "bibitem" || $theline =~ "cite") ) {
+			if( !$ok && $theline =~ /nvidia/  && !($theline =~ /nvidia\.com/) && !($theline =~ "bibitem" || $theline =~ "cite") ) {
 				print "'nvidia' to 'NVIDIA' on line $. in $input.\n";
 			}
 			if( !$ok && $theline =~ /Nvidia/  && !($theline =~ "bibitem" || $theline =~ "cite") ) {
