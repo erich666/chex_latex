@@ -923,6 +923,9 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /signalled/ ) {
 				print "The British spelling 'signalled' should change to 'signaled', on line $. in $input.\n";
 			}
+			if( !$ok && !$isref && $lctheline =~ /diagonalis/ ) {
+				print "The British spelling 'diagonalis*' should change to 'diagonaliz*', on line $. in $input.\n";
+			}
 			if( !$ok && !$isref && $lctheline =~ /fulfils/ ) {
 				print "The spelling 'fulfils' should change to the U.S. spelling 'fulfills', on line $. in $input.\n";
 			}
@@ -931,6 +934,10 @@ sub READCODEFILE
 			}
 			if( !$ok && $lctheline =~ /acknowledgement/ && !$isref ) {
 				print "'acknowledgement' to U.S. spelling 'acknowledgment' (delete second 'e' - really!) on line $. in $input.\n";
+			}
+			# see https://www.washingtonpost.com/news/volokh-conspiracy/wp/2017/08/16/judgment-or-judgement/
+			if( !$ok && $lctheline =~ /judgement/ && !$isref ) {
+				print "Optional but recommended: 'judgement' to more common U.S. spelling 'judgment' on line $. in $input.\n";
 			}
 		}
 		
@@ -1175,6 +1182,15 @@ sub READCODEFILE
 		}
 		if( $lctheline =~ /octtree/ ) {
 			print "MISSPELLING: 'octtree' to 'octree' on line $. in $input.\n";
+		}
+		if( $theline =~ /Thus / ) {
+			print "You likely want a comma after 'Thus' on line $. in $input.\n";
+		}
+		if( $theline =~ /However / ) {
+			print "You likely want a comma after 'However' on line $. in $input.\n";
+		}
+		if( $theline =~ /So / ) {
+			print "You likely want a comma after 'So' on line $. in $input.\n";
 		}
 		# your mileage may vary, depending on how you index, e.g., we do \index{k-d tree@$k$-d tree}
 		if( !$twook && !$textonly && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
