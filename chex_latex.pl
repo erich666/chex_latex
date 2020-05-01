@@ -290,6 +290,7 @@ sub READCODEFILE
 	my $tabsfound = 0;
 	my $justlefteq = 0;
 	my $justblankline = 0;
+	my $duplicate_count = 0;
 
 	# now the code file read
 	unless (open(DATAFILE,$input)) {
@@ -596,7 +597,21 @@ sub READCODEFILE
 		# Check doubled words. Possibly the most useful test in the whole script
 		# the crazy one, from https://stackoverflow.com/questions/23001408/perl-regular-expression-matching-repeating-words, catches all duplicate words such as "the the"
 		if( !$twook && !$infigure && !$intable && !$inequation && $lctwoline =~ /(?:\b(\w+)\b) (?:\1(?: |$))+/ && $1 ne 'em' ) {
-			print "SERIOUS: word duplication problem of word '$1' on line $. in $input.\n";
+			if ($textonly ) {
+				$duplicate_count++;
+			}
+			# lazy coding: $duplicate_count never increases if a .tex file
+			if ( $duplicate_count <= 5 ) {
+				print "SERIOUS: word duplication problem of word '$1' on line $. in $input.\n";
+			}
+			if ($textonly ) {
+				if ( $duplicate_count <= 5 ) {
+					print "    Since this is a text file, this warning might be spurious.\n";
+				}
+				if ( $duplicate_count == 5 ) {
+					print "    *** Five duplicates found, which is unlikely, so further warnings are suppressed.\n";
+				}
+			}
 		}
 		# surprisingly common
 		if( !$twook && $lctwoline =~ / a the / ) {
@@ -821,7 +836,7 @@ sub READCODEFILE
 		}
 
 		# digits with space, some european style, use commas instead
-		if( !$ok && !$infigure && $theline =~ /\d \d\d\d/ ) {
+		if( !$ok && !$textonly && !$!$infigure && $theline =~ /\d \d\d\d/ ) {
 			print "POSSIBLY SERIOUS: digits with space '$&' might be wrong\n    Use commas, e.g., '300 000' should be '300,000' on line $. in $input.\n";
 		}
 
@@ -945,7 +960,7 @@ sub READCODEFILE
 		if( !$twook && $twoline =~ / etc/ && !($' =~ /^\./) ) {
 			print "SERIOUS: 'etc' isn't followed by a '.' on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && !$inequation && $twoline =~ /\. \d/ ) {
+		if( !$twook && !$isref && !$textonly && !$inequation && $twoline =~ /\. \d/ ) {
 			print "A sentence should not start with a numeral (unless it's a year), on line $. in $input.\n";
 		}
 		# look for 3x and so on. Ignore if in something like ObjectToWorld3x4
@@ -1068,7 +1083,7 @@ sub READCODEFILE
 		#}
 		# last bit on this line: if text, then ignore "..."
 		# also ignore "../" as this could be an "include" path in an .html file
-		if( !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && (!$textonly || !($twoline =~ /\.\.\./)) && ($textonly || !($twoline =~ /\.\.\//))  ) {
+		if( !$textonly && !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && (!$textonly || !($twoline =~ /\.\.\./)) && ($textonly || !($twoline =~ /\.\.\//))  ) {
 			print "Doubled periods, on line $. in $input.\n";
 		}
 		if( !$twook && !$infigure && $twoline =~ /,,/ ) {
@@ -1145,10 +1160,10 @@ sub READCODEFILE
 			print "POSSIBLY SERIOUS: change 'et al.' to 'et al.\\' if you are not ending a sentence, on line $. in $input.\n";
 			$period_problem = 1;
 		}
-		if( !$twook && !$inequation && $twoline =~ / \. / ) {
+		if( !$twook && !$inequation && !$textonly && $twoline =~ / \. / ) {
 			print "SERIOUS: change ' .' to '.' (space in front of period), on line $. in $input.\n";
 		}
-		if( !$twook && !$inequation && $twoline =~ / \,/ ) {
+		if( !$twook && !$textonly && !$inequation && $twoline =~ / \,/ ) {
 			print "SERIOUS: change ' ,' to ',' (space in front of comma), on line $. in $input.\n";
 		}
 		# If you use a ".", you need to do something like ".~" to avoid having the period treated
@@ -1171,7 +1186,7 @@ sub READCODEFILE
 			print "Beware, there is a TODO in the text itself at line $. in $input.\n";
 			print "    the line says: $theline\n";
 		}
-		if( !$twook && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !($twoline =~ /\.\.\./) && !$isref && !$inequation && !$period_problem ) {
+		if( !$twook && !$textonly && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !($twoline =~ /\.\.\./) && !$isref && !$inequation && !$period_problem ) {
 			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : " (or the period should have a \\ after it)";
 		}
 		if( !$ok && $theline =~ /Javascript/) {
@@ -1703,7 +1718,7 @@ sub READCODEFILE
 			#}
 			# see http://www.quickanddirtytips.com/education/grammar/use-versus-utilize?page=1
 			if( !$ok && !$inquote && !$isref && $lctheline =~ /utiliz/ ) {
-				print "Probably needlessly complex: change 'utiliz-' to 'use' or similar, on line $. in $input.\n";
+				print "Probably needlessly complex: change 'utiliz*' to 'use' or similar, on line $. in $input.\n";
 				&SAYOK();
 			}
 			# from the book "The Craft of Scientific Writing" by Michael Alley
@@ -1720,13 +1735,13 @@ sub READCODEFILE
 				print "Needlessly complex: change 'has the functionability' to 'can function' on line $. in $input.\n";
 			}
 			if( !$ok && !$inquote && !$isref && !$inequation && $lctheline =~ /facilitat/ ) {
-				print "Possibly needlessly complex: change 'facilitat-' to 'cause' or 'ease' or 'simplify' or 'help along' on line $. in $input.\n";
+				print "Possibly needlessly complex: change 'facilitat*' to 'cause' or 'ease' or 'simplify' or 'help along' on line $. in $input.\n";
 			}
 			if( !$ok && !$inquote && !$isref && $lctheline =~ /finaliz/ ) {
-				print "Needlessly complex: change 'finaliz-' to 'end' on line $. in $input.\n";
+				print "Needlessly complex: change 'finaliz*' to 'end' on line $. in $input.\n";
 			}
 			if( !$ok && !$inquote && !$isref && $lctheline =~ /prioritiz/ ) {
-				print "Perhaps needlessly complex: change 'prioritiz-' to 'assess' or 'first choose' on line $. in $input.\n";
+				print "Perhaps needlessly complex: change 'prioritiz*' to 'assess' or 'first choose' on line $. in $input.\n";
 			}
 			if( !$ok && !$inquote && !$isref && $lctheline =~ /aforementioned/ ) {
 				print "Needlessly complex: change 'aforementioned' to 'mentioned' on line $. in $input.\n";
