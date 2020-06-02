@@ -836,7 +836,7 @@ sub READCODEFILE
 		}
 
 		# digits with space, some european style, use commas instead
-		if( !$ok && !$textonly && !$!$infigure && $theline =~ /\d \d\d\d/ ) {
+		if( !$ok && !$textonly && !$infigure && $theline =~ /\d \d\d\d/ ) {
 			print "POSSIBLY SERIOUS: digits with space '$&' might be wrong\n    Use commas, e.g., '300 000' should be '300,000' on line $. in $input.\n";
 		}
 
