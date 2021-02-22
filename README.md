@@ -96,7 +96,7 @@ So if you want all the tests, do:
 	
 If you want the bare minimum, do:
 
-    perl chex_latex.pl -dfstu [directory or files]
+    perl chex_latex.pl -dstfu [directory or files]
 
 If a message confuses you, look in the Perl script itself, as there are comments about some of the issues.
 

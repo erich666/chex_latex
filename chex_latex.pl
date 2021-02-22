@@ -300,6 +300,7 @@ sub READCODEFILE
 	my $subfigure = 0;
 	my $tabsfound = 0;
 	my $justlefteq = 0;
+	#my $justleftlisting = 0;
 	my $justblankline = 0;
 	my $duplicate_count = 0;
 
@@ -307,6 +308,10 @@ sub READCODEFILE
 	unless (open(DATAFILE,$input)) {
 		printf STDERR "Can't open $input: $!\n";
 		exit 1 ;
+	}
+	# if there is more than one file being parsed, note the separation of files
+	if ($cfnum>1) {
+		printf "\n================================================\nFILE: $input:\n";
 	}
 	while (<DATAFILE>) {
 		if ( /\R$/ ) {
@@ -350,10 +355,20 @@ sub READCODEFILE
 		# test if there's a blank line after an equation - go see if there should be.
 		if ( $picky && $justlefteq ) {
 			if ( $theline eq '' ) {
-				print "EQUATION ends with blank line after. OK? On line $. in $input.\n";
+				print "EQUATION ends with blank line after it, on line $. in $input.\n";
+				print "    This can often give too much white space between the equation and the text.\n";
 			}
 			$justlefteq = 0;
 		}
+		# not necessary
+		#if ( $picky && $justleftlisting ) {
+		#	if ( $theline eq '' ) {
+		#		print "CODE LISTING ends with blank line after it, on line $. in $input.\n";
+		#		print "    This can often give too much white space between the listing and the text.\n";
+		#		print "    You should also check the spacing (remove blank line) at the beginning of this listing.\n";
+		#	}
+		#	$justleftlisting = 0;
+		#}
 
 		# cut rest of any line with includegraphics and trim= on it
 		# really, could just delete this line altogether, but let's leave open
@@ -395,6 +410,7 @@ sub READCODEFILE
 		if ( $theline =~ /\\centering/ ) { $theline = $`; $figcenter = 'has centering'; }
 		if ( $theline =~ /\\bibliography/ ) { $theline = $`; }
 		if ( $theline =~ /\\import/ ) { $theline = $`; }
+		if ( $theline =~ /\\addbibresource/ ) { $theline = $`; }
 		#if ( $theline =~ /\\begin/ ) { $theline = $`; }
 		#if ( $theline =~ /\\end/ ) { $theline = $`; }
 
@@ -542,6 +558,10 @@ sub READCODEFILE
 			}
 			if ( $justblankline && ($theline =~ /begin\{equation}/ || $theline =~ /begin\{eqnarray}/ || $theline =~ /begin\{IEEEeqnarray}/) ) {
 				print "The equation has a blank line in front of it - is this intentional? On line $. in $input.\n";
+			}
+			if ( $justblankline && $inlisting ) {
+				print "The line before the code listing is blank, on line $. in $input.\n";
+				print "    This can lead to large gaps between text and code. Did you mean to?\n";
 			}
 		}
 		$justblankline = 0;
@@ -1683,15 +1703,22 @@ sub READCODEFILE
 			# Most of the others are from Chapter 1 of "Dreyer's English".
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," very",$lcprev_line,"very") )  {
 				print "tip: consider removing or replacing 'very' on line $. in $input.\n";
+				print "    'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/\n";
 			}
-			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," actually",$lcprev_line,"actually") )  {
-				print "tip: remove the never-needed word 'actually' on line $. in $input.\n";
+			if( !$twook && !$isref && !$inquote && $formal && &WORDTEST($lctwoline," really",$lcprev_line,"really") ) {
+				print "tip: consider removing or replacing 'really' on line $. in $input.\n";
+				print "    Perhaps try substitutes: https://www.grammarcheck.net/very/\n";
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," rather",$lcprev_line,"rather") && !($lctwoline =~ /rather than/) )  {
 				print "tip: consider removing or replacing 'rather' on line $. in $input.\n";
+				print "    Perhaps try substitutes: https://www.grammarcheck.net/very/\n";
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," quite",$lcprev_line,"quite") )  {
 				print "tip: consider removing or replacing 'quite' on line $. in $input.\n";
+				print "    Perhaps try substitutes: https://www.grammarcheck.net/very/\n";
+			}
+			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," actually",$lcprev_line,"actually") )  {
+				print "tip: remove the never-needed word 'actually' on line $. in $input.\n";
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," in fact",$lcprev_line,"in fact") )  {
 				print "tip: consider removing 'in fact' on line $. in $input. It's often superfluous, in fact.\n";
@@ -1704,9 +1731,6 @@ sub READCODEFILE
 			}
 			if( !$twook && !$isref && !$inquote && $formal && &WORDTEST($lctwoline," pretty",$lcprev_line,"pretty") )  {
 				print "tip: unless you mean something is pretty, replace or remove the modifier 'pretty' on line $. in $input.\n";
-			}
-			if( !$ok && !$isref && !$inquote && $lctheline =~ /really/ ) {
-				print "tip: consider removing or replacing 'really' on line $. in $input.\n";
 			}
 			if ( !$twook && $lctwoline =~ /\(see figure/ ) {
 				print "Try to avoid `(see Figure', make it a full sentence, on line $. in $input.\n";
@@ -2651,9 +2675,6 @@ sub READCODEFILE
 				print "shortening tip: replace 'the majority of' with 'most' on line $. in $input.\n";
 				&SAYOK();
 			}
-			if( !$twook && !$isref && $lctwoline =~ / quite/ ) {
-				print "The word 'quite' is a cheat for 'very' - can we avoid it? Line $. in $input.\n";
-			}
 			if( !$twook && $lctwoline =~ /kind of/ ) {
 				print "If you don't mean 'type of' for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line $. in $input.\n";
 				&SAYOK();
@@ -2741,6 +2762,7 @@ sub READCODEFILE
 			$inequation = 0;
 			if ( $theline =~ /end\{lstlisting}/ ) {
 				$inlisting = $insidecode = 0;
+				#$justleftlisting = 1;
 			}
 			if ( $theline =~ /end\{equation}/ || $theline =~ /end\{eqnarray}/ || $theline =~ /end\{IEEEeqnarray}/ ) {
 				$justlefteq = 1;
