@@ -911,6 +911,9 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /modelling/ && !$isref ) {
 				print "In the U.S., we prefer 'modeling' to 'modelling' on line $. in $input.\n";
 			}
+			if( !$ok && $lctheline =~ /modelled/ && !$isref ) {
+				print "In the U.S., we prefer 'modeled' to 'modelled' on line $. in $input.\n";
+			}
 			if( !$ok && !$isref && $lctheline =~ /outwards/ ) {
 				print "In the U.S., 'outwards' should change to 'outward' on line $. in $input.\n";
 			}
@@ -989,6 +992,21 @@ sub READCODEFILE
 			# see https://www.washingtonpost.com/news/volokh-conspiracy/wp/2017/08/16/judgment-or-judgement/
 			if( !$ok && $lctheline =~ /judgement/ && !$isref ) {
 				print "Optional but recommended: 'judgement' to more common U.S. spelling 'judgment' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /artefact/ ) {
+				print "The British spelling 'artefact' should change to 'artifact' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /behaviour/ ) {
+				print "The British spelling 'behaviour' should change to 'behavior' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /analyse/ ) {
+				print "The British spelling 'analyse' should change to 'analyze' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /summarise/ ) {
+				print "The British spelling 'summarise' should change to 'summarize' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /emphasise/ ) {
+				print "The British spelling 'emphasise' should change to 'emphasize' on line $. in $input.\n";
 			}
 		}
 		
