@@ -27,6 +27,13 @@ my $usstyle = 1;
 my $textonly = 0;
 my $testlisting = 0; # If > 0, check code line length as set
 
+# If you want to always have titles for sections, etc. be capitalized, set this to 1, else 0.
+# If set to 0, then lowercase titles such as "Testing results" are allowed, but are still checked
+# against other multi-word titles used in this document. For example, if earlier you said
+# "The Algorithm", the document is then using caps in one section, but not in another, and so
+# will flag an error.
+my $force_title_cap = 1;
+
 # If this phrase is found in the comment on a line, ignore that line for various tests.
 # Feel free to add your own "$ok &&" for the various tests below, I didn't go nuts with it.
 my $okword = "chex_latex";
@@ -91,6 +98,10 @@ while (@ARGV) {
 			} elsif ( $char eq 'f' ) {
 				# set $formal to false, to allow informal bits such as contractions
 				$formal = 0;
+			} elsif ( $char eq 't' ) {
+				# set $force_title_cap to false, so that titles don't have to be capitalized.
+				# Still check internal consistency (titles are compared to each other), however.
+				$force_title_cap = 0;
 			} elsif ( $char eq 'p' ) {
 				# set $picky to TRUE, to check for things that may be stylistically suspect
 				$picky = 1;
@@ -498,9 +509,14 @@ sub READCODEFILE
 						# in this type of chapter/section/subsection, so flag it.
 						printf "SERIOUS: Title has a word '$wds[$i]' that is %s, on line $. in $input.\n",
 							$caps_used ? "uncapitalized" : "capitalized";
-						print "    This does not match the style in the first $title_type encountered\n";
-						printf "    $caps_loc, which is %s word.\n",
-							$caps_used ? "a capitalized" : "an uncapitalized";
+						if ( $force_title_cap ) {
+							print "    The program is set to require that titles are capitalized.\n";
+							print "    To override, use '-t' on the command line to allow uncapitalized titles.\n";
+						} else {
+							print "    This does not match the style in the first $title_type encountered\n";
+							printf "    $caps_loc, which is %s word.\n",
+								$caps_used ? "a capitalized" : "an uncapitalized";
+						}
 						if ( $caps_used ) {
 							print "    Ignore if this word '$wds[$i]' is a 'connector word' such as 'in' or 'and' (and please report this bug).\n";
 							print "    To be sure, you can test your title at https://capitalizemytitle.com/\n";
@@ -2113,6 +2129,8 @@ sub READCODEFILE
 			if( !$twook && $lctwoline =~ /speed-up/ ) {
 				print "'speed-up' to 'speedup' on line $. in $input.\n";
 			}
+			# see https://english.stackexchange.com/questions/4300/semi-transparent-what-is-used-in-between
+			# "semitrans" is the accepted form, by a few sources
 			if( !$twook && $lctwoline =~ /semi-transparen/ ) {
 				print "'semi-transparen' to 'semitransparen' on line $. in $input.\n";
 			}
@@ -2898,8 +2916,10 @@ sub SECTION_MISMATCH {
 		$title_type = '\title';
 	}
 	# to force title to be capitalized (as in GPU Gems), set to 2 here;
-	# else comment out this line, to check consistency between this title and other titles of the same type.
-	$cap_title[$ind] = 2;
+	# else set !force_title_cap to 0
+	if ( $force_title_cap ) {
+		$cap_title[$ind] = 2;
+	}
 
 	if ( $cap_title[$ind] ) {
 		# check if this chapter's/section's/etc. capitalization matches the first one's
