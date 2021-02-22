@@ -87,6 +87,7 @@ The options are:
 	-f - turn off formal writing check; allows contractions and other informal usage.
 	-p - turn ON picky style check, which looks for more style problems but is not so reliable.
 	-s - turn off style check; looks for poor usage, punctuation, and consistency.
+	-t - turn off title capitalization check; titles are assumed to be properly capitalized otherwise.
 	-u - turn off U.S. style tests for putting commas and periods inside quotes.
 	
 So if you want all the tests, do:
@@ -95,7 +96,7 @@ So if you want all the tests, do:
 	
 If you want the bare minimum, do:
 
-    perl chex_latex.pl -dfsu [directory or files]
+    perl chex_latex.pl -dfstu [directory or files]
 
 If a message confuses you, look in the Perl script itself, as there are comments about some of the issues.
 
