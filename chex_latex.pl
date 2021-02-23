@@ -1844,9 +1844,11 @@ sub READCODEFILE
 			#if( !$twook && !$isref && $lctwoline =~ /unreal engine/ && !($lctwoline =~ /the unreal engine/) && !($lctwoline =~ /unreal engine \d/)) {
 			#	print "'Unreal Engine' should have 'the' before it, on line $. in $input (note: test is flaky).\n";
 			#}
-			if( !$ok && !$isref && $lctheline =~ /performant/ ) {
-				print "'performant' not fully accepted as a word, so change to 'efficient' or 'powerful' on line $. in $input.\n";
-			}
+			# Performant used to be flagged by MS Word, but now it isn't. Debate was here:
+			# https://english.stackexchange.com/questions/38945/what-is-wrong-with-the-word-performant
+			#if( !$ok && !$isref && $lctheline =~ /performant/ ) {
+			#	print "'performant' not fully accepted as a word, so change to 'efficient' or 'powerful' on line $. in $input.\n";
+			#}
 			if( !$ok && !$isref && $theline =~ /Earth/ && !($twoline =~ /Google Earth/) && !($twoline =~ /Visible Earth/) ) {
 				print "'Earth' should be 'the earth' (or change this rule to what you like), on line $. in $input.\n";
 			}
