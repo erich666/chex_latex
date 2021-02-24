@@ -914,29 +914,30 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /modelled/ && !$isref ) {
 				print "In the U.S., we prefer 'modeled' to 'modelled' on line $. in $input.\n";
 			}
+			# see https://www.grammarly.com/blog/toward-towards/
 			if( !$ok && !$isref && $lctheline =~ /outwards/ ) {
-				print "In the U.S., 'outwards' should change to 'outward' on line $. in $input.\n";
+				print "In the U.S., 'outwards' is not as popular as 'outward' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /inwards/ ) {
-				print "In the U.S., 'inwards' should change to 'inward' on line $. in $input.\n";
+				print "In the U.S., 'inwards' is not as popular as 'inward' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /towards/ ) {
-				print "In the U.S., 'towards' should change to 'toward' on line $. in $input.\n";
+				print "In the U.S., 'towards' is not as popular as 'toward' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /backwards/ ) {
-				print "In the U.S., 'backwards' should change to 'backward' on line $. in $input.\n";
+				print "In the U.S., 'backwards' is not as popular as 'backward' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /forwards/ ) {
-				print "In the U.S., 'forwards' should probably change to 'forward' unless used as ''forwards mail'' etc., on line $. in $input.\n";
+				print "In the U.S., 'forwards' is not as popular as 'forward', unless used as ''forwards mail'' etc., on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /afterwards/ ) {
-				print "In the U.S., 'afterwards' should probably change to 'afterward' unless used as ''forwards mail'' etc., on line $. in $input.\n";
+				print "In the U.S., 'afterwards' is not as popular as 'afterward' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /upwards/ ) {
-				print "In the U.S., 'upwards' should change to 'upward' on line $. in $input.\n";
+				print "In the U.S., 'upwards' is not as popular as 'upward' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /downwards/ ) {
-				print "In the U.S., 'downwards' should change to 'downward' on line $. in $input.\n";
+				print "In the U.S., 'downwards' is not as popular as 'downward' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /grey/ ) { # http://www.dictionary.com/e/gray-or-grey/
 				print "In the U.S., change 'grey' to 'gray' on line $. in $input.\n";
@@ -1160,7 +1161,7 @@ sub READCODEFILE
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] ms/ ) {
 			print "' ms' to '~ms' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$inequation && $theline =~ /([\.\d]+)ms/ ) {
+		if( !$ok && !$textonly && !$isref && !$inequation && $theline =~ /([\.\d]+)ms/ ) {
 			print "Change '$1ms' to '$1~ms' (i.e., add a space), on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] fps/ ) {
@@ -1455,7 +1456,7 @@ sub READCODEFILE
 			print "'blend together' can shorten to 'blend' on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $lctwoline =~ /close proximity/ ) {
-			print "'close proximity' can shorten to 'proximity' (yes, 'close proximity' is a common phrase, but you might want to use a less redundant way to reword this sentence) on line $. in $input.\n";
+			print "Your call: 'close proximity' can shorten to 'proximity' on line $. in $input.\n    'close proximity' is a common phrase but is often redundant; 'proximity' might do.\n";
 		}
 		if( !$twook && !$isref && $lctwoline =~ /blend together/ ) {
 			print "'blend together' can shorten to 'blend' on line $. in $input.\n";
@@ -2442,9 +2443,10 @@ sub READCODEFILE
 			if( !$twook && $lctwoline =~ / can not / ) {
 				print "'can not' to 'cannot' on line $. in $input.\n";
 			}
-			if( !$ok && $lctheline =~ /tradeoff/ && !$isref ) {
-				print "'tradeoff' to 'trade-off' on line $. in $input.\n";
-			}
+			# Wikipedia now says both are OK https://en.wikipedia.org/wiki/Trade-off
+			#if( !$ok && $lctheline =~ /tradeoff/ && !$isref ) {
+			#	print "Your call: 'tradeoff' to 'trade-off' on line $. in $input.\n";
+			#}
 			if( !$ok && $lctwoline =~ /trade off/ && !$isref ) {
 				print "possible fix: 'trade off' to 'trade-off', if not used as a verb, on line $. in $input.\n";
 			}
@@ -2632,7 +2634,7 @@ sub READCODEFILE
 				print "Change 'disc' to 'disk' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /exemplif/ ) {
-				print "Change 'exemplify' to 'give an example' or 'show' on line $. in $input.\n";
+				print "You might change 'exemplify' to 'give an example' or 'show' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /[\s]discs[\s\.,:;?]/ ) {
 				print "Change 'discs' to 'disks' on line $. in $input.\n";
