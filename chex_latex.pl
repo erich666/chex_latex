@@ -1271,6 +1271,15 @@ sub READCODEFILE
 		if( $theline =~ /So / ) {
 			print "You likely want a comma after 'So' on line $. in $input.\n";
 		}
+		if( $theline =~ /Indeed / ) {
+			print "You likely want a comma after 'Indeed' on line $. in $input.\n";
+		}
+		if( $theline =~ /Finally / ) {
+			print "You likely want a comma after 'Finally' on line $. in $input.\n";
+		}
+		if( $theline =~ /For this reason / ) {
+			print "You likely want a comma after 'For this reason' on line $. in $input.\n";
+		}
 		# your mileage may vary, depending on how you index, e.g., we do \index{k-d tree@$k$-d tree}
 		if( !$twook && !$textonly && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
 			print "'k-d' to the more proper '\$k\$-d', on line $. in $input.\n";
