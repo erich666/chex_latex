@@ -981,6 +981,12 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /diagonalis/ ) {
 				print "The British spelling 'diagonalis*' should change to 'diagonaliz*', on line $. in $input.\n";
 			}
+			if( !$ok && !$isref && $lctheline =~ /visualis/ ) {
+				print "The British spelling 'visualis*' should change to 'visualiz*', on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /quantis/ ) {
+				print "The British spelling 'quantis*' should change to 'quantiz*', on line $. in $input.\n";
+			}
 			if( !$ok && !$isref && $lctheline =~ /fulfils/ ) {
 				print "The spelling 'fulfils' should change to the U.S. spelling 'fulfills', on line $. in $input.\n";
 			}
@@ -999,6 +1005,9 @@ sub READCODEFILE
 			}
 			if( !$ok && $lctheline =~ /behaviour/ ) {
 				print "The British spelling 'behaviour' should change to 'behavior' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /neighbour/ ) {
+				print "The British spelling 'neighbour' should change to 'neighbor' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /analyse/ ) {
 				print "The British spelling 'analyse' should change to 'analyze' on line $. in $input.\n";
@@ -2634,7 +2643,7 @@ sub READCODEFILE
 				print "Change 'disc' to 'disk' on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /exemplif/ ) {
-				print "You might change 'exemplify' to 'give an example' or 'show' on line $. in $input.\n";
+				print "You might change 'exemplify' to 'give an example', 'show', or 'demonstrate', on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /[\s]discs[\s\.,:;?]/ ) {
 				print "Change 'discs' to 'disks' on line $. in $input.\n";
