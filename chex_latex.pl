@@ -81,6 +81,8 @@ my $figcaption = '';
 my $figlabel = '';
 my $figcenter = '';
 
+my $flag_formal = 1;
+
 # scan command line arguments
 my @dirs;
 while (@ARGV) {
@@ -1683,26 +1685,34 @@ sub READCODEFILE
 			# http://grammar.ccc.commnet.edu/grammar/numbers.htm
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," math ",$lcprev_line,"math") ) {
 				print "For formal writing, 'math' should change to 'mathematics' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," got ",$lcprev_line,"got") ) {
 				print "For formal writing, please do not use 'got' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && $lctwoline =~ / lots of/ && !$inquote && (lc($prev_line) ne "lots") ) {
 				print "For formal writing, change 'lots of' to 'many' or 'much' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			} elsif( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," lots ",$lcprev_line,"lots") ) {
 				print "For formal writing, change 'lots' to 'many' or 'much' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," cheap ",$lcprev_line,"cheap") ) {
 				print "Please use 'less costly' instead of 'cheap' as 'cheap' implies poor quality, on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			# see http://www.slaw.ca/2011/07/27/grammar-legal-writing/ for various style guides opinions (all against)
 			if( !$ok && !$isref && $lctheline =~ /and\/or/ && !$inquote ) {
 				print "For formal writing, please do not use 'and/or' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && $lctwoline =~ / a lot of / && !$inquote ) {
 				print "Avoid informal 'a lot of' - change to 'many,' 'much,' 'considerable,' or similar, on line $. in $input.\n";
+				&FLAG_FORMAL();
 			} elsif( !$twook && $lctwoline =~ / a lot / && !$inquote ) {
 				print "Avoid informal 'a lot' - change to 'much' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			# left out because of "can not only provide", which is fine
 			#if( !$twook && $lctwoline =~ /can not / ) {
@@ -1710,43 +1720,54 @@ sub READCODEFILE
 			#}
 			if( !$ok && $lctheline =~ /n't/ && !$inquote && !$isref ) {
 				print "SERIOUS: For formal writing, no contractions: 'n't' to ' not' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$ok && $lctheline =~ /let's/ && !$inquote && !$isref ) {	# don't check for in refs.tex
 				print "SERIOUS: For formal writing, no contractions: 'let's' to 'let us' or reword, on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$ok && $lctheline =~ /we've/ && !$inquote && !$isref ) {	# don't check for in refs.tex
 				print "SERIOUS: For formal writing, no contractions: 'we've' to 'we have' or reword, on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," it's ",$lcprev_line,"it's") ) {
 				print "SERIOUS: For formal writing, no contractions: 'it's' to 'it is' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$ok && $theline =~ /'re/ && !$inquote ) {
 				print "SERIOUS: For formal writing, no contractions: ''re' to ' are' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$ok && $theline =~ /'ll/ && !$inquote ) {
 				print "SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$ok && !$isref && $theline =~ /formulas/ && !$inquote ) {
 				print "For formal writing, change 'formulas' to 'formulae' on line $. in $input.\n  But, it's your choice, see https://www.lexico.com/definition/formula\n  and https://www.grammar-monster.com/plurals/plural_of_formula.htm\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && !$twook && !$isref && !$inquote && &WORDTEST($twoline," Generally ",$prev_line,"Generally")) {
 				print "add comma: after 'Generally' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			# But, And, Also are possible to use correctly, but hard: https://www.quickanddirtytips.com/education/grammar/can-i-start-a-sentence-with-a-conjunction
 			# Some avoidance strategies: http://www.bookpromotionhub.com/6341/5-ways-to-avoid-starting-a-sentence-with-but-or-and/
 			if( !$twook && !$isref && !$inquote && 
 				( &WORDTEST($twoline," But ",$prev_line,"but") || &WORDTEST($twoline," But,",$prev_line,"but,") ) ) {
 				print "Usually avoid starting sentences with the informal `But', on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			# usually annoying, a run-on sentence
 			if( !$twook && !$isref && !$inquote && 
 				( &WORDTEST($twoline," And ",$prev_line,"and") || &WORDTEST($twoline," And,",$prev_line,"and,") ) ) {
 				print "Avoid starting sentences with the informal `And', on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			# can be OK, your call...
 			if( !$twook && !$isref && !$inquote && 
 				( &WORDTEST($twoline," Also ",$prev_line,"also") || &WORDTEST($twoline," Also,",$prev_line,"also,") ) ) {
 				print "Usually avoid starting sentences with the informal `Also', on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}			
 		}
 		
@@ -1764,8 +1785,9 @@ sub READCODEFILE
 				print "    'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/\n";
 			}
 			if( !$twook && !$isref && !$inquote && $formal && &WORDTEST($lctwoline," really",$lcprev_line,"really") ) {
-				print "tip: consider removing or replacing 'really' on line $. in $input.\n";
+				print "tip: for formal writing, consider removing or replacing 'really' on line $. in $input.\n";
 				print "    Perhaps try substitutes: https://www.grammarcheck.net/very/\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," rather",$lcprev_line,"rather") && !($lctwoline =~ /rather than/) )  {
 				print "tip: consider removing or replacing 'rather' on line $. in $input.\n";
@@ -1789,6 +1811,7 @@ sub READCODEFILE
 			}
 			if( !$twook && !$isref && !$inquote && $formal && &WORDTEST($lctwoline," pretty",$lcprev_line,"pretty") )  {
 				print "tip: unless you mean something is pretty, replace or remove the modifier 'pretty' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if ( !$twook && $lctwoline =~ /\(see figure/ ) {
 				print "Try to avoid `(see Figure', make it a full sentence, on line $. in $input.\n";
@@ -2576,9 +2599,11 @@ sub READCODEFILE
 			}
 			if( !$ok && !$isref && $formal && $lctheline =~ /bigger/ ) {
 				print "'bigger' to 'larger' on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$ok && !$isref && $formal && $lctheline =~ /biggest/ ) {
 				print "'biggest' to 'greatest' or similar, on line $. in $input.\n";
+				&FLAG_FORMAL();
 			}
 			if( !$twook && !$isref && $lctwoline =~ /self intersect/ && !($lctwoline =~ /self intersection/) ) {
 				print "'self intersect' to 'self-intersect' as it's a common term, on line $. in $input.\n";
@@ -3053,3 +3078,10 @@ sub CAPITALIZED
 	return 0;
 }
 
+sub FLAG_FORMAL
+{
+	if ($flag_formal) {
+		$flag_formal = 0;
+		print "    If you do not want to test for formal usage, put '-f' in the command line.\n";
+	}
+}

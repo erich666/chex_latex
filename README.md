@@ -1,9 +1,9 @@
 # chex_latex
-LaTeX file checking tool.
+LaTeX and text file checking tool.
 
 This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and many other bugs. Put it in your directory of .tex files and run it to look for common mistakes. If a message confuses you, look in the Perl script itself, as there are comments and links about some of the issues flagged. You can also use this script on raw text files; the script will automatically not do LaTeX testing.
 
-You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of all of them. A few minutes wading through these can catch errors hard to notice otherwise. That said, definitely don't take the script's word for it. This program is no substitute for understanding the rules of grammar and LaTeX. One other trick I recommend: paste your text into Microsoft Word and see what it turns up.
+You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of all of them. A few minutes wading through these can catch errors hard to notice otherwise. That said, if you disagree, don't take the script's word for it. This program is no substitute for understanding the rules of grammar and LaTeX. One other trick I recommend: paste your text into Microsoft Word and see what it turns up.
 
 The chex_latex.pl script tests for:
 * Doubled words, such as "the the."
@@ -33,6 +33,7 @@ Before looking below, what errors do you see? By typing "perl chex_latex.pl test
 		To be sure, you can test your title at https://capitalizemytitle.com/
 	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in testfile.tex.
 	SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line 2 in testfile.tex.
+		If you do not want to test for formal usage, put '-f' in the command line.
 	tip: consider removing or replacing 'very' on line 2 in testfile.tex.
 		'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/
 	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in testfile.tex.
@@ -61,7 +62,7 @@ Before looking below, what errors do you see? By typing "perl chex_latex.pl test
 	Not capitalized at start of sentence (or the period should have a \ after it), on line 7 in testfile.tex.
 	==========================================================================================================
 
-This script is in no way foolproof, and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to delete or modify any tests that you don't like.
+This script is in no way foolproof and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to delete or modify any tests that you don't like.
 
 # Installation and Use
 
@@ -94,7 +95,7 @@ The main options are:
 	-t - turn off title capitalization check; titles are assumed to be properly capitalized otherwise.
 	-u - turn off U.S. style tests for putting commas and periods inside quotes.
 	
-So if you want all the tests, do:
+So, if you want all the tests, do:
 
 	perl chex_latex.pl -p [directory or files]
 	
@@ -112,11 +113,11 @@ Two other more obscure options:
 
     -O okword
 	
-Instead of adding a comment "% chex_latex" to lines you want the script to ignore, you could change the keyword to something else, e.g. "-O ignore_lint" would ignore all lines where you put "% ignore_lint" in a comment.
+Instead of adding a comment "% chex_latex" to lines you want the script to ignore, you could change the keyword to something else, e.g., "-O ignore_lint" would ignore all lines where you put "% ignore_lint" in a comment.
 
     -R refs.tex
 	
-By default, the file "refs.tex" is the one that contains \bibitem entries. Our book uses these, just about no one else does. If you actually do use \bibitem, this one is worth setting to your references file. It will tell you whether you reference something that doesn't exist in the references file, and whether any references in the file are not used in the text.
+By default, the file "refs.tex" is the one that contains \bibitem entries. Our book uses these, just about no one else does. If you do use \bibitem, this one is worth setting to your references file. It will tell you whether you reference something that doesn't exist in the references file, and whether any references in the file are not used in the text.
 
 One last obscure option:
 
@@ -144,7 +145,7 @@ Say that file is now in C:\temp. I then run Aspell on this file by going to the 
 
     bin\aspell list -t < C:\temp\alltext.txt > C:\temp\alltypos.txt
 
-This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, code bits will get listed again and again, and other spurious problems flagged. I find it much faster to look at a sorted list of typos, showing each word just once. I recommend starting at the end of the list and working upwards. This process can cut down the number of words you need to examine by [a factor of five](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/).
+This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, code bits will get listed again and again, and other spurious problems flagged. I find it much faster to look at a sorted list of typos, showing each word just once. I recommend starting at the end of the list and working upward. This process can cut down the number of words you need to examine by [a factor of five](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/).
 
 To make such a list, use the script aspell_sorter.pl:
 
