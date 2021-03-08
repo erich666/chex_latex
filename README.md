@@ -21,45 +21,46 @@ As an example, here is testfile.tex file; first, look it over yourself:
 	Here we'll discuss the very many algorithms that can be implemented on the GPU. For more information, Castelli
 	\cite{Castelli2018} gives a thorough overview of the use of mip-maps for level of detail, compute shaders for
 	frustrum culling, etc. and discusses which APIs support these techniques. Basically, you can use anything from
-	DirectX 12\index{DirectX 12} with C++ to WebGL\index{WebGL} with Javascript/index{Javascript} as your API , due
+	DirectX 12\index{DirectX 12} with C++ to WebGL\index{WebGL} with Javascript/index{JS2018} as your API , due
 	to that these all talk to the same underlying hardware. More specifically, there is literally no better way to
 	to accelerate processing data, vs. using just the CPU--so ''just do it''.
 
 Before looking below, what errors do you see? By typing "perl chex_latex.pl testfile.tex", here's what chex_latex.pl finds:
 
-	SERIOUS: Title has a word 'that' that is uncapitalized, on line 1 in testfile.tex.
+	Files will be treated as plain text.
+	MISSPELLING: 'frustrum' to 'frustum' on line 14 in README.md.
+	'tessela' to 'tessella' on line 14 in README.md.
+	SERIOUS: Title has a word 'that' that is uncapitalized, on line 20 in README.md.
 		The program is set to require that titles are capitalized.
 		To override, use '-t' on the command line to allow uncapitalized titles.
 		To be sure, you can test your title at https://capitalizemytitle.com/
-	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in testfile.tex.
-	SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line 2 in testfile.tex.
-		If you do not want to test for formal usage, put '-f' in the command line.
-	tip: consider removing or replacing 'very' on line 2 in testfile.tex.
+	tip: consider removing or replacing 'very' on line 21 in README.md.
 		'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/
-	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in testfile.tex.
-	'mip-map' to 'mipmap' (no hyphen), on line 3 in testfile.tex.
-	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\' to avoid having a 'double-space'
-		appear after the period, on line 4 in testfile.tex.
-		(To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)
-	MISSPELLING: 'frustrum' to 'frustum' on line 4 in testfile.tex.
-	tip: you can probably remove 'basically' on line 4 in testfile.tex.
-	hint: try to avoid using etc., as it adds no real information; on line 4 in testfile.tex.
-		If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\
-	SERIOUS: '/index' should be \index, on line 5 in testfile.tex.
-	SERIOUS: change ' ,' to ',' (space in front of comma), on line 5 in testfile.tex.
-	Please change 'Javascript' to 'JavaScript' on line 5 in testfile.tex.
-	tip: 'due to that' to 'because' on line 6 in testfile.tex.
-	tip: 'more specifically' to 'specifically' on line 6 in testfile.tex.
-	tip: you can probably not use 'literally' (and may mean 'figuratively') on line 6 in testfile.tex.
+	\cite needs a tilde ~\cite before citation to avoid separation, on line 22 in README.md.
+	'mip-map' to 'mipmap' (no hyphen), on line 22 in README.md.
+	MISSPELLING: 'frustrum' to 'frustum' on line 23 in README.md.
+	tip: you can probably remove 'basically' on line 23 in README.md.
+	hint: try to avoid using etc., as it adds no real information; on line 23 in README.md.
+	SERIOUS: '/index' should be \index, on line 24 in README.md.
+	Please change 'Javascript' to 'JavaScript' on line 24 in README.md.
+	tip: 'due to that' to 'because' on line 25 in README.md.
+	tip: 'more specifically' to 'specifically' on line 25 in README.md.
+	tip: you can probably not use 'literally' (and may mean 'figuratively') on line 25 in README.md.
 		If you think it's truly OK (e.g., it's part of a technical term, or you just like it),
-		either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.
-	SERIOUS: word duplication problem of word 'to' on line 7 in testfile.tex.
-	possibly serious: change '--' (short dash) to '---' on line 7 in testfile.tex, unless you are specifying a range.
-	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 7 in testfile.tex.
-	SERIOUS: the right apostrophe ' should probably be a left double-apostrophe ``, on line 7 in testfile.tex.
-	SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,
-		or use 'vs.\' on line 7 in testfile.tex.
-	Not capitalized at start of sentence (or the period should have a \ after it), on line 7 in testfile.tex.
+		you can ignore this warning, or edit this perl script and comment it out.
+	SERIOUS: word duplication problem of word 'to' on line 26 in README.md.
+		Since this is a text file, this warning might be spurious.
+	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 26 in README.md.
+	'mip-map' to 'mipmap' (no hyphen), on line 40 in README.md.
+	MISSPELLING: 'frustrum' to 'frustum' on line 44 in README.md.
+	tip: you can probably remove 'basically' on line 45 in README.md.
+	Please change 'Javascript' to 'JavaScript' on line 50 in README.md.
+	tip: 'due to that' to 'because' on line 51 in README.md.
+	tip: 'more specifically' to 'specifically' on line 52 in README.md.
+	tip: you can probably not use 'literally' (and may mean 'figuratively') on line 53 in README.md.
+		If you think it's truly OK (e.g., it's part of a technical term, or you just like it),
+		you can ignore this warning, or edit this perl script and comment it out.
+	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 58 in README.md.
 	==========================================================================================================
 
 This script is in no way foolproof and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to delete or modify any tests that you don't like.
