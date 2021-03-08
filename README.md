@@ -56,7 +56,7 @@ Before looking below, what errors do you see? By typing "perl chex_latex.pl test
 	SERIOUS: word duplication problem of word 'to' on line 7 in testfile.tex.
 	possibly serious: change '--' (short dash) to '---' on line 7 in testfile.tex, unless you are specifying a range.
 	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 7 in testfile.tex.
-	SERIOUS: the right apostrophe ' should probably be a left double-apostrophe ``, on line 7 in testfile.tex.
+	SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line 7 in testfile.tex.
 	SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,
 		or use 'vs.\' on line 7 in testfile.tex.
 	Not capitalized at start of sentence (or the period should have a \ after it), on line 7 in testfile.tex.

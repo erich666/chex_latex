@@ -1136,7 +1136,11 @@ sub READCODEFILE
 			print "SERIOUS: the double apostrophe should change to a '' on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && !$inequation && $twoline =~ / '/ ) {
-			print "SERIOUS: the right apostrophe ' should probably be a left double-apostrophe ``, on line $. in $input.\n";
+			if( $twoline =~ / ''/ ) {
+				print "SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line $. in $input.\n";
+			} else {
+				print "SERIOUS: the first right apostrophe ' should probably be a left apostrophe , on line $. in $input.\n";
+			}
 		}
 		if( !$twook && !$textonly && !$inequation && $twoline =~ / `/ && !($twoline =~ / ``/) ) {
 			print "SERIOUS: the left apostrophe ` should likely be a left double-apostrophe ``, on line $. in $input.\n";
