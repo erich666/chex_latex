@@ -111,6 +111,7 @@ while (@ARGV) {
 			} elsif ( $char eq 'u' ) {
 				# set $usstyle to false, to ignore U.S. punctuation style tests for period or comma outside quotes
 				$usstyle = 0;
+			# arguments followed by another argument
 			} elsif ( $char eq 'c' ) {
 				# test lines of code for if they're longer than the value set
 				$testlisting = shift(@ARGV);
@@ -120,12 +121,11 @@ while (@ARGV) {
 					&USAGE();
 					exit 0;
 				}
-			# TODO - hook these up
 			} elsif ( $char eq 'O' ) {
 				# instead of "chex_latex" meaning the line is OK, you can put your own single word.
 				$okword = shift(@ARGV);
 				if ( length($okword) == 0 || $i+1 < length($chars) ) {
-					print STDERR "The -o option must be followed by a word.'\n";
+					print STDERR "The -O option must be followed by a word.'\n";
 					&USAGE();
 					exit 0;
 				}
@@ -143,12 +143,14 @@ while (@ARGV) {
 			}
 		}
 	} else {
-		# we assume the argument must then be a directory or file - add it appropriately
+		# we assume the argument must then be a directory or file - test if it exists and add it appropriately
 		if ( -e $arg ) {
+			# is it a directory
 			if ( -d $arg) {
 				# directory
 				push @dirs, $arg;
 			} else {
+				# a text file, I guess...
 				$codefiles[$cfnum] = $arg;
 				$cfnum++;
 				if ( !($arg =~ /.tex$/) ) {
@@ -159,7 +161,7 @@ while (@ARGV) {
 				}
 			}
 		} else {
-			printf STDERR "The argument >$arg< is neither a valid file nor an option.\n";
+			printf STDERR "The argument >$arg< is neither a valid file nor directory, nor an option.\n";
 			&USAGE();
 			exit 0;
 		}
@@ -194,6 +196,8 @@ sub USAGE
 	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
 	print "  -s - turn ON style check; looks for poor usage, punctuation, and consistency.\n";
 	print "  -u - turn off U.S. style tests for putting commas and periods inside quotes.\n";
+	print "  -O word - this script ignores lines with comments 'chex_latex' in them. Use -O to change this keyword.\n";
+	print "  -R [refs.tex] - specify which file has \bibitem references in it, if any, for specialized testing.\n"
 }
 
 sub READRECURSIVEDIR
@@ -500,7 +504,8 @@ sub READCODEFILE
 		}
 
 		# check for section, etc. and see that words are capitalized
-		# can compare with Chicago online https://capitalizemytitle.com/ - may need to add more connector words to this subroutine.
+		# can compare with APA online https://capitalizemytitle.com/ - may need to add more connector words to this subroutine.
+		# APA style capitalizes anything 4 letters or longer: https://apastyle.apa.org/style-grammar-guidelines/capitalization/title-case
 		if ( !$testlisting &&
 			$theline =~ /\\chapter\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\section\{([A-Za-z| -]+)\}/ ||
@@ -534,9 +539,11 @@ sub READCODEFILE
 								$caps_used ? "a capitalized" : "an uncapitalized";
 						}
 						if ( $caps_used ) {
-							print "    Ignore if this word '$wds[$i]' is a 'connector word' such as 'in' or 'and' (and please report this bug).\n";
+							#if (length($wds[$i])<=3) {
+							#	print "    Ignore if this word '$wds[$i]' is a short 'connector word' similar to 'in' or 'and' (and please report this bug to me, erich\@acm.org).\n";
+							#}
 							print "    To be sure, you can test your title at https://capitalizemytitle.com/\n";
-							print "    You could edit the code and comment out this test, or add the word to CONNECTOR_WORD in the program.\n";
+							# print "    You could edit the code and comment out this test, or add the word to CONNECTOR_WORD in the program.\n";
 						}
 					}
 				}
@@ -1009,6 +1016,9 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /neighbour/ ) {
 				print "The British spelling 'neighbour' should change to 'neighbor' on line $. in $input.\n";
 			}
+			if( !$ok && $lctheline =~ /favour/ ) {
+				print "The British spelling 'favour' should change to 'favor' on line $. in $input.\n";
+			}
 			if( !$ok && $lctheline =~ /analyse/ ) {
 				print "The British spelling 'analyse' should change to 'analyze' on line $. in $input.\n";
 			}
@@ -1262,11 +1272,21 @@ sub READCODEFILE
 		if( $lctheline =~ /octtree/ ) {
 			print "MISSPELLING: 'octtree' to 'octree' on line $. in $input.\n";
 		}
+		# see https://linguaholic.com/linguablog/comma-before-or-after-thus/
 		if( $theline =~ /Thus / ) {
 			print "You likely want a comma after 'Thus' on line $. in $input.\n";
 		}
 		if( $theline =~ /However / ) {
 			print "You likely want a comma after 'However' on line $. in $input.\n";
+		}
+		if( $theline =~ /Fortunately / ) {
+			print "You likely want a comma after 'Fortunately' on line $. in $input.\n";
+		}
+		if( $theline =~ /Additionally / ) {
+			print "You likely want a comma after 'Additionally' on line $. in $input.\n";
+		}
+		if( $theline =~ /Therefore / ) {
+			print "You likely want a comma after 'Therefore' on line $. in $input.\n";
 		}
 		if( $theline =~ /So / ) {
 			print "You likely want a comma after 'So' on line $. in $input.\n";
@@ -1277,6 +1297,7 @@ sub READCODEFILE
 		if( $theline =~ /Finally / ) {
 			print "You likely want a comma after 'Finally' on line $. in $input.\n";
 		}
+		# see https://www.grammarly.com/blog/commas-after-introductory-phrases/
 		if( $theline =~ /For this reason / ) {
 			print "You likely want a comma after 'For this reason' on line $. in $input.\n";
 		}
@@ -1384,10 +1405,10 @@ sub READCODEFILE
 			print "tip: change 'thusly' to 'thus' or 'therefore' on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $lctwoline =~ /point in time/ && !$inquote ) {
-			print "tip: avoid the wordy phrase 'point in time' at this point in time, on line $. in $input.\n";
+			print "tip: avoid the wordy phrase 'point in time' at this point in time on line $. in $input.\n";
 		}
 		if( !$ok && !$isref && $lctheline =~ /literally/ && !$inquote ) {
-			print "tip: you can probably not use 'literally' (and may mean 'figuratively'), on line $. in $input.\n";
+			print "tip: you can probably not use 'literally' (and may mean 'figuratively') on line $. in $input.\n";
 			&SAYOK();
 		}
 		if( !$twook && $lctwoline =~ / a lot more/ ) {
@@ -1410,7 +1431,7 @@ sub READCODEFILE
 			print "It is likely that 'well-suited' should be 'well suited', unless it's an adjective before a noun, on line $. in $input.\n";
 			&SAYOK();
 		}
-		# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp
+		# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp - Rule 3, "physically" is an adverb
 		if( !$isref && $lctheline =~ /physically-based/ ) {
 			print "'physically-based' should change to 'physically based' on line $. in $input.\n";
 		}
@@ -1449,7 +1470,7 @@ sub READCODEFILE
 			print "'view independent' should change to 'view-independent' on line $. in $input.\n";
 		}
 		if( &WORDTEST($lctwoline,"defacto ",$lcprev_line,"defacto") ) {
-			print "SERIOUS: change 'defacto' to 'de facto', on line $. in $input.\n";
+			print "SERIOUS: change 'defacto' to 'de facto' on line $. in $input.\n";
 		}
 		# from Dreyer's English, a great book, from "The Trimmables", phrases that can be shortened without loss
 		if( !$twook && !$isref && $lctwoline =~ /absolutely certain/ ) {
@@ -1498,7 +1519,7 @@ sub READCODEFILE
 			print "'end result' can shorten to 'result' (if you are comparing to an intermediate result, how about 'ultimate result'?) on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $lctwoline =~ /equally as / ) {
-			print "'equally as' can shorten to 'equally' or 'as' - don't use both, on line $. in $input.\n";
+			print "'equally as' can shorten to 'equally' or 'as' - don't use both on line $. in $input.\n";
 		}
 		if( !$twook && !$isref && $lctwoline =~ /exact same/ ) {
 			print "'exact same' can shorten to 'same' on line $. in $input.\n";
@@ -2920,6 +2941,18 @@ sub CONNECTOR_WORD
 		$testword eq "per" ||
 		$testword eq "via" ||
 		$testword eq "and/or" ||
+		$testword eq "but" ||
+		$testword eq "if" ||
+		$testword eq "nor" ||
+		$testword eq "at" ||
+		$testword eq "off" ||
+		$testword eq "per" ||
+		$testword eq "up" ||
+		$testword eq "via" ||
+		# questionable: https://apastyle.apa.org/style-grammar-guidelines/capitalization/title-case says lowercase,
+		# https://capitalizemytitle.com/style/Chicago/ says uppercase
+		#$testword eq "so" ||
+		#$testword eq "yet" ||
 		$testword eq "the" ) {
 		return 1;
 	}
@@ -2947,6 +2980,14 @@ sub CONNECTOR_WORD
 		$testword eq "Per" ||
 		$testword eq "Via" ||
 		$testword eq "And/Or" ||
+		$testword eq "But" ||
+		$testword eq "If" ||
+		$testword eq "Nor" ||
+		$testword eq "At" ||
+		$testword eq "Off" ||
+		$testword eq "Per" ||
+		$testword eq "Up" ||
+		$testword eq "Via" ||
 		$testword eq "The" )) {
 		return 2;
 	}

@@ -1,52 +1,10 @@
 # chex_latex
 LaTeX file checking tool.
 
-This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and many other bugs. Put it in your directory of .tex files and run it to look for common mistakes. You can also use it on raw text files, just use the -r option to disable LaTeX-specific warnings.
+This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and many other bugs. Put it in your directory of .tex files and run it to look for common mistakes. If a message confuses you, look in the Perl script itself, as there are comments and links about some of the issues flagged. You can also use this script on raw text files; the script will automatically not do LaTeX testing.
 
-As an example, here is a snippet of a .tex file; first, look it over yourself:
+You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of all of them. A few minutes wading through these can catch errors hard to notice otherwise. That said, definitely don't take the script's word for it. This program is no substitute for understanding the rules of grammar and LaTeX. One other trick I recommend: paste your text into Microsoft Word and see what it turns up.
 
-	\section{Algorithms that Use Hardware}
-	Here we'll discuss the very many algorithms that can be implemented on the GPU. For more information, Castelli
-	\cite{Castelli2018} gives a thorough overview of the use of mip-maps for level of detail, compute shaders for
-	frustrum culling, etc. and discusses which APIs support these techniques. Basically, you can use anything from
-	DirectX 12\index{DirectX 12} with C++ to WebGL\index{WebGL} with Javascript/index{Javascript} as your API ,
-	due to that these all talk to the same underlying hardware. More specifically, there is literally no better way to
-	to accelerate processing data, vs. using just the CPU--so ''just do it''.
-
-Here's what chex_latex.pl finds in a fraction of a second:
-
-	file is testfile.tex
-	SERIOUS: Title has a word 'Use' that is capitalized, on line 1 in .\testfile.tex.
-		This does not match the style in the first \section encountered
-		on line 1 at word 'that' in .\testfile.tex, which is an uncapitalized word.
-	SERIOUS: Title has a word 'Hardware' that is capitalized, on line 1 in .\testfile.tex.
-		This does not match the style in the first \section encountered
-		on line 1 at word 'that' in .\testfile.tex, which is an uncapitalized word.
-	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in .\testfile.tex.
-	SERIOUS: no contractions: ''ll' to ' will' on line 2 in .\testfile.tex.
-	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in .\testfile.tex.
-	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\' to avoid having a 'double-space'
-		appear after the period, on line 4 in .\testfile.tex.
-		(To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)
-	MISSPELLING: 'frustrum' to 'frustum' on line 4 in .\testfile.tex.
-	tip: you can probably remove 'basically' on line 4 in .\testfile.tex.
-	SERIOUS: '/index' should be \index, on line 5 in .\testfile.tex.
-	SERIOUS: change ' ,' to ',' (space in front of comma), on line 5 in .\testfile.tex.
-	Please change 'Javascript' to 'JavaScript' on line 5 in .\testfile.tex.
-	SERIOUS: change ' ,' to ',' (space in front of comma), on line 6 in .\testfile.tex.
-	tip: 'due to that' to 'because' on line 6 in .\testfile.tex.
-	tip: 'more specifically' to 'specifically' on line 6 in .\testfile.tex.
-	tip: you can probably not use 'literally' (and may mean 'figuratively'), on line 6 in .\testfile.tex.
-		If you think it's OK, put on the end of the line the comment '% chex_latex'
-	SERIOUS: word duplication problem of word 'to' on line 7 in .\testfile.tex.
-	SERIOUS: change '--' (short dash) to '---' on line 7 in .\testfile.tex.
-	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 7 in .\testfile.tex.
-	SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,
-		or use 'vs.\' on line 7 in .\testfile.tex.
-	Not capitalized at start of sentence (or the period should have a \ before it), on line 7 in .\testfile.tex.	==========================================================================================================
-
-You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of all of them. A few minutes wading through these can catch errors hard to notice otherwise.
-	
 The chex_latex.pl script tests for:
 * Doubled words, such as "the the."
 * Grammatical goofs or clunky phrasing, as well as rules for formal writing, such as not using contractions.
@@ -56,6 +14,52 @@ The chex_latex.pl script tests for:
 * Misspellings used in computer graphics, e.g., "tesselation" and "frustrum" (and it's easy to add your own).
 * Any \bibitems's that do not have any \cite's, and vice versa.
 * And much else - more than 300 tests in all.
+
+As an example, here is testfile.tex file; first, look it over yourself:
+
+	\section{Algorithms that Use Hardware}
+	Here we'll discuss the very many algorithms that can be implemented on the GPU. For more information, Castelli
+	\cite{Castelli2018} gives a thorough overview of the use of mip-maps for level of detail, compute shaders for
+	frustrum culling, etc. and discusses which APIs support these techniques. Basically, you can use anything from
+	DirectX 12\index{DirectX 12} with C++ to WebGL\index{WebGL} with Javascript/index{Javascript} as your API , due
+	to that these all talk to the same underlying hardware. More specifically, there is literally no better way to
+	to accelerate processing data, vs. using just the CPU--so ''just do it''.
+
+Before looking below, what errors do you see? By typing "perl chex_latex.pl testfile.tex", here's what chex_latex.pl finds:
+
+	SERIOUS: Title has a word 'that' that is uncapitalized, on line 1 in testfile.tex.
+		The program is set to require that titles are capitalized.
+		To override, use '-t' on the command line to allow uncapitalized titles.
+		To be sure, you can test your title at https://capitalizemytitle.com/
+	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in testfile.tex.
+	SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line 2 in testfile.tex.
+	tip: consider removing or replacing 'very' on line 2 in testfile.tex.
+		'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/
+	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in testfile.tex.
+	'mip-map' to 'mipmap' (no hyphen), on line 3 in testfile.tex.
+	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\' to avoid having a 'double-space'
+		appear after the period, on line 4 in testfile.tex.
+		(To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)
+	MISSPELLING: 'frustrum' to 'frustum' on line 4 in testfile.tex.
+	tip: you can probably remove 'basically' on line 4 in testfile.tex.
+	hint: try to avoid using etc., as it adds no real information; on line 4 in testfile.tex.
+		If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\
+	SERIOUS: '/index' should be \index, on line 5 in testfile.tex.
+	SERIOUS: change ' ,' to ',' (space in front of comma), on line 5 in testfile.tex.
+	Please change 'Javascript' to 'JavaScript' on line 5 in testfile.tex.
+	tip: 'due to that' to 'because' on line 6 in testfile.tex.
+	tip: 'more specifically' to 'specifically' on line 6 in testfile.tex.
+	tip: you can probably not use 'literally' (and may mean 'figuratively') on line 6 in testfile.tex.
+		If you think it's truly OK (e.g., it's part of a technical term, or you just like it),
+		either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.
+	SERIOUS: word duplication problem of word 'to' on line 7 in testfile.tex.
+	possibly serious: change '--' (short dash) to '---' on line 7 in testfile.tex, unless you are specifying a range.
+	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 7 in testfile.tex.
+	SERIOUS: the right apostrophe ' should probably be a left double-apostrophe ``, on line 7 in testfile.tex.
+	SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,
+		or use 'vs.\' on line 7 in testfile.tex.
+	Not capitalized at start of sentence (or the period should have a \ after it), on line 7 in testfile.tex.
+	==========================================================================================================
 
 This script is in no way foolproof, and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to delete or modify any tests that you don't like.
 
@@ -81,12 +85,12 @@ This script is one used for the book ''Real-Time Rendering'' and so has a bunch 
 
 The "chex_latex" says the line is OK and won't be tested. Beware, though: if you make any other errors on this line in the future, they also won't be tested.
 
-The options are:
+The main options are:
 
 	-d - turn off dash tests for '-' or '--' flagged as needing to be '---'.
 	-f - turn off formal writing check; allows contractions and other informal usage.
 	-p - turn ON picky style check, which looks for more style problems but is not so reliable.
-	-s - turn off style check; looks for poor usage, punctuation, and consistency.
+	-s - turn off style check; looks for poor usage, punctuation, and consistency problems.
 	-t - turn off title capitalization check; titles are assumed to be properly capitalized otherwise.
 	-u - turn off U.S. style tests for putting commas and periods inside quotes.
 	
@@ -94,11 +98,9 @@ So if you want all the tests, do:
 
 	perl chex_latex.pl -p [directory or files]
 	
-If you want the bare minimum, do:
+If you want the bare minimum, checking just for LaTeX problems and doubled words, do:
 
     perl chex_latex.pl -dstfu [directory or files]
-
-If a message confuses you, look in the Perl script itself, as there are comments about some of the issues.
 
 To run this checker against plain text files, just specify the files, as normal:
 
@@ -116,7 +118,13 @@ Instead of adding a comment "% chex_latex" to lines you want the script to ignor
 	
 By default, the file "refs.tex" is the one that contains \bibitem entries. Our book uses these, just about no one else does. If you actually do use \bibitem, this one is worth setting to your references file. It will tell you whether you reference something that doesn't exist in the references file, and whether any references in the file are not used in the text.
 
-Thanks to John Owens for providing a bunch of theses and technical articles for testing.
+One last obscure option:
+
+    -c 100
+
+This will go through your file and tell you if any lines are longer than 100 characters.
+
+Thanks to John Owens for providing a bunch of the program's tips and technical articles for testing.
 
 # Bonus Tool: Aspell Sorter for Batch Spell Checking
 
@@ -136,7 +144,7 @@ Say that file is now in C:\temp. I then run Aspell on this file by going to the 
 
     bin\aspell list -t < C:\temp\alltext.txt > C:\temp\alltypos.txt
 
-This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, code bits will get listed again and again, and other spurious problems flagged. I find it much faster to look at a sorted list of typos, showing each word just once. This can cut down the number of words you need to examine by [a factor of five](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/).
+This gives a long file of misspelled (or, more likely, not found, such as names) words, in order encountered. The same author's name will show up a bunch of times, code bits will get listed again and again, and other spurious problems flagged. I find it much faster to look at a sorted list of typos, showing each word just once. I recommend starting at the end of the list and working upwards. This process can cut down the number of words you need to examine by [a factor of five](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/).
 
 To make such a list, use the script aspell_sorter.pl:
 
