@@ -1190,10 +1190,10 @@ sub READCODEFILE
 		# For example: Franklin D. Roosevelt. For longer sets of capital letters, e.g., GPU, DNA,
 		# we want to have a "long space," as in: "There are many types of DNA.  We will discuss..."
 		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\./ ) {
-			print "Sentence ending in the capital letters '$1.' should instead be '$1\\@.' to have proper spacing\n    after the period, on line $. in $input.\n";
+			print "Sentence ending in the capital letters '$1.' should instead be '$1\\@.' to have proper 'long' spacing after the period,\n    on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\)\./ ) {
-			print "Sentence ending in the capital letters '$1' and ').' should instead be '$1)\\@.' to have proper spacing\n    after the period, on line $. in $input.\n";
+			print "Sentence ending in the capital letters '$1' and ').' should instead be '$1)\\@.' to have proper 'long' spacing after the period,\n    on line $. in $input.\n";
 		}
 
 		if( $style && !$twook && !$textonly && $twoline =~ /Image Courtesy/ || $twoline =~ /Images Courtesy/ ) {
