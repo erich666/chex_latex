@@ -23,6 +23,7 @@ my $style = 1;
 my $picky = 0;
 my $formal = 1;
 my $dashes = 1;
+my $labels = 1;
 my $usstyle = 1;
 my $textonly = 0;
 my $testlisting = 0; # If > 0, check code line length as set
@@ -100,6 +101,9 @@ while (@ARGV) {
 			} elsif ( $char eq 'f' ) {
 				# set $formal to false, to allow informal bits such as contractions
 				$formal = 0;
+			} elsif ( $char eq 'l' ) {
+				# set $labels to false, to ignore duplicate labels
+				$labels = 0;
 			} elsif ( $char eq 't' ) {
 				# set $force_title_cap to false, so that titles don't have to be capitalized.
 				# Still check internal consistency (titles are compared to each other), however.
@@ -108,8 +112,8 @@ while (@ARGV) {
 				# set $picky to TRUE, to check for things that may be stylistically suspect
 				$picky = 1;
 			} elsif ( $char eq 's' ) {
-				# set $style to TRUE to catch a number of style problems
-				$style = 1;
+				# suppress $style to FALSE to ignore style problems
+				$style = 0;
 			} elsif ( $char eq 'u' ) {
 				# set $usstyle to false, to ignore U.S. punctuation style tests for period or comma outside quotes
 				$usstyle = 0;
@@ -233,56 +237,58 @@ sub PROCESSFILES
 		}
 	}
 
-	my $elem;
-	my $potential = 0;
-	foreach $elem ( sort keys %label ) {
-		if ( !exists( $ref{$elem} ) ) {
-			# check if figure is labeled. TODO: should add tables
-			if ( $labelfigure{$elem} == 1 && $labelimportant{$elem} ) {
-				if ( $potential == 0 ) { $potential = 1; printf "\n\n*************************\nPOTENTIAL ERRORS FOLLOW:\n"; }
-				print "Labeled, but not referenced via \\ref: $elem in \'$label{$elem}\'\n";
+    # better would be to always check labels, etc., among files in the same directory, clear list when a new directory is hit. TODO
+	if ($labels) {
+		my $elem;
+		my $potential = 0;
+		foreach $elem ( sort keys %label ) {
+			if ( !exists( $ref{$elem} ) ) {
+				# check if figure is labeled. TODO: should add tables
+				if ( $labelfigure{$elem} == 1 && $labelimportant{$elem} ) {
+					if ( $potential == 0 ) { $potential = 1; printf "\n\n*************************\nPOTENTIAL ERRORS FOLLOW:\n"; }
+					print "Labeled, but not referenced via \\ref: $elem in \'$label{$elem}\'\n";
+				}
 			}
 		}
-	}
-	# element referenced but not found
-	my $critical = 0;
-	foreach $elem ( sort keys %ref ) {
-		if ( !exists( $label{$elem} ) && !($elem =~ /code:/ || $elem =~ /list:/) ) {
-			if ( $critical == 0 ) { $critical = 1; printf "\n\n*************************\nCRITICAL ERRORS FOLLOW:\n"; }
-			print "Referenced, does not exist (perhaps you meant to \\cite and not \\ref or \\pageref?): \'$elem\' in \'$ref{$elem}\'\n";
-		}
-	}
-	
-	if ( $foundref ) {
-		# element cited but not found
-		foreach $elem ( sort keys %cite ) {
-			if ( !exists( $bibitem{$elem} ) ) {
+		# element referenced but not found
+		my $critical = 0;
+		foreach $elem ( sort keys %ref ) {
+			if ( !exists( $label{$elem} ) && !($elem =~ /code:/ || $elem =~ /list:/) ) {
 				if ( $critical == 0 ) { $critical = 1; printf "\n\n*************************\nCRITICAL ERRORS FOLLOW:\n"; }
-				print "Cited, does not exist (perhaps you meant to \\ref?): \'$elem\' in \'$cite{$elem}\'\n";
+				print "Referenced, does not exist (perhaps you meant to \\cite and not \\ref or \\pageref?): \'$elem\' in \'$ref{$elem}\'\n";
 			}
 		}
-	}
-
-	# bad citation order
-	for ($i = 0; $i < $conum ; $i++ ){
-		my $subf = $citeorder[$i];
-		my @fldc = split(/,/,$subf);
-		my $checkit = 1;
-		#printf "on $i with $subf\n";
-		for ( my $j = 1; $j <= $#fldc && $checkit; $j++ ) {
-			if ( $biborder{$fldc[$j-1]} > $biborder{$fldc[$j]} ) {
-				$checkit = 0;
-				print "ERROR: citations *$subf* out of order (or reference missing) at $citeloc[$i]\n";
+		
+		if ( $foundref ) {
+			# element cited but not found
+			foreach $elem ( sort keys %cite ) {
+				if ( !exists( $bibitem{$elem} ) ) {
+					if ( $critical == 0 ) { $critical = 1; printf "\n\n*************************\nCRITICAL ERRORS FOLLOW:\n"; }
+					print "Cited, does not exist (perhaps you meant to \\ref?): \'$elem\' in \'$cite{$elem}\'\n";
+				}
 			}
 		}
-	}
-	
-	# bibitems not referenced
-	printf "==========================================================================================================\n";
-	foreach $elem ( sort keys %bibitem ) {
-		if ( !exists( $cite{$elem} ) ) {
-			if ( $critical == 0 ) { $critical = 1; printf "\n\n*************************\nCRITICAL ERRORS FOLLOW:\n"; }
-			print "bibitem not referenced: $elem in $bibitem{$elem}\n";
+		# bad citation order
+		for ($i = 0; $i < $conum ; $i++ ){
+			my $subf = $citeorder[$i];
+			my @fldc = split(/,/,$subf);
+			my $checkit = 1;
+			#printf "on $i with $subf\n";
+			for ( my $j = 1; $j <= $#fldc && $checkit; $j++ ) {
+				if ( $biborder{$fldc[$j-1]} > $biborder{$fldc[$j]} ) {
+					$checkit = 0;
+					print "ERROR: citations *$subf* out of order (or reference missing) at $citeloc[$i]\n";
+				}
+			}
+		}
+		
+		# bibitems not referenced
+		printf "==========================================================================================================\n";
+		foreach $elem ( sort keys %bibitem ) {
+			if ( !exists( $cite{$elem} ) ) {
+				if ( $critical == 0 ) { $critical = 1; printf "\n\n*************************\nCRITICAL ERRORS FOLLOW:\n"; }
+				print "bibitem not referenced: $elem in $bibitem{$elem}\n";
+			}
 		}
 	}
 }
@@ -499,7 +505,7 @@ sub READCODEFILE
 			$subfigure = 1;
 		}
 		# it's not so nice to make width=1.0, 100%, as the figure will look wider than the text.
-		if ( !$testlisting &&!$ok && !$subfigure && $theline =~ /\\includegraphics\[/ ) {
+		if ( $style && !$testlisting &&!$ok && !$subfigure && $theline =~ /\\includegraphics\[/ ) {
 			if ( !$subfigure && $theline =~ /width=1.0\\/ || $theline =~ /width=\\/) {
 				print "POSSIBLE OVERHANG: please make the figure width a maximum of 0.95, on line line $. in $input.\n";
 			}
@@ -719,8 +725,8 @@ sub READCODEFILE
 		}
 		# yes, use twoline here.
 		if( !$ok && !$inequation && !$infigure && $theline =~ /\\ref\{/ &&
-			!($twoline =~ /Figure/ || $twoline =~ /Chapter/ || $twoline =~ /Section/ || $twoline =~ /Equation/ || 
-			$twoline =~ /Table/ || $twoline =~ /Listing/ || $twoline =~ /Appendix/) ) {
+			!($lctwoline =~ /figure/ || $lctwoline =~ /chapter/ || $lctwoline =~ /section/ || $lctwoline =~ /equation/ || 
+			$lctwoline =~ /table/ || $lctwoline =~ /listing/ || $lctwoline =~ /appendix/) ) {
 			print "SERIOUS: '\\ref' doesn't have 'Figure', 'Section', 'Equation', 'Table', or 'Appendix'\n    in front of it, on line $. in $input.\n";
 		}
 		if( !$ok && $theline =~ /\/label\{/ ) {
@@ -761,7 +767,7 @@ sub READCODEFILE
 		if( !$ok && $theline =~ /~cite\{/ ) {
 			print "'cite' is missing a leading \\ for '\\cite' on line $. in $input.\n";
 		}
-		if( $theline =~ /see~\\cite\{/ ) {
+		if( $style && $theline =~ /see~\\cite\{/ ) {
 			print "do not use `see~\\cite', on line $. in $input - do not consider citations something you can point at.\n";
 		}
 		# ref should have a \ before this keyword
@@ -776,10 +782,10 @@ sub READCODEFILE
 		# label used twice; also check for label={code} in listings
 		if ( ($str =~ /\\label\{/) || ($str =~ /label\=/) ) {
 			my $foundlabel = 0;
-			while ( ($str =~ /\\label\{([\w_:-]+)}/) || ($str =~ /label\=\{([\w_:-]+)}/) || ($str =~ /label\=([\w_:-]+)/) ) {
+			while ( ($str =~ /\\label\{([\w_:-\s]+)}/) || ($str =~ /label\=\{([\w_:-\s]+)}/) || ($str =~ /label\=([\w_:-\s]+)/) ) {
 				$str = $';
 				$foundlabel = 1;
-				if ( exists($label{$1}) ) {
+				if ( $labels && exists($label{$1}) ) {
 					print "CRITICAL ERROR: duplicate label '$1' - change it in this file to be unique.\n";
 				}
 				# don't really need to check for unused label if label is in a subfigure.
@@ -1024,11 +1030,23 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /analyse/ ) {
 				print "The British spelling 'analyse' should change to 'analyze' on line $. in $input.\n";
 			}
-			if( !$ok && $lctheline =~ /summarise/ ) {
-				print "The British spelling 'summarise' should change to 'summarize' on line $. in $input.\n";
+			if( !$ok && $lctheline =~ /discretis/ ) {
+				print "The British spelling 'discretis*' should change to 'discretiz*' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /generalis/ ) {
+				print "The British spelling 'generalis*' should change to 'generaliz*' on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /emphasise/ ) {
 				print "The British spelling 'emphasise' should change to 'emphasize' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /parametris/ ) {
+				print "The British spelling 'parametris*' should change to 'parametriz*' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /summarise/ ) {
+				print "The British spelling 'summarise' should change to 'summarize' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /theatre/ ) {
+				print "The British spelling 'theatre' should change to 'theater' on line $. in $input.\n";
 			}
 		}
 		
@@ -1043,10 +1061,6 @@ sub READCODEFILE
 		if( !$ok && !$isref && !$textonly && !$inequation && $lctheline =~ /(\d+)x/ && !($lctheline =~ /\w(\d+)x/) && !($lctheline =~ / 0x/) && !($lctheline =~ /\$/) ) {
 			print "Do not use $1x, use \$$1 \\times\$, on line $. in $input.\n";
 		}
-		# we like to avoid ending a sentence with a preposition.
-		if( !$twook && $twoline =~ / with\. / ) {
-			print "consider: 'with.' at end of sentence on line $. in $input. Reword if it's not convoluted to do so.\n";
-		}
 		if( !$ok && $theline =~ /\/footnote/ ) {
 			print "SERIOUS: change '/footnote' to '\\footnote' on line $. in $input.\n";
 		}
@@ -1057,7 +1071,8 @@ sub READCODEFILE
 		#if( !$twook && $lctwoline =~ /\w\\footnote/ ) {
 		#	print "SERIOUS: 'w\\footnote' to ' \\footnote' on line $. in $input.\n";
 		#}
-		if( !$ok && !$textonly && $dashes && ($theline =~ / -- / || $theline =~ / --~/) ) {
+		# flushright usually means someone's making a quote, so I guess two dashes is OK?
+		if( !$ok && !$textonly && $dashes && ($theline =~ / -- / || $theline =~ / --~/) && !($theline =~ /flushright/)) {
 			print "POTENTIALLY SERIOUS: change ' -- ' to the full dash '---' on line $. in $input.\n";
 		}
 		if( $dashes && !$intable && !$twook && !$textonly ) {
@@ -1126,8 +1141,9 @@ sub READCODEFILE
 		if( !$ok && !$textonly && $theline =~ /–/ ) {
 			print "SERIOUS: change nonstandard dash to a proper LaTeX - dash on line $. in $input.\n";
 		}
+		# see https://www.maths.tcd.ie/~dwilkins/LaTeXPrimer/QuotDash.html
 		if( !$ok && !$textonly && !$inequation && $theline =~ /"/ && !($theline =~ /\\"/) ) {
-			print "SERIOUS: the double apostrophe \" should change to a \'\' on line $. in $input.\n";
+			print "Note: the double apostrophe \" (used only for right-side quotes in LaTeX) should likely change to a \`\` or \'\' on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && !$inequation && $theline =~ /“/ && !($theline =~ /\\"/) ) {
 			print "SERIOUS: the double apostrophe should change to a \'\' on line $. in $input.\n";
@@ -1137,13 +1153,13 @@ sub READCODEFILE
 		}
 		if( !$twook && !$textonly && !$inequation && $twoline =~ / '/ ) {
 			if( $twoline =~ / ''/ ) {
-				print "SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line $. in $input.\n";
+				print "POSSIBLY SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line $. in $input.\n";
 			} else {
-				print "SERIOUS: the first right apostrophe ' should probably be a left apostrophe , on line $. in $input.\n";
+				print "POSSIBLY SERIOUS: the first right apostrophe ' should probably be a left apostrophe , on line $. in $input.\n";
 			}
 		}
 		if( !$twook && !$textonly && !$inequation && $twoline =~ / `/ && !($twoline =~ / ``/) ) {
-			print "SERIOUS: the left apostrophe ` should likely be a left double-apostrophe ``, on line $. in $input.\n";
+			print "POSSIBLY SERIOUS: the left apostrophe ` should likely be a left double-apostrophe ``, on line $. in $input.\n";
 		}
 
 		if( !$twook && !$textonly && $twoline && $twoline =~ / Corp\. / ) {
@@ -1163,7 +1179,7 @@ sub READCODEFILE
 		#}
 		# last bit on this line: if text, then ignore "..."
 		# also ignore "../" as this could be an "include" path in an .html file
-		if( !$textonly && !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && (!$textonly || !($twoline =~ /\.\.\./)) && ($textonly || !($twoline =~ /\.\.\//))  ) {
+		if( !$textonly && !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && !($twoline =~ /\.\.\./) && !($twoline =~ /\.\.\//)  ) {
 			print "Doubled periods, on line $. in $input.\n";
 		}
 		if( !$twook && !$infigure && $twoline =~ /,,/ ) {
@@ -1174,48 +1190,48 @@ sub READCODEFILE
 		# For example: Franklin D. Roosevelt. For longer sets of capital letters, e.g., GPU, DNA,
 		# we want to have a "long space," as in: "There are many types of DNA.  We will discuss..."
 		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\./ ) {
-			print "Sentence ending in the capital letters $1 should have a '\\@.' for spacing, on line $. in $input.\n";
+			print "Sentence ending in the capital letters '$1.' should instead be '$1\\@.' to have proper spacing\n    after the period, on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\)\./ ) {
-			print "Sentence ending in the capital letters $1 and ) should have a ')\\@.' for spacing, on line $. in $input.\n";
+			print "Sentence ending in the capital letters '$1' and ').' should instead be '$1)\\@.' to have proper spacing\n    after the period, on line $. in $input.\n";
 		}
 
-		if( !$twook && !$textonly && $twoline =~ /Image Courtesy/ || $twoline =~ /Images Courtesy/ ) {
+		if( $style && !$twook && !$textonly && $twoline =~ /Image Courtesy/ || $twoline =~ /Images Courtesy/ ) {
 			print "Change 'Courtesy' to 'courtesy' on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] ms/ ) {
 			print "' ms' to '~ms' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
-		if( !$ok && !$textonly && !$isref && !$inequation && $theline =~ /([\.\d]+)ms/ ) {
+		if( $style && !$ok && !$textonly && !$isref && !$inequation && $theline =~ /([\.\d]+)ms/ ) {
 			print "Change '$1ms' to '$1~ms' (i.e., add a space), on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] fps/ ) {
 			print "' FPS' to '~FPS' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$inequation && $theline =~ /(\d+)fps/ ) {
+		if( $style && !$ok && !$isref && !$inequation && $theline =~ /(\d+)fps/ ) {
 			print "Change '$1FPS' to '$1~FPS' (i.e., add a space), on line $. in $input.\n";
 		}
-		if( !$ok && $theline =~ /fps/ ) {
+		if( $style && !$ok && $theline =~ /fps/ ) {
 			print "'fps' to 'FPS' on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] Hz/ ) {
 			print "' Hz' to '~Hz' to avoid having the number separated from its units, on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$inequation && $lctheline =~ /(\d+)hz/ ) {
+		if( $style && !$ok && !$isref && !$inequation && $lctheline =~ /(\d+)hz/ ) {
 			print "Change '$1Hz' to '$1~Hz' (i.e., add a space), on line $. in $input.\n";
 		}
-		if( !$ok && !$isref && !$inequation && $theline =~ /(\d+)K / ) {
+		if( $style && !$ok && !$isref && !$inequation && $theline =~ /(\d+)K / ) {
 			print "Change '$1K' to '$1k' (i.e., lowercase 'k'), on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && !$inequation && $lctwoline =~ /(\d+) k / ) {
+		if( $style && !$twook && !$isref && !$inequation && $lctwoline =~ /(\d+) k / ) {
 			print "Change '$1 k' to '$1k' (i.e., lowercase 'k'), on line $. in $input.\n";
 		}
 		# ----------------------------------
 		# Style: comma and period punctuation
-		if( !$twook && $twoline =~ /\w\se\.g\./ ) {
+		if( $formal && !$twook && $twoline =~ /\w\se\.g\./ ) {
 			print "SERIOUS: ' e.g.' does not have a comma before it, on line $. in $input.\n";
 		}
-		if( !$twook && $lctwoline =~ / et al/ ) {
+		if( $formal && !$twook && $lctwoline =~ / et al/ ) {
 			my $post = $';
 			if ( !($post =~ /^\./ || $post =~ /^ia/) ) {
 				print "'et al' is not followed by '.', i.e., 'et al.', on line $. in $input.\n";
@@ -1233,7 +1249,7 @@ sub READCODEFILE
 		# see https://english.stackexchange.com/questions/121054/which-one-is-correct-et-al-s-or-et-al
 		# and https://forum.wordreference.com/threads/how-to-use-the-possessive-s-with-et-al.1621357/
 		# Typical rewrite of "Marquando et al.'s work" is "The work by Marquando et al."
-		if( $lctwoline =~ /et al.'s/ ) {
+		if( $formal && $lctwoline =~ /et al.'s/ ) {
 			print "Rewrite to avoid 'et al.'s', which is half Latin, half English, on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && $twoline =~ / al\. / ) {
@@ -1252,7 +1268,7 @@ sub READCODEFILE
 		if( !$twook && !$isref && !$textonly && $twoline =~ / vs\. / ) {
 			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs.\\' on line $. in $input.\n";
 		}
-		if( !$twook && !$isref && $twoline =~ / vs / ) {
+		if( $formal && !$twook && !$isref && $twoline =~ / vs / ) {
 			print "SERIOUS: change 'vs' to 'versus' on line $. in $input\n";
 		}
 		if( !$twook && !$isref && !$textonly && $twoline =~ / etc\. [a-z]/ ) {
@@ -1266,56 +1282,12 @@ sub READCODEFILE
 			print "Beware, there is a TODO in the text itself at line $. in $input.\n";
 			print "    the line says: $theline\n";
 		}
-		if( !$twook && !$textonly && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !($twoline =~ /\.\.\./) && !$isref && !$inequation && !$period_problem ) {
-			printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : " (or the period should have a \\ after it)";
-		}
-		if( !$ok && $theline =~ /Javascript/) {
-			print "Please change 'Javascript' to 'JavaScript' on line $. in $input.\n";
-		}
+		# common misspellings
 		if( $lctheline =~ /frustrum/ ) {
 			print "MISSPELLING: 'frustrum' to 'frustum' on line $. in $input.\n";
 		}
 		if( $lctheline =~ /octtree/ ) {
 			print "MISSPELLING: 'octtree' to 'octree' on line $. in $input.\n";
-		}
-		# see https://linguaholic.com/linguablog/comma-before-or-after-thus/
-		if( $theline =~ /Thus / ) {
-			print "You likely want a comma after 'Thus' on line $. in $input.\n";
-		}
-		if( $theline =~ /However / ) {
-			print "You likely want a comma after 'However' on line $. in $input.\n";
-		}
-		if( $theline =~ /Fortunately / ) {
-			print "You likely want a comma after 'Fortunately' on line $. in $input.\n";
-		}
-		if( $theline =~ /Additionally / ) {
-			print "You likely want a comma after 'Additionally' on line $. in $input.\n";
-		}
-		if( $theline =~ /Therefore / ) {
-			print "You likely want a comma after 'Therefore' on line $. in $input.\n";
-		}
-		if( $theline =~ /So / ) {
-			print "You likely want a comma after 'So' on line $. in $input.\n";
-		}
-		if( $theline =~ /Indeed / ) {
-			print "You likely want a comma after 'Indeed' on line $. in $input.\n";
-		}
-		if( $theline =~ /Finally / ) {
-			print "You likely want a comma after 'Finally' on line $. in $input.\n";
-		}
-		# see https://www.grammarly.com/blog/commas-after-introductory-phrases/
-		if( $theline =~ /For this reason / ) {
-			print "You likely want a comma after 'For this reason' on line $. in $input.\n";
-		}
-		# your mileage may vary, depending on how you index, e.g., we do \index{k-d tree@$k$-d tree}
-		if( !$twook && !$textonly && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
-			print "'k-d' to the more proper '\$k\$-d', on line $. in $input.\n";
-		}
-		if( !$ok && !$textonly && !$isref && $lctheline =~ /kd-tree/ ) {
-			print "'kd-tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
-		}
-		if( !$twook && !$textonly && !$isref && $lctwoline =~ /kd tree/ && !($lctheline =~ /kd tree@/) ) {
-			print "'kd tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
 		}
 		if( $lctheline =~ /hierarchal/ ) {
 			print "MISSPELLING: 'hierarchal' to 'hierarchical' on line $. in $input.\n";
@@ -1335,350 +1307,402 @@ sub READCODEFILE
 		if( !$inequation && $twoline =~ / gouraud/ ) {
 			print "MISSPELLING: 'gouraud' to 'Gouraud', on line $. in $input.\n";
 		}
-		# leading space to avoid "n-bit mask" which would be fine
-		if( !$twook && $lctwoline =~ / bit mask/ ) {
-			print "'bit mask' to 'bitmask', on line $. in $input.\n";
-		}
-		if( !$twook && $lctwoline =~ /screen space ambient/ ) {
-			print "'screen space ambient' to 'screen-space ambient', on line $. in $input.\n";
-		}
-		
-		# -----------------------------
-		# Clunky or wrong
-		if( !$twook && $twoline =~ / to\. / ) {
-			print "SERIOUS: ending a sentence with 'to.' is not so great, on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /irregardless/ && !$inquote ) {
-			print "No, never use 'irregardless' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /na\\"ive/ && !$inquote ) {
-			print "Change 'na\\\"ive' to good ole 'naive' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /necessitate/ && !$inquote ) {
-			print "Please don't use 'necessitate' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /firstly/ && !$inquote ) {
-			print "Do not say 'firstly' - say 'first' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /secondly/ && !$inquote ) {
-			print "Do not say 'secondly' - say 'second' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /thirdly/ && !$inquote ) {
-			print "Do not say 'thirdly' - say 'third' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /amongst/ ) {
-			print "Change 'amongst' to 'among' on line $. in $input.\n";
-		}
-		if( !$twook && $lctwoline =~ / try and/ ) {
-			print "Change 'try and' to 'try to' on line $. in $input, or reword to 'along with' or similar.\n";
-		}
-		if( !$twook && $twoline =~ /relatively to / ) {
-			print "tip: 'relatively to' probably wants to be 'relative to' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /so as to / ) {
-			print "tip: you probably should replace 'so as to' with 'to' or similar on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
-			&SAYOK();
-		}
-		if( !$twook && $lctwoline =~ /due to that/ ) {
-			print "tip: 'due to that' to 'because' on line $. in $input.\n";
-		}
-		if( !$twook && $lctwoline =~ /more optimal/ ) {
-			print "tip: 'more optimal' is illogical - 'optimal' means the best;\n    maybe try 'better optimized' on line $. in $input.\n";
-		}
-		if( !$twook && $lctwoline =~ /more specifically/ ) {
-			print "tip: 'more specifically' to 'specifically' on line $. in $input.\n";
-		}
-		if( !$twook && $lctwoline =~ /made out of/ ) {
-			print "shortening tip: replace 'made out of' with 'made from' on line $. in $input.\n";
-		}
-		# optionally, remove $infigure && 
-		if( !$twook && $infigure && $lctwoline =~ /as can be seen/ ) {
-			print "shortening tip: remove 'as can be seen', since we are looking at a figure, on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /due to the fact that/ && !$inquote ) {
-			print "tip: replace 'due to the fact that' with 'because' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /on account of/ && !$inquote ) {
-			print "tip: change 'on account of/' to 'because' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /basically/ && !$inquote ) {
-			print "tip: you can probably remove 'basically' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /orientate/ && !$inquote ) {
-			print "tip: you probably don't want to use 'orientate' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /thusly/ && !$inquote ) {
-			print "tip: change 'thusly' to 'thus' or 'therefore' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /point in time/ && !$inquote ) {
-			print "tip: avoid the wordy phrase 'point in time' at this point in time on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /literally/ && !$inquote ) {
-			print "tip: you can probably not use 'literally' (and may mean 'figuratively') on line $. in $input.\n";
-			&SAYOK();
-		}
-		if( !$twook && $lctwoline =~ / a lot more/ ) {
-			print "tip: replace 'a lot' with 'much' on line $. in $input.\n";
-		}
-		if( !$twook && $lctwoline =~ /and also / ) {
-			print "tip: you probably should replace 'and also' with 'and' on line $. in $input,\n    or reword to 'along with' or similar.\n";
-		}
-		if( !$twook && $lctwoline =~ /the reason why is because/ ) {
-			print "tip: 'the reason why is because' is crazy wordy, so rewrite, on line $. in $input.\n";
-		}
-		if( !$twook && $lctwoline =~ /fairly straightforward/ ) {
-			print "shortening tip: replace 'fairly straightforward' with 'straightforward' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /as-is/ ) {
-			print "'as-is' should be 'as is' on line $. in $input.\n";
-		}
-		# https://dict.leo.org/forum/viewGeneraldiscussion.php?idforum=4&idThread=331883&lp=ende
-		if( !$ok && $lctheline =~ /well-suited/ ) {
-			print "It is likely that 'well-suited' should be 'well suited', unless it's an adjective before a noun, on line $. in $input.\n";
-			&SAYOK();
-		}
-		# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp - Rule 3, "physically" is an adverb
-		if( !$isref && $lctheline =~ /physically-based/ ) {
-			print "'physically-based' should change to 'physically based' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /ly-used/ ) {
-			print "'*ly-used' should probably change to '*ly used' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /bottom-left/ ) {
-			print "'bottom-left' should change to 'bottom left' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /bottom-right/ ) {
-			print "'bottom-right' should change to 'bottom right' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /top-left/ ) {
-			print "'top-left' should change to 'top left' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /top-right/ ) {
-			print "'top-right' should change to 'top right' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /lower-left/ ) {
-			print "'lower-left' should change to 'lower left' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /lower-right/ ) {
-			print "'lower-right' should change to 'lower right' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /upper-left/ ) {
-			print "'upper-left' should change to 'upper left' on line $. in $input.\n";
-		}
-		if( !$ok && $lctheline =~ /upper-right/ ) {
-			print "'upper-right' should change to 'upper right' on line $. in $input.\n";
-		}
-		# always hyphenated
-		if( $lctwoline =~ /view dependent/ ) {
-			print "'view dependent' should change to 'view-dependent' on line $. in $input.\n";
-		}
-		if( $lctwoline =~ /view independent/ ) {
-			print "'view independent' should change to 'view-independent' on line $. in $input.\n";
-		}
-		if( &WORDTEST($lctwoline,"defacto ",$lcprev_line,"defacto") ) {
-			print "SERIOUS: change 'defacto' to 'de facto' on line $. in $input.\n";
-		}
-		# from Dreyer's English, a great book, from "The Trimmables", phrases that can be shortened without loss
-		if( !$twook && !$isref && $lctwoline =~ /absolutely certain/ ) {
-			print "'absolutely certain' can shorten to 'certain' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /absolutely certain/ ) {
-			print "'absolute certainty' can shorten to 'certainty' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /absolutely essential/ ) {
-			print "'absolutely essential' can shorten to 'essential' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /all-time record/ ) {
-			print "'all-time record' can shorten to 'record' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /advance planning/ ) {
-			print "'advance planning' can shorten to 'planning' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /advance warning/ ) {
-			print "'advance warning' can shorten to 'warning' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /blend together/ ) {
-			print "'blend together' can shorten to 'blend' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /close proximity/ ) {
-			print "Your call: 'close proximity' can shorten to 'proximity' on line $. in $input.\n    'close proximity' is a common phrase but is often redundant; 'proximity' might do.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /blend together/ ) {
-			print "'blend together' can shorten to 'blend' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /general consensus/ ) {
-			print "'general consensus' can shorten to 'consensus' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /continue on / ) {
-			print "'continue on' can shorten to 'continue' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /disappear from sight/ ) {
-			print "'disappear from sight' can shorten to 'disappear' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /earlier in time/ ) {
-			print "'earlier in time' can shorten to 'earlier' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /end product/ ) {
-			print "'end product' can shorten to 'product' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /end result/ ) {
-			print "'end result' can shorten to 'result' (if you are comparing to an intermediate result, how about 'ultimate result'?) on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /equally as / ) {
-			print "'equally as' can shorten to 'equally' or 'as' - don't use both on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /exact same/ ) {
-			print "'exact same' can shorten to 'same' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /fall down / ) {
-			print "'fall down' can shorten to 'fall' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /fetch back / ) {
-			print "'fetch back' can shorten to 'fetch' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /few in number/ ) {
-			print "'few in number' can shorten to 'few' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /final outcome/ ) {
-			print "'final outcome' can shorten to 'outcome' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /follow after/ ) {
-			print "'follow after' can shorten to 'follow' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /from whence/ ) {
-			print "'from whence' can shorten to 'whence' (since 'whence' means 'from where') on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /full gamut/ ) {
-			print "'full gamut' can shorten to 'gamut' ('gamut' is a full range of something) on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /full extent/ ) {
-			print "'full extent' can shorten to 'extent' ('extent' is its own range) on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /broad spectrum/ ) {
-			print "'broad spectrum' can shorten to 'spectrum' ('spectrum' means a full range) on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /complete range/ ) {
-			print "'complete range' can shorten to 'range' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /future plans/ ) {
-			print "'future plans' can shorten to 'plans' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /gather together/ ) {
-			print "'gather together' can shorten to 'gather' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /briefly glance/ ) {
-			print "'briefly glance' can shorten to 'glance' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /glance briefly/ ) {
-			print "'glance briefly' can shorten to 'glance' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /hollow tube/ ) {
-			print "'hollow tube' can shorten to 'tube' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /on an hourly basis/ ) {
-			print "'on an hourly basis' can shorten to 'hourly' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /on a daily basis/ ) {
-			print "'on a daily basis' can shorten to 'daily' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /on a monthly basis/ ) {
-			print "'on a monthly basis' can shorten to 'monthly' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /on a yearly basis/ ) {
-			print "'on a yearly basis' can shorten to 'yearly' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /join together/ ) {
-			print "'join together' can shorten to 'join' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /last of all/ ) {
-			print "'last of all' might shorten to 'last' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /lift up/ ) {
-			print "'lift up' can shorten to 'lift' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /merge together/ ) {
-			print "'merge together' can shorten to 'merge' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /might possibly/ ) {
-			print "'might possibly' can shorten to 'might' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /moment in time/ ) {
-			print "'moment in time' can shorten to 'moment' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /more superior/ ) {
-			print "'more superior' can shorten to 'superior' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /mutual cooperation/ ) {
-			print "'mutual cooperation' can shorten to 'cooperation' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /orbit around/ ) {
-			print "'orbit around' can shorten to 'orbit' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /overexaggerate/ && !$inquote ) {
-			print "Do not say 'overexaggerate' - say 'exaggerate' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /past history/ ) {
-			print "'past history' can shorten to 'history' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /personal opinion/ ) {
-			print "'personal opinion' can shorten to 'opinion' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /plan ahead/ ) {
-			print "'plan ahead' can shorten to 'plan' on line $. in $input.\n";
-		}
-		if( !$ok && !$isref && $lctheline =~ /preplan/ && !$inquote ) {
-			print "Do not say 'preplan' - say 'plan' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /raise up / ) {
-			print "'raise up' can shorten to 'raise' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ / reason why/ ) {
-			print "'reason why' can shorten to 'reason', if you like, on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /regular routine/ ) {
-			print "'regular routine' can shorten to 'routine' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /recall back/ ) {
-			print "'recall back' can shorten to 'recall' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /return back/ ) {
-			print "'return back' can shorten to 'return' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /revert back/ ) {
-			print "'revert back' can shorten to 'revert' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ / rise up /  && !$inquote ) {
-			print "'rise up' can shorten to 'rise' (Hamilton notwithstanding) on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /short in length/  && !$inquote ) {
-			print "'short in length' can shorten to 'short' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /shuttle back and forth/  && !$inquote ) {
-			print "'shuttle back and forth' can shorten to 'shuttle' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /sink down /  && !$inquote ) {
-			print "'sink down' can shorten to 'sink' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /skirt around/  && !$inquote ) {
-			print "'skirt around' can shorten to 'skirt' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /sudden impulse/  && !$inquote ) {
-			print "'sudden impulse' can shorten to 'impulse' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /surrounded on all sides/  && !$inquote ) {
-			print "'surrounded on all sides' can shorten to 'surrounded' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /undergraduate student/  && !$inquote ) {
-			print "'undergraduate student' can shorten to 'undergraduate' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /unexpected surprise/  && !$inquote ) {
-			print "'unexpected surprise' can shorten to 'surprise' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /unsolved myster/  && !$inquote ) {
-			print "'unsolved mystery' can shorten to 'mystery' on line $. in $input.\n";
-		}
-		if( !$twook && !$isref && $lctwoline =~ /usual custom/  && !$inquote ) {
-			print "'usual custom' can shorten to 'custom' on line $. in $input.\n";
+		# more style oriented - normally useful, but you can turn it off with -s
+		if ( $style ) {
+			if( !$twook && !$textonly && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !($twoline =~ /\.\.\./) && !$isref && !$inequation && !$period_problem ) {
+				printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : " (or the period should have a \\ after it)";
+			}
+			# we like to avoid ending a sentence with a preposition.
+			if( !$twook && $twoline =~ / with\. / ) {
+				print "consider: 'with.' at end of sentence on line $. in $input. Reword if it's not convoluted to do so.\n";
+			}
+			if( !$ok && $theline =~ /Javascript/) {
+				print "Please change 'Javascript' to 'JavaScript' on line $. in $input.\n";
+			}
+			# see https://linguaholic.com/linguablog/comma-before-or-after-thus/
+			if( $theline =~ /Thus / ) {
+				print "You likely want a comma after 'Thus' on line $. in $input.\n";
+			}
+			if( $theline =~ /However / ) {
+				print "You likely want a comma after 'However' on line $. in $input.\n";
+			}
+			if( $theline =~ /Fortunately / ) {
+				print "You likely want a comma after 'Fortunately' on line $. in $input.\n";
+			}
+			if( $theline =~ /Additionally / ) {
+				print "You likely want a comma after 'Additionally' on line $. in $input.\n";
+			}
+			if( $theline =~ /Therefore / ) {
+				print "You likely want a comma after 'Therefore' on line $. in $input.\n";
+			}
+			if( $theline =~ /So / ) {
+				print "You likely want a comma after 'So' on line $. in $input.\n";
+			}
+			if( $theline =~ /Indeed / ) {
+				print "You likely want a comma after 'Indeed' on line $. in $input.\n";
+			}
+			if( $theline =~ /Finally / ) {
+				print "You likely want a comma after 'Finally' on line $. in $input.\n";
+			}
+			# see https://www.grammarly.com/blog/commas-after-introductory-phrases/
+			if( $theline =~ /For this reason / ) {
+				print "You likely want a comma after 'For this reason' on line $. in $input.\n";
+			}
+			# your mileage may vary, depending on how you index, e.g., we do \index{k-d tree@$k$-d tree}
+			if( !$twook && !$textonly && !$isref && $lctwoline =~ /k-d / && !($lctheline =~ /k-d tree@/) ) {
+				print "'k-d' to the more proper '\$k\$-d', on line $. in $input.\n";
+			}
+			if( !$ok && !$textonly && !$isref && $lctheline =~ /kd-tree/ ) {
+				print "'kd-tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
+			}
+			if( !$twook && !$textonly && !$isref && $lctwoline =~ /kd tree/ && !($lctheline =~ /kd tree@/) ) {
+				print "'kd tree' to the more proper '\$k\$-d tree', on line $. in $input.\n";
+			}
+			# leading space to avoid "n-bit mask" which would be fine
+			if( !$twook && $lctwoline =~ / bit mask/ ) {
+				print "'bit mask' to 'bitmask', on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /screen space ambient/ ) {
+				print "'screen space ambient' to 'screen-space ambient', on line $. in $input.\n";
+			}
+			
+			# -----------------------------
+			# Clunky or wrong
+			if( !$twook && $twoline =~ / to\. / ) {
+				print "SERIOUS: ending a sentence with 'to.' is not so great, on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /irregardless/ && !$inquote ) {
+				print "No, never use 'irregardless' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /na\\"ive/ && !$inquote ) {
+				print "Change 'na\\\"ive' to good ole 'naive' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /necessitate/ && !$inquote ) {
+				print "Please don't use 'necessitate' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /firstly/ && !$inquote ) {
+				print "Do not say 'firstly' - say 'first' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /secondly/ && !$inquote ) {
+				print "Do not say 'secondly' - say 'second' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /thirdly/ && !$inquote ) {
+				print "Do not say 'thirdly' - say 'third' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /amongst/ ) {
+				print "Change 'amongst' to 'among' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ / try and/ ) {
+				print "Change 'try and' to 'try to' on line $. in $input, or reword to 'along with' or similar.\n";
+			}
+			if( !$twook && $twoline =~ /relatively to / ) {
+				print "tip: 'relatively to' probably wants to be 'relative to' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /so as to / ) {
+				print "tip: you probably should replace 'so as to' with 'to' or similar on line $. in $input, or rewrite.\n    It's a wordy phrase.\n";
+				&SAYOK();
+			}
+			if( !$twook && $lctwoline =~ /due to that/ ) {
+				print "tip: 'due to that' to 'because' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /more optimal/ ) {
+				print "tip: 'more optimal' is illogical - 'optimal' means the best;\n    maybe try 'better optimized' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /more specifically/ ) {
+				print "tip: 'more specifically' to 'specifically' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /made out of/ ) {
+				print "shortening tip: replace 'made out of' with 'made from' on line $. in $input.\n";
+			}
+			# optionally, remove $infigure && 
+			if( !$twook && $infigure && $lctwoline =~ /as can be seen/ ) {
+				print "shortening tip: remove 'as can be seen', since we are looking at a figure, on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /due to the fact that/ && !$inquote ) {
+				print "tip: replace 'due to the fact that' with 'because' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /on account of/ && !$inquote ) {
+				print "tip: change 'on account of/' to 'because' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /basically/ && !$inquote ) {
+				print "tip: you can probably remove 'basically' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /orientate/ && !$inquote ) {
+				print "tip: you probably don't want to use 'orientate' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /thusly/ && !$inquote ) {
+				print "tip: change 'thusly' to 'thus' or 'therefore' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /point in time/ && !$inquote ) {
+				print "tip: avoid the wordy phrase 'point in time' at this point in time on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /literally/ && !$inquote ) {
+				print "tip: you can probably not use 'literally' (and may mean 'figuratively') on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$twook && $lctwoline =~ / a lot more/ ) {
+				print "tip: replace 'a lot' with 'much' on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /and also / ) {
+				print "tip: you probably should replace 'and also' with 'and' on line $. in $input,\n    or reword to 'along with' or similar.\n";
+			}
+			if( !$twook && $lctwoline =~ /the reason why is because/ ) {
+				print "tip: 'the reason why is because' is crazy wordy, so rewrite, on line $. in $input.\n";
+			}
+			if( !$twook && $lctwoline =~ /fairly straightforward/ ) {
+				print "shortening tip: replace 'fairly straightforward' with 'straightforward' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /as-is/ ) {
+				print "'as-is' should be 'as is' on line $. in $input.\n";
+			}
+			# https://dict.leo.org/forum/viewGeneraldiscussion.php?idforum=4&idThread=331883&lp=ende
+			if( !$ok && $lctheline =~ /well-suited/ ) {
+				print "It is likely that 'well-suited' should be 'well suited', unless it's an adjective before a noun, on line $. in $input.\n";
+				&SAYOK();
+			}
+			# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp - Rule 3, "physically" is an adverb
+			if( !$isref && $lctheline =~ /physically-based/ ) {
+				print "'physically-based' should change to 'physically based' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /ly-used/ ) {
+				print "'*ly-used' should probably change to '*ly used' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /bottom-left/ ) {
+				print "'bottom-left' should change to 'bottom left' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /bottom-right/ ) {
+				print "'bottom-right' should change to 'bottom right' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /top-left/ ) {
+				print "'top-left' should change to 'top left' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /top-right/ ) {
+				print "'top-right' should change to 'top right' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /lower-left/ ) {
+				print "'lower-left' should change to 'lower left' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /lower-right/ ) {
+				print "'lower-right' should change to 'lower right' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /upper-left/ ) {
+				print "'upper-left' should change to 'upper left' on line $. in $input.\n";
+			}
+			if( !$ok && $lctheline =~ /upper-right/ ) {
+				print "'upper-right' should change to 'upper right' on line $. in $input.\n";
+			}
+			# always hyphenated
+			if( $lctwoline =~ /view dependent/ ) {
+				print "'view dependent' should change to 'view-dependent' on line $. in $input.\n";
+			}
+			if( $lctwoline =~ /view independent/ ) {
+				print "'view independent' should change to 'view-independent' on line $. in $input.\n";
+			}
+			if( &WORDTEST($lctwoline,"defacto ",$lcprev_line,"defacto") ) {
+				print "SERIOUS: change 'defacto' to 'de facto' on line $. in $input.\n";
+			}
+			# from Dreyer's English, a great book, from "The Trimmables", phrases that can be shortened without loss
+			if( !$twook && !$isref && $lctwoline =~ /absolutely certain/ ) {
+				print "'absolutely certain' can shorten to 'certain' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /absolutely certain/ ) {
+				print "'absolute certainty' can shorten to 'certainty' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /absolutely essential/ ) {
+				print "'absolutely essential' can shorten to 'essential' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /all-time record/ ) {
+				print "'all-time record' can shorten to 'record' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /advance planning/ ) {
+				print "'advance planning' can shorten to 'planning' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /advance warning/ ) {
+				print "'advance warning' can shorten to 'warning' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /blend together/ ) {
+				print "'blend together' can shorten to 'blend' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /close proximity/ ) {
+				print "Your call: 'close proximity' can shorten to 'proximity' on line $. in $input.\n    'close proximity' is a common phrase but is often redundant; 'proximity' might do.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /blend together/ ) {
+				print "'blend together' can shorten to 'blend' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /general consensus/ ) {
+				print "'general consensus' can shorten to 'consensus' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /continue on / ) {
+				print "'continue on' can shorten to 'continue' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /disappear from sight/ ) {
+				print "'disappear from sight' can shorten to 'disappear' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /earlier in time/ ) {
+				print "'earlier in time' can shorten to 'earlier' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /end product/ ) {
+				print "'end product' can shorten to 'product' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /end result/ ) {
+				print "'end result' can shorten to 'result' (if you are comparing to an intermediate result, how about 'ultimate result'?) on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /equally as / ) {
+				print "'equally as' can shorten to 'equally' or 'as' - don't use both on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /exact same/ ) {
+				print "'exact same' can shorten to 'same' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /fall down / ) {
+				print "'fall down' can shorten to 'fall' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /fetch back / ) {
+				print "'fetch back' can shorten to 'fetch' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /few in number/ ) {
+				print "'few in number' can shorten to 'few' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /final outcome/ ) {
+				print "'final outcome' can shorten to 'outcome' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /follow after/ ) {
+				print "'follow after' can shorten to 'follow' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /from whence/ ) {
+				print "'from whence' can shorten to 'whence' (since 'whence' means 'from where') on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /full gamut/ ) {
+				print "'full gamut' can shorten to 'gamut' ('gamut' is a full range of something) on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /full extent/ ) {
+				print "'full extent' can shorten to 'extent' ('extent' is its own range) on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /broad spectrum/ ) {
+				print "'broad spectrum' can shorten to 'spectrum' ('spectrum' means a full range) on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /complete range/ ) {
+				print "'complete range' can shorten to 'range' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /future plans/ ) {
+				print "'future plans' can shorten to 'plans' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /gather together/ ) {
+				print "'gather together' can shorten to 'gather' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /briefly glance/ ) {
+				print "'briefly glance' can shorten to 'glance' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /glance briefly/ ) {
+				print "'glance briefly' can shorten to 'glance' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /hollow tube/ ) {
+				print "'hollow tube' can shorten to 'tube' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /on an hourly basis/ ) {
+				print "'on an hourly basis' can shorten to 'hourly' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /on a daily basis/ ) {
+				print "'on a daily basis' can shorten to 'daily' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /on a monthly basis/ ) {
+				print "'on a monthly basis' can shorten to 'monthly' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /on a yearly basis/ ) {
+				print "'on a yearly basis' can shorten to 'yearly' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /join together/ ) {
+				print "'join together' can shorten to 'join' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /last of all/ ) {
+				print "'last of all' might shorten to 'last' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /lift up/ ) {
+				print "'lift up' can shorten to 'lift' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /merge together/ ) {
+				print "'merge together' can shorten to 'merge' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /might possibly/ ) {
+				print "'might possibly' can shorten to 'might' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /moment in time/ ) {
+				print "'moment in time' can shorten to 'moment' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /more superior/ ) {
+				print "'more superior' can shorten to 'superior' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /mutual cooperation/ ) {
+				print "'mutual cooperation' can shorten to 'cooperation' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /orbit around/ ) {
+				print "'orbit around' can shorten to 'orbit' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /overexaggerate/ && !$inquote ) {
+				print "Do not say 'overexaggerate' - say 'exaggerate' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /past history/ ) {
+				print "'past history' can shorten to 'history' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /personal opinion/ ) {
+				print "'personal opinion' can shorten to 'opinion' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /plan ahead/ ) {
+				print "'plan ahead' can shorten to 'plan' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /preplan/ && !$inquote ) {
+				print "Do not say 'preplan' - say 'plan' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /raise up / ) {
+				print "'raise up' can shorten to 'raise' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ / reason why/ ) {
+				print "'reason why' can shorten to 'reason', if you like, on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /regular routine/ ) {
+				print "'regular routine' can shorten to 'routine' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /recall back/ ) {
+				print "'recall back' can shorten to 'recall' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /return back/ ) {
+				print "'return back' can shorten to 'return' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /revert back/ ) {
+				print "'revert back' can shorten to 'revert' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ / rise up /  && !$inquote ) {
+				print "'rise up' can shorten to 'rise' (Hamilton notwithstanding) on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /short in length/  && !$inquote ) {
+				print "'short in length' can shorten to 'short' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /shuttle back and forth/  && !$inquote ) {
+				print "'shuttle back and forth' can shorten to 'shuttle' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /sink down /  && !$inquote ) {
+				print "'sink down' can shorten to 'sink' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /skirt around/  && !$inquote ) {
+				print "'skirt around' can shorten to 'skirt' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /sudden impulse/  && !$inquote ) {
+				print "'sudden impulse' can shorten to 'impulse' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /surrounded on all sides/  && !$inquote ) {
+				print "'surrounded on all sides' can shorten to 'surrounded' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /undergraduate student/  && !$inquote ) {
+				print "'undergraduate student' can shorten to 'undergraduate' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /unexpected surprise/  && !$inquote ) {
+				print "'unexpected surprise' can shorten to 'surprise' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /unsolved myster/  && !$inquote ) {
+				print "'unsolved mystery' can shorten to 'mystery' on line $. in $input.\n";
+			}
+			if( !$twook && !$isref && $lctwoline =~ /usual custom/  && !$inquote ) {
+				print "'usual custom' can shorten to 'custom' on line $. in $input.\n";
+			}
 		}
 		if ( $formal ) {
 			# -----------------------------
@@ -1775,7 +1799,7 @@ sub READCODEFILE
 			}			
 		}
 		
-		if ( $style  ) {
+		if ( $style ) {
 			# ------------------------------------------------
 			# Personal preferences, take them or leave them
 			# Why no "very"?
@@ -2519,8 +2543,20 @@ sub READCODEFILE
 			if( !$ok && $lctheline =~ /absorbtion/ ) {
 				print "'absorbtion' to 'absorption' on line $. in $input.\n";
 			}
+			if( !$twook && !$inequation && $twoline =~ /fourier/ ) {
+				print "'fourier' to 'Fourier' on line $. in $input.\n";
+			}
+			if( !$twook && !$inequation && $twoline =~ /fresnel/ ) {
+				print "'fresnel' to 'Fresnel' on line $. in $input.\n";
+			}
 			if( !$twook && !$inequation && $twoline =~ / gauss/ ) {
 				print "'gauss' to 'Gauss' on line $. in $input.\n";
+			}
+			if( !$twook && !$inequation && $twoline =~ /lambert/ ) {
+				print "'lambert' to 'Lambert' on line $. in $input.\n";
+			}
+			if( !$twook && !$inequation && $twoline =~ / russian/ ) {
+				print "'russian' to 'Russian' on line $. in $input.\n";
 			}
 			if( !$twook && !$inequation && $lctwoline =~ / gbuffer/ ) {
 				print "'gbuffer' to 'G-buffer' on line $. in $input.\n";
@@ -2723,90 +2759,90 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /non-zero/ ) {
 				print "Change 'non-zero' to 'nonzero' on line $. in $input.\n";
 			}
-		}
-		# nice for a final check one time, but kind of crazed and generates false positives
-		if ( $picky ) {
-			# Ending a sentence with a preposition is frowned on, but often without merit.
-			# The warnings are here just to tip you off to check the sentence, as sometimes the sentence can
-			# be reworded.
-			# https://blog.oxforddictionaries.com/2011/11/28/grammar-myths-prepositions/
-			#if( !$twook && $twoline =~ / on\. / ) {
-			#	print "Noteworthy: sentence finishes with the preposition 'on.'  on line $. in $input.\n";
-			#}
-			if( !$twook && $twoline =~ / at\. / ) {
-				print "Noteworthy: sentence finishes with the preposition 'at.' on line $. in $input.\n";
-			}
-			# some of these, not so terrible.
-			#if( !$twook && $twoline =~ / in\. / ) {
-			#	print "Noteworthy: sentence finishes with the preposition 'in.' on line $. in $input.\n";
-			#}
-			if( !$twook && $twoline =~ / of\. / ) {
-				print "Noteworthy: sentence finishes with the preposition 'of.' on line $. in $input.\n";
-			}
-			if( !$twook && $twoline =~ / for\. / ) {
-				print "Noteworthy: sentence finishes with the preposition 'for.' on line $. in $input.\n";
-			}
-			#if( !$twook && $lctwoline =~ / lets/ ) {	# don't check for in refs.tex
-			#	print "lets - maybe you mean 'let's' which should go to 'let us' or reword, on line $. in $input.\n";
-			#}
-			if( !$twook && !$isref && $lctwoline =~ /a number of/ ) {
-				print "shortening tip: replace 'a number of' with 'several' (or possibly even remove), on line $. in $input.\n";
-				&SAYOK();
-			}
-			if( !$twook && !$isref && $lctwoline =~ /in particular/ ) {
-				print "shortening tip: perhaps remove 'in particular' on line $. in $input.\n";
-				&SAYOK();
-			}
-			if( !$twook && !$isref && $lctwoline =~ /a large number of/ ) {
-				print "shortening tip: perhaps replace 'a large number of' with 'many' on line $. in $input.\n";
-				&SAYOK();
-			}
-			if( !$twook && !$isref && $lctwoline =~ /the majority of/ ) {
-				print "shortening tip: replace 'the majority of' with 'most' on line $. in $input.\n";
-				&SAYOK();
-			}
-			if( !$twook && $lctwoline =~ /kind of/ ) {
-				print "If you don't mean 'type of' for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line $. in $input.\n";
-				&SAYOK();
-			}
-			# finds some problems, but plenty of false positives:
-			if( !$ok && $isref && $theline =~ /\w''/ ) {
-				print "ERROR: reference title does not have comma before closed quotes, on line $. in $input.\n";
-			}
+			# nice for a final check one time, but kind of crazed and generates false positives
+			if ( $picky ) {
+				# Ending a sentence with a preposition is frowned on, but often without merit.
+				# The warnings are here just to tip you off to check the sentence, as sometimes the sentence can
+				# be reworded.
+				# https://blog.oxforddictionaries.com/2011/11/28/grammar-myths-prepositions/
+				#if( !$twook && $twoline =~ / on\. / ) {
+				#	print "Noteworthy: sentence finishes with the preposition 'on.'  on line $. in $input.\n";
+				#}
+				if( !$twook && $twoline =~ / at\. / ) {
+					print "Noteworthy: sentence finishes with the preposition 'at.' on line $. in $input.\n";
+				}
+				# some of these, not so terrible.
+				#if( !$twook && $twoline =~ / in\. / ) {
+				#	print "Noteworthy: sentence finishes with the preposition 'in.' on line $. in $input.\n";
+				#}
+				if( !$twook && $twoline =~ / of\. / ) {
+					print "Noteworthy: sentence finishes with the preposition 'of.' on line $. in $input.\n";
+				}
+				if( !$twook && $twoline =~ / for\. / ) {
+					print "Noteworthy: sentence finishes with the preposition 'for.' on line $. in $input.\n";
+				}
+				#if( !$twook && $lctwoline =~ / lets/ ) {	# don't check for in refs.tex
+				#	print "lets - maybe you mean 'let's' which should go to 'let us' or reword, on line $. in $input.\n";
+				#}
+				if( !$twook && !$isref && $lctwoline =~ /a number of/ ) {
+					print "shortening tip: replace 'a number of' with 'several' (or possibly even remove), on line $. in $input.\n";
+					&SAYOK();
+				}
+				if( !$twook && !$isref && $lctwoline =~ /in particular/ ) {
+					print "shortening tip: perhaps remove 'in particular' on line $. in $input.\n";
+					&SAYOK();
+				}
+				if( !$twook && !$isref && $lctwoline =~ /a large number of/ ) {
+					print "shortening tip: perhaps replace 'a large number of' with 'many' on line $. in $input.\n";
+					&SAYOK();
+				}
+				if( !$twook && !$isref && $lctwoline =~ /the majority of/ ) {
+					print "shortening tip: replace 'the majority of' with 'most' on line $. in $input.\n";
+					&SAYOK();
+				}
+				if( !$twook && $lctwoline =~ /kind of/ ) {
+					print "If you don't mean 'type of' for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line $. in $input.\n";
+					&SAYOK();
+				}
+				# finds some problems, but plenty of false positives:
+				if( !$ok && $isref && $theline =~ /\w''/ ) {
+					print "ERROR: reference title does not have comma before closed quotes, on line $. in $input.\n";
+				}
 
-			if( !$twook && !$isref && $twoline =~ /in order to/ ) {
-				print "shortening tip: perhaps replace 'in order to' with 'to' on line $. in $input.\n";
+				if( !$twook && !$isref && $twoline =~ /in order to/ ) {
+					print "shortening tip: perhaps replace 'in order to' with 'to' on line $. in $input.\n";
+					&SAYOK();
+				}
+			}
+			# promoted from "picky"
+			# The non-picky version - at the start of a sentence is particularly likely to be replaceable.
+			if( !$twook && !$isref && $twoline =~ /In order to/ ) {
+				print "shortening tip: perhaps replace 'In order to' with 'to' on line $. in $input.\n";
 				&SAYOK();
 			}
-		}
-		# promoted from "picky"
-		# The non-picky version - at the start of a sentence is particularly likely to be replaceable.
-		if( !$twook && !$isref && $twoline =~ /In order to/ ) {
-			print "shortening tip: perhaps replace 'In order to' with 'to' on line $. in $input.\n";
-			&SAYOK();
-		}
-		if( !$twook && !$isref && $lctwoline =~ / all of / && 
-			# these phrases are usually better as "all of," not just "all"
-			!($lctwoline =~ / all of which/) &&
-			!($lctwoline =~ / all of this/) &&
-			!($lctwoline =~ / all of these/) &&
-			!($lctwoline =~ / all of space/) &&
-			!($lctwoline =~ / all of it/)
-			) {
-			print "shortening tip: replace 'all of' with 'all' on line $. in $input.\n";
-			&SAYOK();
-		}
-		if( !$twook && !$isref && $lctwoline =~ / off of / ) {
-			print "shortening tip: replace 'off of' with 'off' on line $. in $input.\n";
-			&SAYOK();
-		}
-		if( !$twook && !$isref && $lctwoline =~ / on the basis of / ) {
-			print "shortening tip: replace 'on the basis of' with 'based on' on line $. in $input.\n";
-			&SAYOK();
-		}
-		if( !$twook && !$isref && $lctwoline =~ / first of all, / ) {
-			print "shortening tip: replace 'first of all,' with 'first,' on line $. in $input.\n";
-			&SAYOK();
+			if( !$twook && !$isref && $lctwoline =~ / all of / && 
+				# these phrases are usually better as "all of," not just "all"
+				!($lctwoline =~ / all of which/) &&
+				!($lctwoline =~ / all of this/) &&
+				!($lctwoline =~ / all of these/) &&
+				!($lctwoline =~ / all of space/) &&
+				!($lctwoline =~ / all of it/)
+				) {
+				print "shortening tip: replace 'all of' with 'all' on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$twook && !$isref && $lctwoline =~ / off of / ) {
+				print "shortening tip: replace 'off of' with 'off' on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$twook && !$isref && $lctwoline =~ / on the basis of / ) {
+				print "shortening tip: replace 'on the basis of' with 'based on' on line $. in $input.\n";
+				&SAYOK();
+			}
+			if( !$twook && !$isref && $lctwoline =~ / first of all, / ) {
+				print "shortening tip: replace 'first of all,' with 'first,' on line $. in $input.\n";
+				&SAYOK();
+			}
 		}
 
 		# warn if an italicized term is repeated

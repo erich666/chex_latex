@@ -90,6 +90,7 @@ The main options are:
 
 	-d - turn off dash tests for '-' or '--' flagged as needing to be '---'.
 	-f - turn off formal writing check; allows contractions and other informal usage.
+	-l - ignore duplicate labels, citations, references; use when running on a directory tree of unrelated chapters.
 	-p - turn ON picky style check, which looks for more style problems but is not so reliable.
 	-s - turn off style check; looks for poor usage, punctuation, and consistency problems.
 	-t - turn off title capitalization check; titles are assumed to be properly capitalized otherwise.
@@ -101,7 +102,7 @@ So, if you want all the tests, do:
 	
 If you want the bare minimum, checking just for LaTeX problems and doubled words, do:
 
-    perl chex_latex.pl -dstfu [directory or files]
+    perl chex_latex.pl -dlstfu [directory or files]
 
 To run this checker against plain text files, just specify the files, as normal:
 
