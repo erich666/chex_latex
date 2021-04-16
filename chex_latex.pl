@@ -383,19 +383,21 @@ sub READCODEFILE
 		#}
 
 		# cut rest of any line with includegraphics and trim= on it
-		# really, could just delete this line altogether, but let's leave open
+		# really, just delete the whole line
 		# the possibility we want to do something with it
 		if ( $theline =~ /\\includegraphics\[/ ) {
-			if ( $theline =~ /trim=/ ) {
-				# delete rest of line, to avoid junk like:
-				# trim=2.3in 0in 0in 0in
-				# which flags a word duplication problem.
-				$theline = $`;
-			}
-			elsif ( $theline =~ /{/ ) {
-				# trim the image file name so that we don't check that for misspellings, etc.
-				$theline = $`;
-			}
+			# delete line
+			$theline = '';
+			# if ( $theline =~ /trim=/ ) {
+			# 	# delete rest of line, to avoid junk like:
+			# 	# trim=2.3in 0in 0in 0in
+			# 	# which flags a word duplication problem.
+			# 	$theline = $`;
+			# }
+			# elsif ( $theline =~ /{/ ) {
+			# 	# trim the image file name so that we don't check that for misspellings, etc.
+			# 	$theline = $`;
+			# }
 		}
 		# other lines that get ignored
 		if ( $theline =~ /\\def/ ) { $theline = $`; }
@@ -1213,6 +1215,15 @@ sub READCODEFILE
 		}
 		if( $style && !$ok && $theline =~ /fps/ ) {
 			print "'fps' to 'FPS' on line $. in $input.\n";
+		}
+		if( !$twook && !$textonly && $lctwoline =~ /[\d+] spp/ ) {
+			print "' SPP' to '~SPP' to avoid having the number separated from its units, on line $. in $input.\n";
+		}
+		if( $style && !$ok && !$isref && !$inequation && $theline =~ /(\d+)spp/ ) {
+			print "Change '$1SPP' to '$1~SPP' (i.e., add a space), on line $. in $input.\n";
+		}
+		if( $style && !$ok && $theline =~ /fps/ ) {
+			print "'spp' to 'SPP' on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && $lctwoline =~ /[\d+] Hz/ ) {
 			print "' Hz' to '~Hz' to avoid having the number separated from its units, on line $. in $input.\n";
