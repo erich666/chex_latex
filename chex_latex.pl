@@ -669,10 +669,10 @@ sub READCODEFILE
 		}
 		# surprisingly common
 		if( !$twook && $lctwoline =~ / a the / ) {
-			print "'a the' to 'the' on line $. in $input.\n";
+			print "SERIOUS: 'a the' to 'the' on line $. in $input.\n";
 		}
 		if( !$twook && $lctwoline =~ / the a / ) {
-			print "'the a' to 'the' on line $. in $input.\n";
+			print "SERIOUS: 'the a' to 'the' on line $. in $input.\n";
 		}
 
 		# ---------------------------------------------------------
