@@ -208,7 +208,8 @@ sub USAGE
 
 sub READRECURSIVEDIR
 {
-	if ( m/\.(tex)$/ ) {
+	# ignore tikz files, they are weird
+	if ( m/\.(tex)$/ && !(m/tikz/)) {
 		$codefiles[$cfnum] = $File::Find::name;
 		$cfnum++;
 	}
@@ -782,7 +783,7 @@ sub READCODEFILE
 		}
 		$str = $theline;
 		# label used twice; also check for label={code} in listings
-		if ( ($str =~ /\\label\{/) || ($str =~ /label\=/) ) {
+		if ( ($str =~ /\\label\{/) || (($str =~ /label\=/) && !($str =~ /xlabel\=/) && ($str =~ /ylabel\=/) ) ) {
 			my $foundlabel = 0;
 			while ( ($str =~ /\\label\{([\w_:-\s]+)}/) || ($str =~ /label\=\{([\w_:-\s]+)}/) || ($str =~ /label\=([\w_:-\s]+)/) ) {
 				$str = $';
@@ -895,6 +896,23 @@ sub READCODEFILE
 
 		# ----------------------------------------------------------------
 		# Punctuation
+		# always test for the following, as these are dumb
+		if( !$ok && $theline =~ /i\.\~e\./ ) {
+			print "SERIOUS: don't put a space in 'i.e.', remove the tilde ~ on line $. in $input.\n";
+			$period_problem = 1;
+		}
+		if( !$ok && $theline =~ /i\. e\./ ) {
+			print "SERIOUS: don't put a space in 'i.e.' on line $. in $input.\n";
+			$period_problem = 1;
+		}
+		if( !$ok && $theline =~ /e\.\~g\./ ) {
+			print "SERIOUS: don't put a space inside 'e.g.', remove the tilde ~ on line $. in $input.\n";
+			$period_problem = 1;
+		}
+		if( !$ok && $theline =~ /e\. g\./ ) {
+			print "SERIOUS: don't put a space inside 'e.g.' on line $. in $input.\n";
+			$period_problem = 1;
+		}
 		if ( $dashes ) {
 			# single dash should be ---
 			# test could be commented out because it could be an equation, e.g., 9 - 4
@@ -1144,7 +1162,7 @@ sub READCODEFILE
 			print "SERIOUS: change nonstandard dash to a proper LaTeX - dash on line $. in $input.\n";
 		}
 		# see https://www.maths.tcd.ie/~dwilkins/LaTeXPrimer/QuotDash.html
-		if( !$ok && !$textonly && !$inequation && $theline =~ /"/ && !($theline =~ /\\"/) ) {
+		if( !$ok && !$textonly && !$inequation && $theline =~ /"/ && !($theline =~ /\\"/) && !($theline =~ /\w+"/) ) {
 			print "Note: the double apostrophe \" (used only for right-side quotes in LaTeX) should likely change to a \`\` or \'\' on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && !$inequation && $theline =~ /“/ && !($theline =~ /\\"/) ) {
@@ -1268,10 +1286,10 @@ sub READCODEFILE
 			$period_problem = 1;
 		}
 		if( !$twook && !$inequation && !$textonly && $twoline =~ / \. / ) {
-			print "SERIOUS: change ' .' to '.' (space in front of period), on line $. in $input.\n";
+			print "SERIOUS: change ' .' to '.' (remove space in front of period), on line $. in $input.\n";
 		}
 		if( !$twook && !$textonly && !$inequation && $twoline =~ / \,/ ) {
-			print "SERIOUS: change ' ,' to ',' (space in front of comma), on line $. in $input.\n";
+			print "SERIOUS: change ' ,' to ',' (remove space in front of comma), on line $. in $input.\n";
 		}
 		# If you use a ".", you need to do something like ".~" to avoid having the period treated
 		# as if it's the end of a sentence, which causes a bit of additional space to get added after it.
