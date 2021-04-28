@@ -85,7 +85,7 @@ For all files in a directory, here shown with a relative path:
 
     perl chex_latex.pl work_files/my-thesis-master
 
-This script is one used for the book ''Real-Time Rendering'' and so has a bunch of book-specific rules. Blithely ignore our opinions or, better yet, comment out the warning lines you don't like in the script (the program's just a text file, nothing complex). You can also add "% chex_latex" to the end of any line in your .tex file in order to have this script skip some error tests on it, e.g.:
+This script is one used for the book _Real-Time Rendering_ and so has a bunch of book-specific rules. Blithely ignore our opinions or, better yet, comment out the warning lines you don't like in the script (the program's just a text file, nothing complex). You can also add "% chex_latex" to the end of any line in your .tex file in order to have this script skip some error tests on it, e.g.:
 
     This method of using data is reasonable. % don't flag "data is" - chex_latex
 
