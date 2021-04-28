@@ -1,5 +1,9 @@
 # chex_latex
-LaTeX and text file checking tool.
+LaTeX and text file checking tool. [Install Perl](https://www.activestate.com/activeperl) and run by:
+
+    perl chex_latex.pl
+
+See all the options further down, e.g., you might consider '-p' if you want all possible warnings.
 
 This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and many other bugs. Put it in your directory of .tex files and run it to look for common mistakes. If a message confuses you, look in the Perl script itself, as there are comments and links about some of the issues flagged. You can also use this script on raw text files; the script will automatically not do LaTeX testing.
 
@@ -7,6 +11,7 @@ You might disagree with some of the problems flagged, but with chex_latex.pl you
 
 The chex_latex.pl script tests for:
 * Doubled words, such as "the the."
+* Problems with spacing. For example, a sentence ending with with "GPU." should be "GPU\@." so that the space following is a "long space."
 * Grammatical goofs or clunky phrasing, as well as rules for formal writing, such as not using contractions.
 * Potential [inter-word vs. inter-sentence spacing problems](https://en.wikibooks.org/wiki/LaTeX/Text_Formatting#Space_between_words_and_sentences).
 * Any figure \label's that do not have any \ref's, and vice versa.
@@ -66,7 +71,7 @@ This script is in no way foolproof and will natter about all sorts of things you
 
 # Installation and Use
 
-Install Perl from say https://www.activestate.com/activeperl, put chex_latex.pl somewhere (easiest is to put it in the directory with your .tex files, else you need to specify the path to this file), go to the directory where your .tex files are and then:
+Install Perl from say https://www.activestate.com/activeperl, put chex_latex.pl somewhere (easiest is to put it in the directory with your .tex files, else you'll need to specify the path to this file), go to the directory where your .tex files are and then:
 
     perl chex_latex.pl
   

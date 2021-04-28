@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Script to read in a latex file or directory and its subdirectories and check for typographic
 # and syntax errors of various sort.
-# See https://github.com/erich666/chex_latex for details.
+# See https://github.com/erich666/chex_latex for details on how to install perl and use it.
 
 #
 # Usage: perl chex_latex.pl
@@ -43,7 +43,10 @@ my $okword = "chex_latex";
 # to perform specialized tests on this file.
 my $refstex = "refs.tex";
 
-# put any files you want to skip into this list
+# put specific files you want to skip into this list.
+# NOTE: this script ignores all files with "tikz" in the path; this is done in READRECURSIVEDIR.
+# These files were found to cause a lot of false positives with no gain.
+# See https://www.overleaf.com/learn/latex/TikZ_package
 my %skip_filename = (
 # for example:
 #	"./Boffins_for_Bowling/main.tex"  => "skip",
