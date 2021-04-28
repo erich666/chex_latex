@@ -16,7 +16,7 @@ The chex_latex.pl script tests for:
 * Potential [inter-word vs. inter-sentence spacing problems](https://en.wikibooks.org/wiki/LaTeX/Text_Formatting#Space_between_words_and_sentences).
 * Any figure \label's that do not have any \ref's, and vice versa.
 * \index markers that get opened but not closed, or vice versa.
-* Misspellings used in computer graphics, e.g., "tesselation" and "frustrum" (and it's easy to add your own).
+* Common misspellings in computer graphics, e.g., "tesselation" and "frustrum" (and it's easy to add your own).
 * Any \bibitems's that do not have any \cite's, and vice versa.
 * And much else - more than 300 tests in all.
 
