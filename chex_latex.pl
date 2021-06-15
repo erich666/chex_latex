@@ -115,7 +115,7 @@ while (@ARGV) {
 				# set $picky to TRUE, to check for things that may be stylistically suspect
 				$picky = 1;
 			} elsif ( $char eq 's' ) {
-				# suppress $style to FALSE to ignore style problems
+				# turn $style to false
 				$style = 0;
 			} elsif ( $char eq 'u' ) {
 				# set $usstyle to false, to ignore U.S. punctuation style tests for period or comma outside quotes
@@ -202,11 +202,13 @@ sub USAGE
 	print "  -c # - check number of characters in a line of code against the value passed in, e.g., 80.\n";
 	print "  -d - turn off dash tests for '-' or '--' flagged as needing to be '---'.\n";
 	print "  -f - turn off formal writing check; allows contractions and other informal usage.\n";
+	print "  -l - ignore duplicate labels, citations, references; use when running on a directory tree of unrelated chapters.\n";
 	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
-	print "  -s - turn ON style check; looks for poor usage, punctuation, and consistency.\n";
+	print "  -s - turn off style check; looks for poor usage, punctuation, and consistency problems.\n";
+	print "  -t - turn off title capitalization check.\n";
 	print "  -u - turn off U.S. style tests for putting commas and periods inside quotes.\n";
 	print "  -O word - this script ignores lines with comments 'chex_latex' in them. Use -O to change this keyword.\n";
-	print "  -R [refs.tex] - specify which file has \bibitem references in it, if any, for specialized testing.\n"
+	print "  -R [refs.tex] - specify which file has \\bibitem references in it, if any, for specialized testing.\n"
 }
 
 sub READRECURSIVEDIR
@@ -214,7 +216,9 @@ sub READRECURSIVEDIR
 	# ignore tikz files, they are weird
 	if ( m/\.(tex)$/ && !(m/tikz/)) {
 		$codefiles[$cfnum] = $File::Find::name;
-		$cfnum++;
+		if ( !($codefiles[$cfnum] =~ /tikz/) ) {
+			$cfnum++;
+		}
 	}
 }
 
