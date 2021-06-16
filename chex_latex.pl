@@ -790,9 +790,11 @@ sub READCODEFILE
 		}
 		$str = $theline;
 		# label used twice; also check for label={code} in listings
-		if ( ($str =~ /\\label\{/) || (($str =~ /label\=/) && !($str =~ /xlabel\=/) && ($str =~ /ylabel\=/) ) ) {
+		if ( ($str =~ /\\label\{/) || (($str =~ /label=/) && !($str =~ /xlabel=/) && !($str =~ /ylabel=/) && !($str =~ /label=\\/) ) ) {
 			my $foundlabel = 0;
-			while ( ($str =~ /\\label\{([\w_:-\s]+)}/) || ($str =~ /label\=\{([\w_:-\s]+)}/) || ($str =~ /label\=([\w_:-\s]+)/) ) {
+			#print "GOT HERE 1 on line $. with $str\n";
+			while ( ($str =~ /\\label\{([\w_:#-\s]+)}/) || ($str =~ /label=\{([\w_:#-\s]+)}/) || ($str =~ /label=([\w_:#-\s]+)/) ) {
+				#print "GOT HERE 2 on line $. with $str\n";
 				$str = $';
 				$foundlabel = 1;
 				if ( $labels && exists($label{$1}) ) {
@@ -802,6 +804,7 @@ sub READCODEFILE
 				$labelimportant{$1} = !$subfigure;
 				$label{$1} = $input;
 				if ( $infigure ) {
+					#print "AND CLOSED HERE 3 on line $. with $input\n";
 					$figlabel = $input;
 					$labelfigure{$1} = 1;
 				}
@@ -1107,7 +1110,7 @@ sub READCODEFILE
 				print "SERIOUS: ' --- ' should not have spaces before and after it, on line $. in $input.\n";
 			} elsif( $twoline =~ /--- / ) {
 				print "SERIOUS: '--- ' should not have a space after it, on line $. in $input.\n";
-			} elsif( $twoline =~ / ---/ && !$inquote ) {
+			} elsif( $twoline =~ / ---/ && !$inquote && !($twoline =~ /flushright/) ) {
 				print "SERIOUS: ' ---' should not have a space before it, on line $. in $input.\n";
 			}
 		}
@@ -1209,7 +1212,8 @@ sub READCODEFILE
 		if( !$textonly && !($twoline =~ /\$/) && !($twoline =~ /''/) && $twoline =~ /\.\./ && !($twoline =~ /{\.\./) && !$inequation && !($twoline =~ /\.\.\./) && !($twoline =~ /\.\.\//)  ) {
 			print "Doubled periods, on line $. in $input.\n";
 		}
-		if( !$twook && !$infigure && $twoline =~ /,,/ ) {
+		# if the first comma is backslashed, that means it's a thin unbreakable space, e.g., https://tex.stackexchange.com/questions/390995/what-is-the-difference-between-tilde-and-backslash-comma-for-a-nonbreak
+		if( !$twook && !$infigure && $twoline =~ /,,/ && !($twoline =~ /\\,,/) ) {
 			print "Doubled commas, on line $. in $input.\n";
 		}
 		# experimental...
@@ -1295,7 +1299,7 @@ sub READCODEFILE
 		if( !$twook && !$inequation && !$textonly && $twoline =~ / \. / ) {
 			print "SERIOUS: change ' .' to '.' (remove space in front of period), on line $. in $input.\n";
 		}
-		if( !$twook && !$textonly && !$inequation && $twoline =~ / \,/ ) {
+		if( !$twook && !$textonly && !$inequation && $twoline =~ / \,/ && !($twoline =~ /ldots ,/) ) {
 			print "SERIOUS: change ' ,' to ',' (remove space in front of comma), on line $. in $input.\n";
 		}
 		# If you use a ".", you need to do something like ".~" to avoid having the period treated
