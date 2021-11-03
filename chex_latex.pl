@@ -1163,7 +1163,7 @@ sub READCODEFILE
 			print "Spacing: you probably want to change `\textregistered ' to '\textregistered\ ' so that there is space after it, on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && $theline =~ /’/ ) {
-			print "SERIOUS: change nonstandard apostrophe to a proper LaTeX ' (vertical) apostrophe on line $. in $input.\n";
+			print "Warning: you may need to change the nonstandard apostrophe to a proper LaTeX ' (vertical) apostrophe on line $. in $input.\n";
 		}
 		elsif( !$ok && !$textonly && $theline =~ /‘/ ) {
 			print "SERIOUS: change nonstandard single-quote mark to a proper LaTeX ` (vertical) apostrophe on line $. in $input.\n";
@@ -2860,8 +2860,10 @@ sub READCODEFILE
 				print "shortening tip: perhaps replace 'In order to' with 'to' on line $. in $input.\n";
 				&SAYOK();
 			}
+			# see https://www.grammar-monster.com/lessons/all_of.htm
 			if( !$twook && !$isref && $lctwoline =~ / all of / && 
 				# these phrases are usually better as "all of," not just "all"
+				!($lctwoline =~ / all of the /) &&	# trailing space, to avoid the correct "all of them"
 				!($lctwoline =~ / all of which/) &&
 				!($lctwoline =~ / all of this/) &&
 				!($lctwoline =~ / all of these/) &&
