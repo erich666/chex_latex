@@ -2863,11 +2863,15 @@ sub READCODEFILE
 			# see https://www.grammar-monster.com/lessons/all_of.htm
 			if( !$twook && !$isref && $lctwoline =~ / all of / && 
 				# these phrases are usually better as "all of," not just "all"
-				!($lctwoline =~ / all of the /) &&	# trailing space, to avoid the correct "all of them"
+				!($lctwoline =~ / all of them/) &&
 				!($lctwoline =~ / all of which/) &&
 				!($lctwoline =~ / all of this/) &&
 				!($lctwoline =~ / all of these/) &&
 				!($lctwoline =~ / all of space/) &&
+				!($lctwoline =~ / all of you/) &&
+				!($lctwoline =~ / all of us/) &&
+				!($lctwoline =~ / all of his/) &&
+				!($lctwoline =~ / all of her/) &&
 				!($lctwoline =~ / all of it/)
 				) {
 				print "shortening tip: replace 'all of' with 'all' on line $. in $input.\n";
