@@ -115,6 +115,18 @@ To run this checker against plain text files, just specify the files, as normal:
 	
 If any file is found that does not end in ".tex," the LaTeX-specific tests will be disabled (for all files, so don't mix .tex with .txt).
 
+This script will also ignore any text between the following pairs of lines:
+
+@<foo>>=     <--- really, just searches for "@<" at the start of a line
+lines of your source code here...
+@.
+
+and
+
+\draft
+lines of your draft text here that you don't want tested...
+\enddraft
+
 Two other more obscure options:
 
     -O okword
