@@ -323,6 +323,8 @@ sub READCODEFILE
 	#my $justleftlisting = 0;
 	my $justblankline = 0;
 	my $duplicate_count = 0;
+	my $insource = 0;
+	my $indraft = 0;
 
 	# now the code file read
 	unless (open(DATAFILE,$input)) {
@@ -341,6 +343,25 @@ sub READCODEFILE
 		$untouchedtheline = $theline = $_;
 		my $skip = 0;
 		my $period_problem = 0;
+
+		# if we're in source code or draft text, ignore them
+		# source code starts with:
+		#  @<foo>>=
+		# where "foo" is the fragment name, and it ends with
+		#  @.
+		# Draft text is “\draft" and “\enddraft"
+		if ( $theline =~ /^\@\</) {
+			$insource = 1;
+		} elsif ( $theline =~ /^\@\./) {
+			$insource = 0;
+		} elsif ( $theline =~ /\\draft/) {
+			$indraft = 1;
+		} elsif ( $theline =~ /\\enddraft/) {
+			$indraft = 0;
+		}
+		if ( $insource || $indraft ) {
+			$skip = 1;
+		}
 		
 		# if the line has chex_latex on it in the comments, can ignore certain flagged problems,
 		# and ignore figure names.
