@@ -955,6 +955,8 @@ sub READCODEFILE
 			}
 			# -- to ---, if words on both sides (otherwise this might be a page number range)
 			if( !$twook && !$textonly && !$isref && !$inequation && $lctwoline =~ /[a-z]--\w/ && !($lctheline =~ /--based/ ) ) {
+				# TODO someday when I'm terribly bored: check if the previous or next word is capitalized. If so, it's
+				# probably OK, Cook--Torrance or New York--based.
 				if ( !($` =~ /\$/) ) {
 					print "possibly serious: change '--' (short dash) to '---' on line $. in $input, unless you are specifying a range or a pair of researchers, such as Cook--Torrance, or something not normally hyphenated, such as New York--based.\n    You can use the -d option on the command line to turn off all dash warnings.\n";
 				}
