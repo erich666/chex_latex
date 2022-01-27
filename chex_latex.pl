@@ -1525,7 +1525,7 @@ sub READCODEFILE
 			}
 			# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp - Rule 3, "physically" is an adverb
 			if( !$isref && $lctheline =~ /physically-based/ ) {
-				print "'physically-based' should change to 'physically based' (adding the hyphen is becoming accepted, but it's incorrect, so let's fight that trend, OK?) on line $. in $input.\n";
+				print "'physically-based' should change to 'physically based' (adding the hyphen is becoming accepted, but it's incorrect, so let's fight that trend, OK? See the book 'Physically Based Rendering,' for example) on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /ly-used/ ) {
 				print "'*ly-used' should probably change to '*ly used' on line $. in $input.\n";
