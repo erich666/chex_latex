@@ -1019,9 +1019,9 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /parametriz/ ) {
 				print "In the U.S., change 'parametrization' to 'parameterization' on line $. in $input.\n";
 			}
-			# see https://www.dailywritingtips.com/comma-after-i-e-and-e-g/ for example
+			# see https://www.dailywritingtips.com/comma-after-i-e-and-e-g/ for example - commas are optional but common.
 			if( !$twook && ($twoline =~ /i\.e\. / || $twoline =~ /i\.e\.~/) ) {
-				print "SERIOUS: in the U.S. 'i.e.' should have a comma after it, not a space, on line $. in $input.\n";
+				print "Nomrally, in the U.S. 'i.e.' usually has a comma after it, not a space - if nothing else, make sure you choose one or the other and stick with it; on line $. in $input.\n";
 				$period_problem = 1;
 			}
 			if( !$ok && $theline =~ /i\.e\.:/ ) {
@@ -1029,7 +1029,7 @@ sub READCODEFILE
 				$period_problem = 1;
 			}
 			if( !$twook && ($twoline =~ /e\.g\. / || $twoline =~ /e\.g\.~/) ) {
-				print "SERIOUS: in the U.S. 'e.g.' should have a comma after it, not a space, on line $. in $input.\n";
+				print "SERIOUS: in the U.S. 'e.g.' usually has a comma after it, not a space - if nothing else, make sure you choose one or the other and stick with it; on line $. in $input.\n";
 				$period_problem = 1;
 			}
 			if( !$ok && $theline =~ /e\.g\.:/ ) {
@@ -1525,7 +1525,7 @@ sub READCODEFILE
 			}
 			# rules about hyphens: https://www.grammarbook.com/punctuation/hyphens.asp - Rule 3, "physically" is an adverb
 			if( !$isref && $lctheline =~ /physically-based/ ) {
-				print "'physically-based' should change to 'physically based' on line $. in $input.\n";
+				print "'physically-based' should change to 'physically based' (adding the hyphen is becoming accepted, but it's incorrect, so let's fight that trend, OK?) on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /ly-used/ ) {
 				print "'*ly-used' should probably change to '*ly used' on line $. in $input.\n";
@@ -2070,7 +2070,7 @@ sub READCODEFILE
 				print "'inter-reflect' should change to 'interreflect', on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /level-of-detail/ && !$isref ) {
-				print "'level-of-detail' should change to 'level of detail', on line $. in $input.\n";
+				print "'level-of-detail' should change to 'level of detail' if used as a noun, on line $. in $input.\n";
 			}
 			if( !$ok && $lctheline =~ /micro-facet/ && !$isref ) {
 				print "'micro-facet' should change to 'microfacet', on line $. in $input.\n";
@@ -2406,9 +2406,6 @@ sub READCODEFILE
 				print "'mip map' to 'mipmap' (no space), on line $. in $input.\n";
 			}
 			# it's a toss up on this one, but make a stand ;). Also, https://www.ics.uci.edu/~yug10/projects/translucent/papers/Hanika_et_al-2015-Computer_Graphics_Forum.pdf and others use it.
-			if( !$ok && !$isref && $lctheline =~ /next-event/ ) {
-				print "'next-event' to 'next event' (no hyphen), on line $. in $input.\n";
-			}
 			if( !$twook && !$isref && $lctwoline =~ /wall clock time/ ) {
 				print "'wall clock time' to 'wall-clock time', on line $. in $input.\n";
 			}
