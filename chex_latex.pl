@@ -1515,9 +1515,6 @@ sub READCODEFILE
 			if( !$twook && $lctwoline =~ /fairly straightforward/ ) {
 				print "shortening tip: replace 'fairly straightforward' with 'straightforward' on line $. in $input.\n";
 			}
-			if( !$ok && $lctheline =~ /as-is/ ) {
-				print "'as-is' should be 'as is' on line $. in $input.\n";
-			}
 			# https://dict.leo.org/forum/viewGeneraldiscussion.php?idforum=4&idThread=331883&lp=ende
 			if( !$ok && $lctheline =~ /well-suited/ ) {
 				print "It is likely that 'well-suited' should be 'well suited', unless it's an adjective before a noun, on line $. in $input.\n";
@@ -2009,8 +2006,9 @@ sub READCODEFILE
 			if( !$ok && !$isref && $theline =~ /Moon / ) {
 				print "'Moon' probably wants to be 'the moon' (or change this rule to what you like), on line $. in $input.\n";
 			}
+			# either is OK, https://en.wikipedia.org/wiki/Data_set - may someday use this one for a consistency check. TODO
 			if( !$ok && !$isref && $lctheline =~ /dataset/ ) {
-				print "'dataset' to 'data set' on line $. in $input.\n";
+				print "'dataset' to 'data set' (either is fine, 'data set' is preferred, but your choice) on line $. in $input.\n";
 			}
 			if( !$ok && !$isref && $lctheline =~ /depth-of-field/ ) {
 				print "'depth-of-field' to 'depth of field' on line $. in $input.\n";
