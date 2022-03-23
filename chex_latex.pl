@@ -2866,11 +2866,6 @@ sub READCODEFILE
 				if( !$ok && $isref && $theline =~ /\w''/ ) {
 					print "ERROR: reference title does not have comma before closed quotes, on line $. in $input.\n";
 				}
-
-				if( !$twook && !$isref && $twoline =~ /in order to/ ) {
-					print "shortening tip: perhaps replace 'in order to' with 'to' on line $. in $input.\n";
-					&SAYOK();
-				}
 			}
 			# promoted from "picky"
 			# The non-picky version - at the start of a sentence is particularly likely to be replaceable.
