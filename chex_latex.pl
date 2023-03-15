@@ -1868,6 +1868,7 @@ sub READCODEFILE
 			# Try to find a substitute, e.g., "very small" could become "minute" or "tiny"
 			# substitutes site here: https://www.grammarcheck.net/very/
 			# Most of the others are from Chapter 1 of "Dreyer's English".
+			# Tool that can help, though it's not great: https://www.losethevery.com/
 			if( !$twook && !$isref && !$inquote && &WORDTEST($lctwoline," very",$lcprev_line,"very") )  {
 				print "tip: consider removing or replacing 'very' on line $. in $input.\n";
 				print "    'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/\n";
