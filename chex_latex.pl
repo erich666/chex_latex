@@ -1125,6 +1125,7 @@ sub READCODEFILE
 		#	print "SERIOUS: 'w\\footnote' to ' \\footnote' on line $. in $input.\n";
 		#}
 		# flushright usually means someone's making a quote, so I guess two dashes is OK?
+		# See https://www.complang.tuwien.ac.at/anton/latex/ltx-430.html for the quick summary of how to use dashes.
 		if( !$ok && !$textonly && $dashes && ($theline =~ / -- / || $theline =~ / --~/) && !($theline =~ /flushright/)) {
 			print "POTENTIALLY SERIOUS: change ' -- ' to the full dash '---' on line $. in $input.\n";
 		}
