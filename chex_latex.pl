@@ -205,7 +205,7 @@ sub USAGE
 	print "  -l - ignore duplicate labels, citations, references; use when running on a directory tree of unrelated chapters.\n";
 	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
 	print "  -s - turn off style check; looks for poor usage, punctuation, and consistency problems.\n";
-	print "  -t - turn off title capitalization check.\n";
+	print "  -t - turn off title capitalization check. Titles are still checked for internal consistency.\n";
 	print "  -u - turn off U.S. style tests for putting commas and periods inside quotes.\n";
 	print "  -O word - this script ignores lines with comments 'chex_latex' in them. Use -O to change this keyword.\n";
 	print "  -R [refs.tex] - specify which file has \\bibitem references in it, if any, for specialized testing.\n"
