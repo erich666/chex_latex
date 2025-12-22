@@ -127,11 +127,23 @@ and
 lines of your draft text here that you don't want tested...
 \enddraft
 
-Two other more obscure options:
+Some other more obscure options:
 
     -O okword
 	
 Instead of adding a comment "% chex_latex" to lines you want the script to ignore, you could change the keyword to something else, e.g., "-O ignore_lint" would ignore all lines where you put "% ignore_lint" in a comment.
+
+    -P packages.json
+
+Check that all \usepackage commands use only approved packages. Provide a JSON file containing an array of approved package names, for example:
+
+    [
+        "amsmath",
+        "graphicx",
+        "hyperref"
+    ]
+
+Any package not in the list will be flagged as an error. This is useful for ensuring compliance with publisher or institutional requirements. An example file `taps_accepted-packages.json` is included in this repository, downloaded [from this site](https://portalparts.acm.org/hippo/latex_templates/taps_accepted-packages.json) (explained [here](https://authors.acm.org/proceedings/production-information/accepted-latex-packages)), containing the list of packages accepted by ACM TAPS.
 
     -R refs.tex
 	

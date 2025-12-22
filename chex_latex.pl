@@ -27,6 +27,7 @@ my $labels = 1;
 my $usstyle = 1;
 my $textonly = 0;
 my $testlisting = 0; # If > 0, check code line length as set
+my $checkpackages = 0; # If set, check \usepackage against approved list
 
 # If you want to always have titles for sections, etc. be capitalized, set this to 1, else 0.
 # If set to 0, then lowercase titles such as "Testing results" are allowed, but are still checked
@@ -42,6 +43,11 @@ my $okword = "chex_latex";
 # Specify which file has \bibitem references in it, both to avoid style checks on this file and
 # to perform specialized tests on this file.
 my $refstex = "refs.tex";
+
+# Specify which file has the approved packages list in JSON format.
+# Use the -P option to set this file path and enable package checking.
+my $packagesjson = "";
+my %approved_packages;
 
 # put specific files you want to skip into this list.
 # NOTE: this script ignores all files with "tikz" in the path; this is done in READRECURSIVEDIR.
@@ -145,6 +151,19 @@ while (@ARGV) {
 					printf STDOUT "Reference tex file unset.\n";
 					$refstex = '';
 				}
+			} elsif ( $char eq 'P' ) {
+				# specify a JSON file with approved packages list
+				$packagesjson = shift(@ARGV);
+				if ( length($packagesjson) == 0 || $i+1 < length($chars) ) {
+					print STDERR "The -P option must be followed by a JSON file path.\n";
+					&USAGE();
+					exit 0;
+				}
+				if ( ! -e $packagesjson ) {
+					print STDERR "The packages JSON file '$packagesjson' does not exist.\n";
+					exit 1;
+				}
+				$checkpackages = 1;
 			} else {
 				print STDERR "Unknown argument character '$char'.\n";
 				&USAGE();
@@ -190,6 +209,11 @@ if ( $cfnum == 0 ) {
 	find( \&READRECURSIVEDIR, @dirs, );
 }
 
+# Load approved packages from JSON file if specified
+if ( $checkpackages && length($packagesjson) > 0 ) {
+	&LOADAPPROVEDPACKAGES();
+}
+
 &PROCESSFILES();
 
 exit 0;
@@ -198,17 +222,67 @@ exit 0;
 
 sub USAGE
 {
-	print "Usage: perl chex_latex.pl [-dfpsu] [-O okword] [-R refs.tex] [directory [directory...]]\n";
+	print "Usage: perl chex_latex.pl [-dfpsu] [-O okword] [-P packages.json] [-R refs.tex] [directory [directory...]]\n";
 	print "  -c # - check number of characters in a line of code against the value passed in, e.g., 80.\n";
 	print "  -d - turn off dash tests for '-' or '--' flagged as needing to be '---'.\n";
 	print "  -f - turn off formal writing check; allows contractions and other informal usage.\n";
 	print "  -l - ignore duplicate labels, citations, references; use when running on a directory tree of unrelated chapters.\n";
 	print "  -p - turn ON picky style check, which looks for more style problems but is not so reliable.\n";
+	print "  -P packages.json - specify a JSON file with approved \\usepackage names to check against.\n";
 	print "  -s - turn off style check; looks for poor usage, punctuation, and consistency problems.\n";
 	print "  -t - turn off title capitalization check. Titles are still checked for internal consistency.\n";
 	print "  -u - turn off U.S. style tests for putting commas and periods inside quotes.\n";
 	print "  -O word - this script ignores lines with comments 'chex_latex' in them. Use -O to change this keyword.\n";
 	print "  -R [refs.tex] - specify which file has \\bibitem references in it, if any, for specialized testing.\n"
+}
+
+sub LOADAPPROVEDPACKAGES
+{
+	# Simple parser for JSON array of strings like:
+	# [
+	#     "package1",
+	#     "package2"
+	# ]
+	unless (open(PKGFILE, $packagesjson)) {
+		printf STDERR "Can't open packages file $packagesjson: $!\n";
+		exit 1;
+	}
+	while (<PKGFILE>) {
+		# Look for quoted strings: "packagename"
+		if ( /"([^"]+)"/ ) {
+			my $pkg = $1;
+			$approved_packages{$pkg} = 1;
+		}
+	}
+	close(PKGFILE);
+	my $count = scalar keys %approved_packages;
+	printf "Loaded $count approved packages from $packagesjson\n";
+}
+
+sub CHECKUSEPACKAGE
+{
+	my ($line) = @_;
+	# Parse the \usepackage line to extract package name(s)
+	# Handles: \usepackage{pkg}, \usepackage[options]{pkg}, \usepackage{pkg1,pkg2,pkg3}
+	
+	# Remove any comment from the line first
+	if ( $line =~ /%/ ) {
+		$line = $`;
+	}
+	
+	# Match \usepackage with optional options and the package name(s)
+	if ( $line =~ /\\usepackage(?:\s*\[[^\]]*\])?\s*\{([^}]+)\}/ ) {
+		my $packages_str = $1;
+		# Split by comma in case multiple packages are listed
+		my @packages = split(/\s*,\s*/, $packages_str);
+		foreach my $pkg (@packages) {
+			# Trim whitespace
+			$pkg =~ s/^\s+|\s+$//g;
+			if ( length($pkg) > 0 && !exists($approved_packages{$pkg}) ) {
+				print "ERROR: unapproved package '$pkg' used on line $. in $input.\n";
+			}
+		}
+	}
 }
 
 sub READRECURSIVEDIR
@@ -431,7 +505,13 @@ sub READCODEFILE
 		# other lines that get ignored
 		if ( $theline =~ /\\def/ ) { $theline = $`; }
 		if ( $theline =~ /\\graphicspath/ ) { $theline = $`; }
-		if ( $theline =~ /\\usepackage/ ) { $theline = $`; }
+		if ( $theline =~ /\\usepackage/ ) {
+			# Check packages against approved list if enabled
+			if ( $checkpackages ) {
+				&CHECKUSEPACKAGE($untouchedtheline);
+			}
+			$theline = $`;
+		}
 		if ( $theline =~ /\\counterwithout/ ) { $theline = $`; }
 		if ( $theline =~ /\\hyphenation/ ) { $theline = $`; }
 		if ( $theline =~ /\\definecolor/ ) { $theline = $`; }
