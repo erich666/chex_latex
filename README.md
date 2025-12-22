@@ -1,5 +1,5 @@
 # chex_latex
-LaTeX and text file checking tool. [Install Perl](https://www.activestate.com/activeperl) and run by:
+LaTeX and text file checking tool. [Install Perl](https://www.perl.org/get.html) and run by:
 
     perl chex_latex.pl
 
