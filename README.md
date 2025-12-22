@@ -27,7 +27,8 @@ As an example, here is testfile.tex file; first, look it over yourself:
 	\cite{Castelli2018} gives a thorough overview of the use of mip-maps for level of detail, compute shaders for
 	frustrum culling, etc. and discusses which APIs support these techniques. Basically, you can use anything from
 	DirectX 12\index{DirectX 12} with C++ to WebGL\index{WebGL} with Javascript/index{JS2018} as your API , due
-	to that these all talk to the same underlying hardware. More specifically, there is literally no better way to
+	to that these all talk to the same underlying hardware. This will power up your programming by 53\% and facilitate
+	your familiarization and utilization of the API, etc.! More specifically, there is literally no better way to
 	to accelerate processing data, vs. using just the CPU--so ''just do it''.
 
 Before looking below, what errors do you see? By typing "perl chex_latex.pl testfile.tex", here's what chex_latex.pl finds:
