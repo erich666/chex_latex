@@ -261,17 +261,24 @@ sub LOADAPPROVEDPACKAGES
 
 sub CHECKUSEPACKAGE
 {
-	my ($line) = @_;
-	# Parse the \usepackage line to extract package name(s)
+	my ($line, $is_ok) = @_;
+	# Parse the \usepackage or \RequirePackage line to extract package name(s)
 	# Handles: \usepackage{pkg}, \usepackage[options]{pkg}, \usepackage{pkg1,pkg2,pkg3}
 	
-	# Remove any comment from the line first
+	# Skip if line has the okword comment
+	if ( $is_ok ) {
+		return;
+	}
+	
+	# Remove any comment from the line first (but not escaped \%)
+	$line =~ s/\\%/ESCAPEDPERCENT/g;
 	if ( $line =~ /%/ ) {
 		$line = $`;
 	}
+	$line =~ s/ESCAPEDPERCENT/\\%/g;
 	
-	# Match \usepackage with optional options and the package name(s)
-	if ( $line =~ /\\usepackage(?:\s*\[[^\]]*\])?\s*\{([^}]+)\}/ ) {
+	# Match \usepackage or \RequirePackage with optional options and the package name(s)
+	if ( $line =~ /\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{([^}]+)\}/ ) {
 		my $packages_str = $1;
 		# Split by comma in case multiple packages are listed
 		my @packages = split(/\s*,\s*/, $packages_str);
@@ -505,10 +512,10 @@ sub READCODEFILE
 		# other lines that get ignored
 		if ( $theline =~ /\\def/ ) { $theline = $`; }
 		if ( $theline =~ /\\graphicspath/ ) { $theline = $`; }
-		if ( $theline =~ /\\usepackage/ ) {
+		if ( $theline =~ /\\usepackage/ || $theline =~ /\\RequirePackage/ ) {
 			# Check packages against approved list if enabled
 			if ( $checkpackages ) {
-				&CHECKUSEPACKAGE($untouchedtheline);
+				&CHECKUSEPACKAGE($untouchedtheline, $ok);
 			}
 			$theline = $`;
 		}

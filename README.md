@@ -32,39 +32,46 @@ As an example, here is testfile.tex file; first, look it over yourself:
 
 Before looking below, what errors do you see? By typing "perl chex_latex.pl testfile.tex", here's what chex_latex.pl finds:
 
-	SERIOUS: Title has a word 'that' that is uncapitalized, on line 1 in testfile.tex.
+	SERIOUS: Title has a word 'that' that is uncapitalized, on line 2 in testfile.tex.
 		The program is set to require that titles are capitalized.
 		To override, use '-t' on the command line to allow uncapitalized titles.
 		To be sure, you can test your title at https://capitalizemytitle.com/
-	Sentence ending in the capital letters GPU should have a '\@.' for spacing, on line 2 in testfile.tex.
-	SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line 2 in testfile.tex.
+	Sentence ending in the capital letters 'GPU.' should instead be 'GPU\@.' to have proper 'long' spacing after the period,
+		on line 3 in testfile.tex.
+	SERIOUS: For formal writing, no contractions: ''ll' to ' will' on line 3 in testfile.tex.
 		If you do not want to test for formal usage, put '-f' in the command line.
-	tip: consider removing or replacing 'very' on line 2 in testfile.tex.
+	tip: consider removing or replacing 'very' on line 3 in testfile.tex.
 		'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/
-	\cite needs a tilde ~\cite before citation to avoid separation, on line 3 in testfile.tex.
-	'mip-map' to 'mipmap' (no hyphen), on line 3 in testfile.tex.
+	\cite needs a tilde ~\cite before citation to avoid separation, on line 4 in testfile.tex.
+	'mip-map' to 'mipmap' (no hyphen), on line 4 in testfile.tex.
 	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\' to avoid having a 'double-space'
-		appear after the period, on line 4 in testfile.tex.
+		appear after the period, on line 5 in testfile.tex.
 		(To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)
-	MISSPELLING: 'frustrum' to 'frustum' on line 4 in testfile.tex.
-	tip: you can probably remove 'basically' on line 4 in testfile.tex.
-	hint: try to avoid using etc., as it adds no real information; on line 4 in testfile.tex.
+	MISSPELLING: 'frustrum' to 'frustum' on line 5 in testfile.tex.
+	tip: you can probably remove 'basically' on line 5 in testfile.tex.
+	hint: try to avoid using etc., as it adds no real information; on line 5 in testfile.tex.
 		If you do end up using etc., if you don't use it at the end of a sentence, add a backslash: etc.\
-	SERIOUS: '/index' should be \index, on line 5 in testfile.tex.
-	SERIOUS: change ' ,' to ',' (space in front of comma), on line 5 in testfile.tex.
-	Please change 'Javascript' to 'JavaScript' on line 5 in testfile.tex.
-	tip: 'due to that' to 'because' on line 6 in testfile.tex.
-	tip: 'more specifically' to 'specifically' on line 6 in testfile.tex.
-	tip: you can probably not use 'literally' (and may mean 'figuratively') on line 6 in testfile.tex.
+	SERIOUS: '/index' should be \index, on line 6 in testfile.tex.
+	SERIOUS: change ' ,' to ',' (remove space in front of comma), on line 6 in testfile.tex.
+	Please change 'Javascript' to 'JavaScript' on line 6 in testfile.tex.
+	tip: 'due to that' to 'because' on line 7 in testfile.tex.
+	Possibly needlessly complex: change 'facilitat*' to 'cause' or 'ease' or 'simplify' or 'help along' on line 7 in testfile.tex.
+	tip: 'more specifically' to 'specifically' on line 8 in testfile.tex.
+	tip: you can probably not use 'literally' (and may mean 'figuratively') on line 8 in testfile.tex.
 		If you think it's truly OK (e.g., it's part of a technical term, or you just like it),
 		either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.
-	SERIOUS: word duplication problem of word 'to' on line 7 in testfile.tex.
-	possibly serious: change '--' (short dash) to '---' on line 7 in testfile.tex, unless you are specifying a range.
-	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 7 in testfile.tex.
-	SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line 7 in testfile.tex.
+	Probably needlessly complex: change 'utiliz*' to 'use' or similar, on line 8 in testfile.tex.
+		If you think it's truly OK (e.g., it's part of a technical term, or you just like it),
+		either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.
+	Needlessly complex: change 'familiarization' to 'familiarity' on line 8 in testfile.tex.
+	SERIOUS: word duplication problem of word 'to' on line 9 in testfile.tex.
+	possibly serious: change '--' (short dash) to '---' on line 9 in testfile.tex, unless you are specifying a range or a pair of researchers, such as Cook--Torrance, or something not normally hyphenated, such as New York--based.
+		You can use the -d option on the command line to turn off all dash warnings.
+	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 9 in testfile.tex.
+	POSSIBLY SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line 9 in testfile.tex.
 	SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,
-		or use 'vs.\' on line 7 in testfile.tex.
-	Not capitalized at start of sentence (or the period should have a \ after it), on line 7 in testfile.tex.
+		or use 'vs.\' on line 9 in testfile.tex.
+	Not capitalized at start of sentence (or the period should have a \ after it), on line 9 in testfile.tex.
 	==========================================================================================================
 
 This script is in no way foolproof and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to delete or modify any tests that you don't like.
