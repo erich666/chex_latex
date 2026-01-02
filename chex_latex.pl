@@ -844,8 +844,9 @@ sub READCODEFILE
 		# yes, use twoline here.
 		if( !$ok && !$inequation && !$infigure && $theline =~ /\\ref\{/ &&
 			!($lctwoline =~ /figure/ || $lctwoline =~ /chapter/ || $lctwoline =~ /section/ || $lctwoline =~ /equation/ || 
-			$lctwoline =~ /table/ || $lctwoline =~ /listing/ || $lctwoline =~ /appendix/) ) {
-			print "SERIOUS: '\\ref' doesn't have 'Figure', 'Section', 'Equation', 'Table', or 'Appendix'\n    in front of it, on line $. in $input.\n";
+			$lctwoline =~ /table/ || $lctwoline =~ /listing/ || $lctwoline =~ /appendix/ ||
+			$lctwoline =~ /fig./ || $lctwoline =~ /ch./ || $lctwoline =~ /sec./ || $lctwoline =~ /eq./ ) ) {
+			print "SERIOUS: '\\ref' doesn't have 'Figure', 'Section', 'Equation', 'Table', or 'Appendix'\n    or an abbreviation for these - Fig., Ch., Sec., Eq.\n    in front of it, on line $. in $input.\n";
 		}
 		if( !$ok && $theline =~ /\/label\{/ ) {
 			print "SERIOUS: '/label' $& problem, should use backslash, on line $. in $input.\n";
@@ -1230,7 +1231,7 @@ sub READCODEFILE
 		}
 		if( !$twook && !$isref && !$textonly && $twoline =~ / \[\d+-\d+\]/) {
 			print "ERROR: '$&' date range has only one dash, needs two, on line $. in $input.\n";
-		} elsif( !$ok && !$isref && !$textonly && $theline =~ /\d+-\d+/ && !$inequation && !($theline =~ /\\cite/) && !($theline =~ /\$/) ) {
+		} elsif( !$ok && !$isref && !$textonly && $theline =~ /\d+-\d+/ && !$inequation && !($theline =~ /\\cite/) && !($theline =~ /\$/) && !($theline =~ /^\\/) ) {
 			print "ERROR: '$&' need two dashes between numbers, on line $. in $input.\n";
 		}
 		if( !$ok && !$isref && !$textonly && $theline =~ / \(\d+-\d+\)/ && !($theline =~ /\$/) ) {
@@ -1295,7 +1296,8 @@ sub READCODEFILE
 		if( !$twook && !$textonly && !$inequation && $twoline =~ / '/ ) {
 			if( $twoline =~ / ''/ ) {
 				print "POSSIBLY SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line $. in $input.\n";
-			} else {
+			} elsif (!($twoline =~ / '[0-9]/)) {
+				# not an abbreviation of the year, like '25
 				print "POSSIBLY SERIOUS: the first right apostrophe ' should probably be a left apostrophe , on line $. in $input.\n";
 			}
 		}
@@ -1331,7 +1333,8 @@ sub READCODEFILE
 		# Latex will by default make a "short space" after a capital letter followed by a period.
 		# For example: Franklin D. Roosevelt. For longer sets of capital letters, e.g., GPU, DNA,
 		# we want to have a "long space," as in: "There are many types of DNA.  We will discuss..."
-		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\./ ) {
+		# Also ignore any line starting with a \ as it's probably some command, like \acmDOI{XXXXXXX.XXXXXXX}
+		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\./ && !($theline =~ /^\\/)) {
 			print "Sentence ending in the capital letters '$1.' should instead be '$1\\@.' to have proper 'long' spacing after the period,\n    on line $. in $input.\n";
 		}
 		if( !$ok && !$textonly && !$inequation && !$infigure && $theline =~ /([A-Z][A-Z]+)\)\./ ) {
