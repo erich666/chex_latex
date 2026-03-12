@@ -1,11 +1,17 @@
 # chex_latex
-LaTeX and text file checking tool. [Install Perl](https://www.perl.org/get.html) and run by:
+LaTeX and text file checking tool. Run with either Python or Perl:
+
+    python chex_latex.py
+
+or, if you prefer Perl, [install Perl](https://www.perl.org/get.html) and run:
 
     perl chex_latex.pl
 
 See all the options further down, e.g., you might consider '-p' if you want all possible warnings.
 
-This Perl script reads your .tex files and looks for potential problems, such as doubled words ("the the") and many other bugs. Put it in your directory of .tex files and run it to look for common mistakes. If a message confuses you, look in the Perl script itself, as there are comments and links about some of the issues flagged. You can also use this script on raw text files; the script will automatically not do LaTeX testing.
+Both versions have the same command-line options and produce the same output. The Python version requires only the standard library (no pip installs needed). If you have Python 3.6+ installed, you're good to go.
+
+This script reads your .tex files and looks for potential problems, such as doubled words ("the the") and many other bugs. Put it in your directory of .tex files and run it to look for common mistakes. If a message confuses you, look in the script itself, as there are comments and links about some of the issues flagged. You can also use this script on raw text files; the script will automatically not do LaTeX testing.
 
 You might disagree with some of the problems flagged, but with chex_latex.pl you are at least aware of all of them. A few minutes wading through these can catch errors hard to notice otherwise. That said, if you disagree, don't take the script's word for it. This program is no substitute for understanding the rules of grammar and LaTeX. One other trick I recommend: paste your text into Microsoft Word and see what it turns up.
 
@@ -32,7 +38,7 @@ As an example, here is testfile.tex file; first, look it over yourself:
 	your familiarization and utilization of the API, etc.! More specifically, there is literally no better way to
 	to accelerate processing data, vs. using just the CPU--so ''just do it''.
 
-Before looking below, what errors do you see? By typing "perl chex_latex.pl testfile.tex", here's what chex_latex.pl finds:
+Before looking below, what errors do you see? By typing "python chex_latex.py testfile.tex" (or "perl chex_latex.pl testfile.tex"), here's what chex_latex finds:
 
 	SERIOUS: Title has a word 'that' that is uncapitalized, on line 2 in testfile.tex.
 		The program is set to require that titles are capitalized.
@@ -76,25 +82,29 @@ Before looking below, what errors do you see? By typing "perl chex_latex.pl test
 	Not capitalized at start of sentence (or the period should have a \ after it), on line 9 in testfile.tex.
 	==========================================================================================================
 
-This script is in no way foolproof and will natter about all sorts of things you may not care about. Since it's a Perl script, it's easy for you to delete or modify any tests that you don't like.
+This script is in no way foolproof and will natter about all sorts of things you may not care about. Since it's a script, it's easy for you to delete or modify any tests that you don't like.
 
 # Installation and Use
 
-Install Perl from say https://www.activestate.com/activeperl, put chex_latex.pl somewhere (easiest is to put it in the directory with your .tex files, else you'll need to specify the path to this file), go to the directory where your .tex files are and then:
+If you have Python 3.6+, simply run:
+
+    python chex_latex.py
+
+Alternatively, install Perl from say https://www.activestate.com/activeperl and run:
 
     perl chex_latex.pl
-  
-and all .tex files in your directory and subdirectories will be read and checked for this and that. If you run this command in your downloaded repository, you should get the error list shown at the top of this page for the testfile.tex file included.
+
+Either way, put the script somewhere (easiest is to put it in the directory with your .tex files, else you'll need to specify the path to this file), go to the directory where your .tex files are and run it. All .tex files in your directory and subdirectories will be read and checked for this and that. If you run this command in your downloaded repository, you should get the error list shown at the top of this page for the testfile.tex file included.
 
 To run on a single file, here shown on Windows with an absolute path:
 
-    perl chex_latex.pl C:\Users\you\your_thesis\chapter1.tex
-	
+    python chex_latex.py C:\Users\you\your_thesis\chapter1.tex
+
 For all files in a directory, here shown with a relative path:
 
-    perl chex_latex.pl work_files/my-thesis-master
+    python chex_latex.py work_files/my-thesis-master
 
-This script is one used for the book _Real-Time Rendering_ and so has a bunch of book-specific rules. Blithely ignore our opinions or, better yet, comment out the warning lines you don't like in the script (the program's just a text file, nothing complex). You can also add "% chex_latex" to the end of any line in your .tex file in order to have this script skip some error tests on it, e.g.:
+This script is one used for the book _Real-Time Rendering_ and so has a bunch of book-specific rules. Blithely ignore our opinions or, better yet, comment out the warning lines you don't like in the script (it's just a text file, nothing complex). You can also add "% chex_latex" to the end of any line in your .tex file in order to have this script skip some error tests on it, e.g.:
 
     This method of using data is reasonable. % don't flag "data is" - chex_latex
 
@@ -112,15 +122,15 @@ The main options are:
 	
 So, if you want all the tests, do:
 
-	perl chex_latex.pl -p [directory or files]
-	
+	python chex_latex.py -p [directory or files]
+
 If you want the bare minimum, checking just for LaTeX problems and doubled words, do:
 
-    perl chex_latex.pl -dlstfu [directory or files]
+    python chex_latex.py -dlstfu [directory or files]
 
 To run this checker against plain text files, just specify the files, as normal:
 
-	perl chex_latex.pl my_text_file.txt another_text_file.txt
+	python chex_latex.py my_text_file.txt another_text_file.txt
 	
 If any file is found that does not end in ".tex," the LaTeX-specific tests will be disabled (for all files, so don't mix .tex with .txt).
 
