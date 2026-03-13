@@ -421,6 +421,7 @@ sub READCODEFILE
 			# should work in perl 5.10 and later
 			chop;       # strip record separator
 		}
+		s/\r$//;    # also strip \r for CRLF files
 		$untouchedtheline = $theline = $_;
 		my $skip = 0;
 		my $period_problem = 0;
@@ -697,7 +698,11 @@ sub READCODEFILE
 				print "    This can lead to large gaps between text and code. Did you mean to?\n";
 			}
 		}
-		$justblankline = 0;
+		# Reset justblankline only on non-blank lines, so the next line can detect
+		# that it followed a blank line (e.g. blank line before an equation or listing).
+		if ( $skip || length($theline) > 0 ) {
+			$justblankline = 0;
+		}
 		if ( $theline =~ /begin\{figure}/ ||
 			$theline =~ /begin\{tikzpicture}/ ) {
 			$infigure = 1;

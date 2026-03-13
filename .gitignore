@@ -33,3 +33,5 @@ inc/
 /MANIFEST.bak
 /pm_to_blib
 /*.zip
+/__pycache__/*
+/norm_diff.py
