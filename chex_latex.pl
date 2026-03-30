@@ -2914,6 +2914,32 @@ sub READCODEFILE
 			if( !$ok && !$isref && $lctheline =~ /non-zero/ ) {
 				print "Change 'non-zero' to 'nonzero' on line $. in $input.\n";
 			}
+			# https://learn.microsoft.com/en-us/style-guide/a-z-word-list-term-collections/f/far-left-far-right
+			if( !$ok && !$isref && $lctheline =~ /far-left/ ) {
+				print "Change 'far-left' to 'leftmost' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /far left/ ) {
+				print "Change 'far left' to 'leftmost' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /far-right/ ) {
+				print "Change 'far-right' to 'rightmost' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /far right/ ) {
+				print "Change 'far right' to 'rightmost' on line $. in $input.\n";
+			}
+			# unlikely, but just in case...
+			if( !$ok && !$isref && $lctheline =~ /far-top/ ) {
+				print "Change 'far-top' to 'topmost' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /far top/ ) {
+				print "Change 'far top' to 'topmost' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /far-bottom/ ) {
+				print "Change 'far-bottom' to 'bottommost' on line $. in $input.\n";
+			}
+			if( !$ok && !$isref && $lctheline =~ /far bottom/ ) {
+				print "Change 'far bottom' to 'bottommost' on line $. in $input.\n";
+			}
 			# nice for a final check one time, but kind of crazed and generates false positives
 			if ( $picky ) {
 				# Ending a sentence with a preposition is frowned on, but often without merit.

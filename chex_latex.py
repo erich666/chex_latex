@@ -2300,6 +2300,24 @@ def read_code_file():
                 print(f"Change 'non-uniform' to 'nonuniform' on line {line_number} in {input_file}.")
             if not ok and not isref and 'non-zero' in lctheline:
                 print(f"Change 'non-zero' to 'nonzero' on line {line_number} in {input_file}.")
+			# https://learn.microsoft.com/en-us/style-guide/a-z-word-list-term-collections/f/far-left-far-right
+            if not ok and not isref and 'far-left' in lctheline:
+                print(f"Change 'far-left' to 'leftmost' on line {line_number} in {input_file}.")
+            if not ok and not isref and 'far left' in lctheline:
+                print(f"Change 'far left' to 'leftmost' on line {line_number} in {input_file}.")
+            if not ok and not isref and 'far-right' in lctheline:
+                print(f"Change 'far-right' to 'rightmost' on line {line_number} in {input_file}.")
+            if not ok and not isref and 'far right' in lctheline:
+                print(f"Change 'far right' to 'rightmost' on line {line_number} in {input_file}.")
+			# unlikely, but just in case...
+            if not ok and not isref and 'far-top' in lctheline:
+                print(f"Change 'far-top' to 'topmost' on line {line_number} in {input_file}.")
+            if not ok and not isref and 'far top' in lctheline:
+                print(f"Change 'far top' to 'topmost' on line {line_number} in {input_file}.")
+            if not ok and not isref and 'far-bottom' in lctheline:
+                print(f"Change 'far-bottom' to 'bottommost' on line {line_number} in {input_file}.")
+            if not ok and not isref and 'far bottom' in lctheline:
+                print(f"Change 'far bottom' to 'bottommost' on line {line_number} in {input_file}.")
 
             # nice for a final check one time, but kind of crazed and generates false positives
             if picky:
