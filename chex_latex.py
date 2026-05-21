@@ -1127,8 +1127,10 @@ def read_code_file():
             if not twook and not isref and not textonly and m:
                 print(f"ERROR: '{m.group()}' date range has only one dash, needs two, on line {line_number} in {input_file}.")
             else:
-                m = re.search(r'\d+-\d+', theline)
-                if not ok and not isref and not textonly and m and not inequation and '\\cite' not in theline and '$' not in theline and not re.search(r'^\\', theline):
+                stripped = re.sub(r'\\[a-zA-Z]*ref\{[^}]*\}', '', theline)
+                stripped = re.sub(r'\\cite[a-zA-Z]*\{[^}]*\}', '', stripped)
+                m = re.search(r'\d+-\d+', stripped)
+                if not ok and not isref and not textonly and m and not inequation and '$' not in theline and not re.search(r'^\\', theline):
                     print(f"ERROR: '{m.group()}' need two dashes between numbers, on line {line_number} in {input_file}.")
             m = re.search(r' \(\d+-\d+\)', theline)
             if not ok and not isref and not textonly and m and '$' not in theline:

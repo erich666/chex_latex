@@ -1236,8 +1236,15 @@ sub READCODEFILE
 		}
 		if( !$twook && !$isref && !$textonly && $twoline =~ / \[\d+-\d+\]/) {
 			print "ERROR: '$&' date range has only one dash, needs two, on line $. in $input.\n";
-		} elsif( !$ok && !$isref && !$textonly && $theline =~ /\d+-\d+/ && !$inequation && !($theline =~ /\\cite/) && !($theline =~ /\$/) && !($theline =~ /^\\/) ) {
-			print "ERROR: '$&' need two dashes between numbers, on line $. in $input.\n";
+		} elsif( !$ok && !$isref && !$textonly && !$inequation && !($theline =~ /\$/) && !($theline =~ /^\\/) ) {
+			# Strip \ref{...}, \cite{...} and their variants (\eqref, \pageref, \citep, etc.)
+			# so digit-dash-digit inside labels/keys (e.g., \ref{tab:perf-8-8}) isn't flagged.
+			my $stripped = $theline;
+			$stripped =~ s/\\[a-zA-Z]*ref\{[^}]*\}//g;
+			$stripped =~ s/\\cite[a-zA-Z]*\{[^}]*\}//g;
+			if( $stripped =~ /\d+-\d+/ ) {
+				print "ERROR: '$&' need two dashes between numbers, on line $. in $input.\n";
+			}
 		}
 		if( !$ok && !$isref && !$textonly && $theline =~ / \(\d+-\d+\)/ && !($theline =~ /\$/) ) {
 			print "ERROR: '$&' date range needs to use brackets, [], not parentheses, and\n    has only one dash, needs two, on line $. in $input.\n";
