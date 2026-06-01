@@ -760,7 +760,8 @@ def read_code_file():
             # ---------------------------------------------------------
             # citation problem: use a ~ instead of a space so that the citation is connected with the content before it.
             if not twook and not infigure and re.search(r'[\s\w\.,}]\\cite\{', twoline):
-                print(f"\\cite needs a tilde ~\\cite before citation to avoid separation, on line {line_number} in {input_file}.")
+                print(f"\\cite should be preceeded by a tilde, e.g., ~\\cite, instead of a space, so that the")
+                print(f"    citation is always connected with the content before it, on line {line_number} in {input_file}.")
             # has the tilde, but there's a space before the tilde
             if not twook and re.search(r'\s~\\cite\{', twoline):
                 print(f"\\cite - remove the space before the tilde ~\\cite, on line {line_number} in {input_file}.")
