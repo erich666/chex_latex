@@ -848,9 +848,9 @@ sub READCODEFILE
 		}
 		# yes, use twoline here.
 		if( !$ok && !$inequation && !$infigure && $theline =~ /\\ref\{/ &&
-			!($lctwoline =~ /figure/ || $lctwoline =~ /chapter/ || $lctwoline =~ /section/ || $lctwoline =~ /equation/ || 
+			!($lctwoline =~ /figure/ || $lctwoline =~ /chapter/ || $lctwoline =~ /section/ || $lctwoline =~ /equation/ ||
 			$lctwoline =~ /table/ || $lctwoline =~ /listing/ || $lctwoline =~ /appendix/ ||
-			$lctwoline =~ /fig./ || $lctwoline =~ /ch./ || $lctwoline =~ /sec./ || $lctwoline =~ /eq./ ) ) {
+			$lctwoline =~ /\b(?:figs?|chs?|secs?|eqs?)\./ ) ) {
 			print "SERIOUS: '\\ref' doesn't have 'Figure', 'Section', 'Equation', 'Table', or 'Appendix'\n    or an abbreviation for these - Fig., Ch., Sec., Eq.\n    in front of it, on line $. in $input.\n";
 		}
 		if( !$ok && $theline =~ /\/label\{/ ) {

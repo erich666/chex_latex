@@ -779,8 +779,7 @@ def read_code_file():
                          'section' in lctwoline or 'equation' in lctwoline or
                          'table' in lctwoline or 'listing' in lctwoline or
                          'appendix' in lctwoline or
-                         'fig.' in lctwoline or 'ch.' in lctwoline or
-                         'sec.' in lctwoline or 'eq.' in lctwoline)):
+                         re.search(r'\b(?:figs?|chs?|secs?|eqs?)\.', lctwoline))):
                 print(f"SERIOUS: '\\ref' doesn't have 'Figure', 'Section', 'Equation', 'Table', or 'Appendix'")
                 print(f"    or an abbreviation for these - Fig., Ch., Sec., Eq.")
                 print(f"    in front of it, on line {line_number} in {input_file}.")
