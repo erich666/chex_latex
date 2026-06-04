@@ -830,8 +830,8 @@ sub READCODEFILE
 
 		# ---------------------------------------------------------
 		# citation problem: use a ~ instead of a space so that the citation is connected with the content before it.
-		if( !$twook && !$infigure && $twoline =~ /[\s\w\.,}]\\cite\{/ ) {
-			print "\\cite should be preceeded by a tilde, e.g., ~\\cite, instead of a space, so that the\n    citation is always connected with the content before it, on line $. in $input.\n";
+		if( $picky && !$twook && !$infigure && $twoline =~ /[\s\w\.,}]\\cite\{/ ) {
+			print "\\cite may want to be preceeded by a tilde, e.g., ~\\cite, instead of a space, so that the\n    citation is always connected with the content before it, on line $. in $input.\n";
 		}
 		# has the tilde, but there's a space before the tilde
 		if( !$twook && $twoline =~ /\s~\\cite\{/ ) {
