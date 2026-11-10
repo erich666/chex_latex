@@ -210,5 +210,5 @@ Aspell also works on plaintext files, so if you can extract your text into a sim
 # LLM Resources
 
 There are now skills for LLMs to check writing style. Here are two I know of:
-* [Economist Style Guide](https://github.com/TAJD/economist-style-guide-plugin) - a Claude Code plugin (skill) that edits and proofreads your writing the way The Economist's style guide would
-* [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish) - an agent skill that makes LLMs write plain English
+* [Economist Style Guide](https://github.com/TAJD/economist-style-guide-plugin) - a Claude Code plugin (skill) that edits and proofreads your writing the way The Economist's style guide would.
+* [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish) - an agent skill that makes LLMs write plain English. See [some advice here](https://x.com/karpathy/status/2105819303471976479?lang=en) on using this sort of thing.
