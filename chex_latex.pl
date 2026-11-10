@@ -256,7 +256,7 @@ sub LOADAPPROVEDPACKAGES
 	}
 	close(PKGFILE);
 	my $count = scalar keys %approved_packages;
-	printf "Loaded $count approved packages from $packagesjson\n";
+	print "Loaded $count approved packages from $packagesjson\n";
 }
 
 sub CHECKUSEPACKAGE
@@ -414,7 +414,7 @@ sub READCODEFILE
 	}
 	# if there is more than one file being parsed, note the separation of files
 	if ($cfnum>1) {
-		printf "\n================================================\nFILE: $input:\n";
+		print "\n================================================\nFILE: $input:\n";
 	}
 	while (<DATAFILE>) {
 		if ( /\R$/ ) {
@@ -497,6 +497,15 @@ sub READCODEFILE
 		# really, just delete the whole line
 		# the possibility we want to do something with it
 		if ( $theline =~ /\\includegraphics\[/ ) {
+			# it's not so nice to make width=1.0, 100%, as the figure will look wider than the text.
+			# Test this before the line is deleted; ignore anything in a comment.
+			my $gline = $theline;
+			$gline =~ s/(?<!\\)%.*//;
+			if ( $style && !$skip && !$testlisting && !$ok && !$subfigure &&
+				$gline =~ /\\includegraphics\[/ &&
+				( $gline =~ /width=1.0\\/ || $gline =~ /width=\\/ ) ) {
+				print "POSSIBLE OVERHANG: please make the figure width a maximum of 0.95, on line $. in $input.\n";
+			}
 			# delete line
 			$theline = '';
 			# if ( $theline =~ /trim=/ ) {
@@ -592,7 +601,7 @@ sub READCODEFILE
 			} elsif ( $indexname =~ /\|\)/ ) {
 				#print "right index *$`*\n";
 				if ( !exists($indexlong{$`}) ) {
-					printf "ERROR: found right index {$`|)} without left index in $input.\n    Perhaps you repeated this right entry?\n";
+					print "ERROR: found right index {$`|)} without left index in $input.\n    Perhaps you repeated this right entry?\n";
 				} else {
 					$indexlong{$`}--;
 					if ( $indexlong{$`} == 0 ) {
@@ -619,32 +628,25 @@ sub READCODEFILE
 
 		my $lctheline = lc($theline);
 
-		# have to do this one early, as includegraphics gets culled out
 		if ( $theline =~ /begin\{subfigure}/ || $theline =~ /begin\{minipage}/ ) {
 			$subfigure = 1;
-		}
-		# it's not so nice to make width=1.0, 100%, as the figure will look wider than the text.
-		if ( $style && !$testlisting &&!$ok && !$subfigure && $theline =~ /\\includegraphics\[/ ) {
-			if ( !$subfigure && $theline =~ /width=1.0\\/ || $theline =~ /width=\\/) {
-				print "POSSIBLE OVERHANG: please make the figure width a maximum of 0.95, on line line $. in $input.\n";
-			}
 		}
 
 		# check for section, etc. and see that words are capitalized
 		# can compare with APA online https://capitalizemytitle.com/ - may need to add more connector words to this subroutine.
 		# APA style capitalizes anything 4 letters or longer: https://apastyle.apa.org/style-grammar-guidelines/capitalization/title-case
 		if ( !$testlisting &&
-			$theline =~ /\\chapter\{([A-Za-z| -]+)\}/ ||
+			( $theline =~ /\\chapter\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\section\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\subsection\{([A-Za-z| -]+)\}/ ||
 			$theline =~ /\\subsubsection\{([A-Za-z| -]+)\}/ ||
-			$theline =~ /\\title\{([A-Za-z| -\\,]+)\}/ ) {
+			$theline =~ /\\title\{([A-Za-z| \-\\,]+)\}/ ) ) {
 			my @wds = split(/[ -]/,$1);	# split
 			for ($i = 0; $i <= $#wds; $i++ ) {
 				if ( $i == 0 ) {
 					# first word - just check for capitalization, which should always be true for any form of title
 					if ( CAPITALIZED($wds[$i]) == 0 ) {
-						printf "LIKELY SERIOUS: Chapter or Section's first word '$wds[$i]' is not capitalized, on line $. in $input.\n";
+						print "LIKELY SERIOUS: Chapter or Section's first word '$wds[$i]' is not capitalized, on line $. in $input.\n";
 					}
 				} else {
 					my $sw = &CONNECTOR_WORD($wds[$i], $i);
@@ -655,15 +657,15 @@ sub READCODEFILE
 					} elsif ( $sw == 0 && (length($wds[$i]) > 0) && &SECTION_MISMATCH($wds[$i]) ) {
 						# Not a connector word, and the capitalization is different than the previous word encountered
 						# in this type of chapter/section/subsection, so flag it.
-						printf "SERIOUS: Title has a word '$wds[$i]' that is %s, on line $. in $input.\n",
-							$caps_used ? "uncapitalized" : "capitalized";
+						print "SERIOUS: Title has a word '$wds[$i]' that is " .
+							($caps_used ? "uncapitalized" : "capitalized") . ", on line $. in $input.\n";
 						if ( $force_title_cap ) {
 							print "    The program is set to require that titles are capitalized.\n";
 							print "    To override, use '-t' on the command line to allow uncapitalized titles.\n";
 						} else {
 							print "    This does not match the style in the first $title_type encountered\n";
-							printf "    $caps_loc, which is %s word.\n",
-								$caps_used ? "a capitalized" : "an uncapitalized";
+							print "    $caps_loc, which is " .
+								($caps_used ? "a capitalized" : "an uncapitalized") . " word.\n";
 						}
 						if ( $caps_used ) {
 							#if (length($wds[$i])<=3) {
@@ -731,38 +733,43 @@ sub READCODEFILE
 
 		# let the main testing begin!
 		if ( $inlisting && ($testlisting > 0) ) {
-			if ( !$ok &&
-					!($theline =~ /label=/) && 
-					!($theline =~ /caption=/) && 
-					!($theline =~ /language=/) && 
-					!($theline =~ /morekeywords=/) && 
-					!($theline =~ /basicstyle=/) &&
-					!($theline =~ /mathescape=/) ) {
+			if ( $theline =~ /begin\{lstlisting}/ ) {
+				# code starts on the next line, unless an [options] list is opened here and not closed
+				my $after = $';
+				$after =~ s/^\s+//;
+				$insidecode = ( $after =~ /^\[/ && !($after =~ /\]/) ) ? 0 : 1;
+			} elsif ( !$insidecode ) {
 				# A ] will end the definitions.
-				if ( !$insidecode && $theline =~ /\]/ ) {
+				if ( $theline =~ /\]/ ) {
 					$insidecode = 1;
 				}
-				if ( $insidecode ) {
-					# OK, real code, I think. Figure out character count
-					my $codestr = $untouchedtheline;
-					if ( !$tabsfound && $codestr =~ /\t/ ) {
-						printf "***TABS FOUND IN LISTING: first found on line $. in $input.\n";
-						$tabsfound = 1;
-					}
-					if ( $codestr =~ /\$/ ) {
-						printf ">>>EQUATION FOUND IN LISTING on line $. in $input.\n";
-					}
-					# clever expand tabs to spaces, four spaces to the tab.
-					$codestr =~ s/\t+/' ' x (length($&) * 4 - length($`) % 4)/e;
-					# convert references to equation numbers, roughly using 5 spaces.
-					$codestr =~ s/\\ref\{([\w_:-]+)}/X.X/g;
-					# remove all $ for math equations, just to cut down a bit and see if it all fits.
-					$codestr =~ s/\$//g;
-					my $codelen = length($codestr);
-					if ( $codelen > $testlisting ) {
-						printf "CODE POSSIBLY TOO LONG: $codelen characters on line $. in $input.\n";
-						printf "    code: $codestr\n";
-					}
+			} elsif ( !$ok &&
+					!($theline =~ /end\{lstlisting}/) &&
+					!($theline =~ /label=/) &&
+					!($theline =~ /caption=/) &&
+					!($theline =~ /language=/) &&
+					!($theline =~ /morekeywords=/) &&
+					!($theline =~ /basicstyle=/) &&
+					!($theline =~ /mathescape=/) ) {
+				# OK, real code, I think. Figure out character count
+				my $codestr = $untouchedtheline;
+				if ( !$tabsfound && $codestr =~ /\t/ ) {
+					print "***TABS FOUND IN LISTING: first found on line $. in $input.\n";
+					$tabsfound = 1;
+				}
+				if ( $codestr =~ /\$/ ) {
+					print ">>>EQUATION FOUND IN LISTING on line $. in $input.\n";
+				}
+				# clever expand tabs to spaces, four spaces to the tab.
+				1 while $codestr =~ s/\t+/' ' x (length($&) * 4 - length($`) % 4)/e;
+				# convert references to equation numbers, roughly using 5 spaces.
+				$codestr =~ s/\\ref\{([\w_:-]+)}/X.X/g;
+				# remove all $ for math equations, just to cut down a bit and see if it all fits.
+				$codestr =~ s/\$//g;
+				my $codelen = length($codestr);
+				if ( $codelen > $testlisting ) {
+					print "CODE POSSIBLY TOO LONG: $codelen characters on line $. in $input.\n";
+					print "    code: $codestr\n";
 				}
 			}
 		}
@@ -866,7 +873,7 @@ sub READCODEFILE
 			# look at index entry - only looks at first one in line, though.
 			my $index = $';
 			if ( $index =~ /\|/ && !($index =~ /\|see/) && !($index =~ /\|nn/) && !($index =~ /\|emph/) && !($index =~ /\|\(/) && !($index =~ /\|\)/) ) {
-				print "SERIOUS: '\index' has a '|' without a 'see' or similar after it, on line $. in $input. Did you mean '!'?\n";
+				print "SERIOUS: '\\index' has a '|' without a 'see' or similar after it, on line $. in $input. Did you mean '!'?\n";
 			}
 		}
 		# reference needs tilde
@@ -907,7 +914,7 @@ sub READCODEFILE
 		if ( ($str =~ /\\label\{/) || (($str =~ /label=/) && !($str =~ /xlabel=/) && !($str =~ /ylabel=/) && !($str =~ /label=\\/) ) ) {
 			my $foundlabel = 0;
 			#print "GOT HERE 1 on line $. with $str\n";
-			while ( ($str =~ /\\label\{([\w_:#-\s]+)}/) || ($str =~ /label=\{([\w_:#-\s]+)}/) || ($str =~ /label=([\w_:#-\s]+)/) ) {
+			while ( ($str =~ /\\label\{([\w_:#\-\s]+)}/) || ($str =~ /label=\{([\w_:#\-\s]+)}/) || ($str =~ /label=([\w_:#\-\s]+)/) ) {
 				#print "GOT HERE 2 on line $. with $str\n";
 				$str = $';
 				$foundlabel = 1;
@@ -973,7 +980,7 @@ sub READCODEFILE
 			my $kk = chop $prev_real_line;
 			#printf "k is $k\n";
 			if ( $k ne '.' && $kk ne '.' && !$ignore_first ) {
-				printf "no period on around line $lastl in $input.\n";
+				print "no period on around line $lastl in $input.\n";
 			}
 			$ignore_first = 0;
 			$foundref = 1;
@@ -1410,7 +1417,7 @@ sub READCODEFILE
 			print "Change 'et. al.' to 'et al.' (no first period), on line $. in $input.\n";
 		}
 		if ( !$twook && $twoline =~ /et al.~\\cite\{\w+\}\s+[A-Z]/ ) { # \{\w+\} [A-Z]
-			printf "et al. citation looks like it needs a period after the citation, on line $. in $input.\n";
+			print "et al. citation looks like it needs a period after the citation, on line $. in $input.\n";
 		}
 		# see https://english.stackexchange.com/questions/121054/which-one-is-correct-et-al-s-or-et-al
 		# and https://forum.wordreference.com/threads/how-to-use-the-possessive-s-with-et-al.1621357/
@@ -1432,13 +1439,13 @@ sub READCODEFILE
 		# as if it's the end of a sentence, which causes a bit of additional space to get added after it.
 		# Easiest is to just spell out vs.
 		if( !$twook && !$isref && !$textonly && $twoline =~ / vs\. / ) {
-			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs.\\' on line $. in $input.\n";
+			print "SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,\n    or use 'vs.\\ ' on line $. in $input.\n";
 		}
 		if( $formal && !$twook && !$isref && $twoline =~ / vs / ) {
 			print "SERIOUS: change 'vs' to 'versus' on line $. in $input\n";
 		}
 		if( !$twook && !$isref && !$textonly && $twoline =~ / etc\. [a-z]/ ) {
-			print "POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\\' to avoid having a 'double-space'\n    appear after the period, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
+			print "POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\\ ' to avoid having a 'double-space'\n    appear after the period, on line $. in $input.\n    (To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)\n";
 			$period_problem = 1;
 		}
 		
@@ -1476,7 +1483,7 @@ sub READCODEFILE
 		# more style oriented - normally useful, but you can turn it off with -s
 		if ( $style ) {
 			if( !$twook && !$textonly && $twoline =~ /\. [a-z]/ && !($twoline =~ /a\.k\.a\./) && !($twoline =~ /\.\.\./) && !$isref && !$inequation && !$period_problem ) {
-				printf "Not capitalized at start of sentence%s, on line $. in $input.\n", $textonly ? "" : " (or the period should have a \\ after it)";
+				print "Not capitalized at start of sentence (or the period should have a \\ after it), on line $. in $input.\n";
 			}
 			# we like to avoid ending a sentence with a preposition.
 			if( !$twook && $twoline =~ / with\. / ) {
@@ -3163,9 +3170,9 @@ sub SAYOK
 {
 	print "    If you think it's truly OK (e.g., it's part of a technical term, or you just like it),\n";
 	if ($textonly) {
-		print "    you can ignore this warning, or edit this perl script and comment it out.\n";
+		print "    you can ignore this warning, or edit this script and comment it out.\n";
 	} else {
-		print "    either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.\n";
+		print "    either edit this script, or put on the end of this line of your .tex file the comment '% chex_latex'.\n";
 	}
 }
 

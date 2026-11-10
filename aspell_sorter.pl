@@ -39,7 +39,7 @@ foreach $elem ( sort alphabetical ( keys %words ) ) {
 exit ;
 
 sub READ {
-	local($fname) = @_[0] ;
+	local($fname) = $_[0] ;
 
 	die "can't open $fname: $!\n"
 		unless open(INFILE,$fname) ;

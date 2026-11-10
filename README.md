@@ -50,9 +50,8 @@ Before looking below, what errors do you see? By typing "python chex_latex.py te
 		If you do not want to test for formal usage, put '-f' in the command line.
 	tip: consider removing or replacing 'very' on line 3 in testfile.tex.
 		'very' tends to weaken a sentence. Try substitutes: https://www.grammarcheck.net/very/
-	\cite needs a tilde ~\cite before citation to avoid separation, on line 4 in testfile.tex.
 	'mip-map' to 'mipmap' (no hyphen), on line 4 in testfile.tex.
-	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\' to avoid having a 'double-space'
+	POSSIBLY SERIOUS: you may need to change 'etc.' to 'etc.\ ' to avoid having a 'double-space'
 		appear after the period, on line 5 in testfile.tex.
 		(To be honest, it's better to avoid 'etc.' altogether, as it provides little to no information.)
 	MISSPELLING: 'frustrum' to 'frustum' on line 5 in testfile.tex.
@@ -67,10 +66,10 @@ Before looking below, what errors do you see? By typing "python chex_latex.py te
 	tip: 'more specifically' to 'specifically' on line 8 in testfile.tex.
 	tip: you can probably not use 'literally' (and may mean 'figuratively') on line 8 in testfile.tex.
 		If you think it's truly OK (e.g., it's part of a technical term, or you just like it),
-		either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.
+		either edit this script, or put on the end of this line of your .tex file the comment '% chex_latex'.
 	Probably needlessly complex: change 'utiliz*' to 'use' or similar, on line 8 in testfile.tex.
 		If you think it's truly OK (e.g., it's part of a technical term, or you just like it),
-		either edit this perl script, or put on the end of this line of your .tex file the comment '% chex_latex'.
+		either edit this script, or put on the end of this line of your .tex file the comment '% chex_latex'.
 	Needlessly complex: change 'familiarization' to 'familiarity' on line 8 in testfile.tex.
 	SERIOUS: word duplication problem of word 'to' on line 9 in testfile.tex.
 	possibly serious: change '--' (short dash) to '---' on line 9 in testfile.tex, unless you are specifying a range or a pair of researchers, such as Cook--Torrance, or something not normally hyphenated, such as New York--based.
@@ -78,7 +77,7 @@ Before looking below, what errors do you see? By typing "python chex_latex.py te
 	SERIOUS: U.S. punctuation rule, change ''. to .'' on line 9 in testfile.tex.
 	POSSIBLY SERIOUS: the first right double-apostrophe '' should probably be a left double-apostrophe ``, on line 9 in testfile.tex.
 	SERIOUS: change 'vs.' to 'versus' to avoid having a 'double-space' appear after the period,
-		or use 'vs.\' on line 9 in testfile.tex.
+		or use 'vs.\ ' on line 9 in testfile.tex.
 	Not capitalized at start of sentence (or the period should have a \ after it), on line 9 in testfile.tex.
 	==========================================================================================================
 

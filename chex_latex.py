@@ -184,8 +184,7 @@ def process_files():
     global citeorder, citeloc
 
     for i in range(cfnum):
-        fld = codefiles[i].split('/')
-        nextfile = fld[-1]
+        nextfile = os.path.basename(codefiles[i])
         # not vital for a book
         # if nextfile in filenames_found:
         #     print(f"BEWARE: two .tex files with same name {nextfile} found in directory or subdirectory.")
@@ -463,6 +462,13 @@ def read_code_file():
         # cut rest of any line with includegraphics and trim= on it
         # really, just delete the whole line
         if '\\includegraphics[' in theline:
+            # it's not so nice to make width=1.0, 100%, as the figure will look wider than the text.
+            # Test this before the line is deleted; ignore anything in a comment.
+            gline = re.sub(r'(?<!\\)%.*', '', theline)
+            if (style and not skip and not testlisting and not ok and not subfigure and
+                    '\\includegraphics[' in gline and
+                    ('width=1.0\\' in gline or 'width=\\' in gline)):
+                print(f"POSSIBLE OVERHANG: please make the figure width a maximum of 0.95, on line {line_number} in {input_file}.")
             # delete line
             theline = ''
 
@@ -532,23 +538,6 @@ def read_code_file():
                 if not m:
                     break
                 indexname = m.group(1)
-
-                str_val = str_val[m.end():]
-                newtwoline += str_val[:m.start()] if False else twoline[len(twoline) - len(str_val) - (len(str_val)):m.start()]
-                # Correct prematch: everything before the match in the current str_val
-                # We need to track prematch properly
-                # Let me redo this logic more carefully
-                pass
-
-            # Redo the index test loop more carefully
-            str_val = twoline
-            newtwoline = ' '
-
-            while not textonly:
-                m = re.search(r'\\index\{([\d\w_".\'\~\-\$& !^()/\|\\@]+)}', str_val)
-                if not m:
-                    break
-                indexname = m.group(1)
                 prematch = str_val[:m.start()]
                 str_val = str_val[m.end():]
                 newtwoline += prematch
@@ -587,14 +576,8 @@ def read_code_file():
 
             lctheline = theline.lower()
 
-            # have to do this one early, as includegraphics gets culled out
             if re.search(r'begin\{subfigure}', theline) or re.search(r'begin\{minipage}', theline):
                 subfigure = 1
-
-            # it's not so nice to make width=1.0, 100%, as the figure will look wider than the text.
-            if style and not testlisting and not ok and not subfigure and '\\includegraphics[' in theline:
-                if (not subfigure and 'width=1.0\\' in theline) or 'width=\\' in theline:
-                    print(f"POSSIBLE OVERHANG: please make the figure width a maximum of 0.95, on line line {line_number} in {input_file}.")
 
             # check for section, etc. and see that words are capitalized
             title_match = None
@@ -603,7 +586,7 @@ def read_code_file():
                             r'\\section\{([A-Za-z| -]+)\}',
                             r'\\subsection\{([A-Za-z| -]+)\}',
                             r'\\subsubsection\{([A-Za-z| -]+)\}',
-                            r'\\title\{([A-Za-z| -\\,]+)\}']:
+                            r'\\title\{([A-Za-z| \-\\,]+)\}']:
                     title_match = re.search(pat, theline)
                     if title_match:
                         break
@@ -674,34 +657,39 @@ def read_code_file():
 
             # let the main testing begin!
             if inlisting and (testlisting > 0):
-                if (not ok and
+                if 'begin{lstlisting}' in theline:
+                    # code starts on the next line, unless an [options] list is opened here and not closed
+                    after = theline[theline.index('begin{lstlisting}') + len('begin{lstlisting}'):].lstrip()
+                    insidecode = 0 if (after.startswith('[') and ']' not in after) else 1
+                elif not insidecode:
+                    # A ] will end the definitions.
+                    if ']' in theline:
+                        insidecode = 1
+                elif (not ok and
+                        'end{lstlisting}' not in theline and
                         'label=' not in theline and
                         'caption=' not in theline and
                         'language=' not in theline and
                         'morekeywords=' not in theline and
                         'basicstyle=' not in theline and
                         'mathescape=' not in theline):
-                    # A ] will end the definitions.
-                    if not insidecode and ']' in theline:
-                        insidecode = 1
-                    if insidecode:
-                        # OK, real code, I think. Figure out character count
-                        codestr = untouchedtheline
-                        if not tabsfound and 't' in codestr:
-                            print(f"***TABS FOUND IN LISTING: first found on line {line_number} in {input_file}.")
-                            tabsfound = 1
-                        if '$' in codestr:
-                            print(f">>>EQUATION FOUND IN LISTING on line {line_number} in {input_file}.")
-                        # expand tabs to spaces, four spaces to the tab.
-                        codestr = codestr.expandtabs(4)
-                        # convert references to equation numbers, roughly using 5 spaces.
-                        codestr = re.sub(r'\\ref\{[\w_:-]+}', 'X.X', codestr)
-                        # remove all $ for math equations
-                        codestr = re.sub(r'\$', '', codestr)
-                        codelen = len(codestr)
-                        if codelen > testlisting:
-                            print(f"CODE POSSIBLY TOO LONG: {codelen} characters on line {line_number} in {input_file}.")
-                            print(f"    code: {codestr}")
+                    # OK, real code, I think. Figure out character count
+                    codestr = untouchedtheline
+                    if not tabsfound and '\t' in codestr:
+                        print(f"***TABS FOUND IN LISTING: first found on line {line_number} in {input_file}.")
+                        tabsfound = 1
+                    if '$' in codestr:
+                        print(f">>>EQUATION FOUND IN LISTING on line {line_number} in {input_file}.")
+                    # expand tabs to spaces, four spaces to the tab.
+                    codestr = codestr.expandtabs(4)
+                    # convert references to equation numbers, roughly using 5 spaces.
+                    codestr = re.sub(r'\\ref\{[\w_:-]+}', 'X.X', codestr)
+                    # remove all $ for math equations
+                    codestr = re.sub(r'\$', '', codestr)
+                    codelen = len(codestr)
+                    if codelen > testlisting:
+                        print(f"CODE POSSIBLY TOO LONG: {codelen} characters on line {line_number} in {input_file}.")
+                        print(f"    code: {codestr}")
 
             # ------------------------------------------
             # Check doubled words. Possibly the most useful test in the whole script
@@ -1310,7 +1298,7 @@ def read_code_file():
             # more style oriented - normally useful, but you can turn it off with -s
             if style:
                 if not twook and not textonly and re.search(r'\. [a-z]', twoline) and not re.search(r'a\.k\.a\.', twoline) and not re.search(r'\.\.\.', twoline) and not isref and not inequation and not period_problem:
-                    print(f"Not capitalized at start of sentence{'' if textonly else ' (or the period should have a \\\\ after it)'}, on line {line_number} in {input_file}.")
+                    print(f"Not capitalized at start of sentence (or the period should have a \\ after it), on line {line_number} in {input_file}.")
                 # we like to avoid ending a sentence with a preposition.
                 if not twook and ' with. ' in twoline:
                     print(f"consider: 'with.' at end of sentence on line {line_number} in {input_file}. Reword if it's not convoluted to do so.")
@@ -1763,619 +1751,619 @@ def read_code_file():
                 if not ok and not isref and 'Moon ' in theline:
                     print(f"'Moon' probably wants to be 'the moon' (or change this rule to what you like), on line {line_number} in {input_file}.")
 
-            # ---- continuation of while loop body, terminology/spelling checks ----
+                # ---- continuation of while loop body, terminology/spelling checks ----
 
-            # either is OK, https://en.wikipedia.org/wiki/Data_set - may someday use this one for a consistency check. TODO
-            if not ok and not isref and 'dataset' in lctheline:
-                print(f"'dataset' to 'data set' (either is fine, 'data set' is preferred, but your choice) on line {line_number} in {input_file}.")
-            if not ok and not isref and 'depth-of-field' in lctheline:
-                print(f"'depth-of-field' to 'depth of field' on line {line_number} in {input_file}.")
-            if not twook and not isref and 'fall off' in lctwoline:
-                print(f"'fall off' to 'falloff' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'fall-off' in lctheline:
-                print(f"'fall-off' to 'falloff' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'farfield' in lctheline:
-                print(f"'farfield' to 'far field' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'far-field' in lctheline:
-                print(f"'far-field' to 'far field' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'nearfield' in lctheline:
-                print(f"'nearfield' to 'near field' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'near-field' in lctheline:
-                print(f"'near-field' to 'near field' on line {line_number} in {input_file}.")
-            if not twook and not isref and 'six dimensional' in lctwoline:
-                print(f"if used as an adjective, 'six dimensional' to 'six-dimensional' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and 'five dimensional' in lctwoline:
-                print(f"if used as an adjective, 'five dimensional' to 'five-dimensional' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and 'four dimensional' in lctwoline:
-                print(f"if used as an adjective, 'four dimensional' to 'four-dimensional' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and 'three dimensional' in lctwoline:
-                print(f"if used as an adjective, 'three dimensional' to 'three-dimensional' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and 'two dimensional' in lctwoline:
-                print(f"if used as an adjective, 'two dimensional' to 'two-dimensional' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and 'one dimensional' in lctwoline:
-                print(f"if used as an adjective, 'one dimensional' to 'one-dimensional' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not ok and 'LoD' in theline:
-                print(f"'LoD' to 'LOD' on line {line_number} in {input_file}.")
-            if not ok and 'rerender' in lctheline and not isref:
-                print(f"'rerender' should change to 're-render', on line {line_number} in {input_file}.")
-            if not ok and 'retro-reflect' in lctheline and not isref:
-                print(f"'retro-reflect' should change to 'retroreflect', on line {line_number} in {input_file}.")
-            if not ok and 'inter-reflect' in lctheline and not isref:
-                print(f"'inter-reflect' should change to 'interreflect', on line {line_number} in {input_file}.")
-            if not ok and 'level-of-detail' in lctheline and not isref:
-                print(f"'level-of-detail' should change to 'level of detail' if used as a noun, on line {line_number} in {input_file}.")
-            if not ok and 'micro-facet' in lctheline and not isref:
-                print(f"'micro-facet' should change to 'microfacet', on line {line_number} in {input_file}.")
-            if not ok and 'microdetail' in lctheline and not isref:
-                print(f"'microdetail' should change to 'micro-detail', on line {line_number} in {input_file}.")
-            if not ok and 'black-body' in lctheline:
-                print(f"'black-body' should change to 'blackbody' on line {line_number} in {input_file}.")
-            if not ok and 'black body' in lctwoline:
-                print(f"'black body' should change to 'blackbody' on line {line_number} in {input_file}.")
-            if not twook and 'spot light' in lctwoline:
-                print(f"'spot light' should change to 'spotlight' on line {line_number} in {input_file}.")
-            if not ok and 'spot-light' in theline:
-                print(f"'spot-light' should change to 'spotlight' on line {line_number} in {input_file}.")
-            if not twook and 'frame buffer' in lctwoline and not isref:
-                print(f"'frame buffer' to 'framebuffer' on line {line_number} in {input_file}.")
-            if not ok and 'frame-buffer' in lctheline and not isref:
-                print(f"'frame-buffer' to 'framebuffer' on line {line_number} in {input_file}.")
-            # yes, this is inconsistent with the above; chosen by Google search popularity
-            if not ok and 'framerate' in lctheline and not isref:
-                print(f"'framerate' to 'frame rate' on line {line_number} in {input_file}.")
-            if not ok and 'pre-filter' in lctheline and not isref:
-                print(f"'pre-filter' to 'prefilter' on line {line_number} in {input_file}.")
-            if not ok and 'pre-process' in lctheline and not isref:
-                print(f"'pre-process' to 'preprocess' on line {line_number} in {input_file}.")
-            if not ok and 'bandlimit' in lctheline and not isref:
-                print(f"'bandlimit' to 'band-limit' on line {line_number} in {input_file}.")
-            if not ok and ' raycast' in lctheline and not isref:
-                print(f"'raycast' to 'ray cast' on line {line_number} in {input_file}.")
-            if not twook and ' lob ' in lctwoline:
-                print(f"Typo? 'lob' to 'lobe' on line {line_number} in {input_file}.")
-            if not ok and 'frustums' in lctheline and not isref:
-                print(f"'frustums' to 'frusta' on line {line_number} in {input_file}.")
-            if not ok and '$Z' in theline:
-                print(f"Consistency check: $Z should be $z (or change this test), on line {line_number} in {input_file}.")
-            if not twook and ' 6D' in twoline:
-                print(f"'6D' to 'six-dimensional' on line {line_number} in {input_file}.")
-            # things like "1:1" should be "$1:1$"
-            if not twook and not isref and not inequation and ':1 ' in lctwoline and textonly != 1:
-                print(f"'X:1' should be of the form '$X:1$', on line {line_number} in {input_file}.")
-            if not twook and not isref and not inequation and ' : 1' in lctwoline and textonly != 1:
-                print(f"'X : 1' should be of the form '$X:1$' (no spaces), on line {line_number} in {input_file}.")
-            if not ok and not isref and ' PBRT' in twoline and textonly != 1:
-                print(f"'PBRT' to '{{\\em pbrt}}', or cite the book or author, on line {line_number} in {input_file}.")
-            if not ok and not isref and 'DX9' in theline:
-                print(f"'DX9' to 'DirectX~9' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'DX10' in theline:
-                print(f"'DX10' to 'DirectX~10' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'DX11' in theline:
-                print(f"'DX11' to 'DirectX~11' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'DX12' in theline:
-                print(f"'DX12' to 'DirectX~12' on line {line_number} in {input_file}.")
-            if not twook and not isref and 'Direct X' in twoline:
-                print(f"'Direct X' to 'DirectX' on line {line_number} in {input_file}.")
-            if not ok and not isref and re.search(r'\u2122', theline) and textonly != 1:
-                print(f"Put \\trademark instead of the TM symbol directly, if needed at all, on line {line_number} in {input_file}.")
-            # "2-degree color-matching" is how that phrase is always presented
-            if not ok and not isref and re.search(r'\d-degree', theline) and not re.search(r'color-matching', theline):
-                print(f"'N-degree' to 'N degree' on line {line_number} in {input_file}.")
-            if not ok and 'Ph.D' in theline:
-                print(f"'Ph.D.' to 'PhD' on line {line_number} in {input_file}.")
-            if not ok and 'M.S.' in theline:
-                print(f"'M.S.' to 'MS' on line {line_number} in {input_file}.")
-            if not ok and 'M.Sc.' in theline:
-                print(f"'M.Sc.' to 'MSc' on line {line_number} in {input_file}.")
-            if not twook and 'a MS' in twoline:
-                print(f"'a MS' to 'an MS' on line {line_number} in {input_file}.")
-            if not ok and 'B.S.' in theline:
-                print(f"'B.S.' to 'BS' on line {line_number} in {input_file}.")
-            if not ok and 'B.Sc.' in theline:
-                print(f"'B.Sc.' to 'BSc' on line {line_number} in {input_file}.")
-            if not twook and 'masters thesis' in lctwoline:
-                print(f"'masters' to 'master's' on line {line_number} in {input_file}.")
-            if not twook and 'masters degree' in lctwoline:
-                print(f"'masters' to 'master's' on line {line_number} in {input_file}.")
-            if not twook and 'bachelors degree' in lctwoline:
-                print(f"'bachelors' to 'bachelor's' on line {line_number} in {input_file}.")
-            if not twook and ' id ' in twoline and ' id Software' not in twoline:
-                print(f"Please change 'id' to 'ID' on line {line_number} in {input_file}.")
-            if not twook and ' id~' in twoline:
-                print(f"Please change 'id' to 'ID' on line {line_number} in {input_file}.")
-            if not twook and ' ids ' in twoline:
-                print(f"Please change 'ids' to 'IDs' on line {line_number} in {input_file}.")
-            if not twook and ' ids~' in twoline:
-                print(f"Please change 'ids' to 'IDs' on line {line_number} in {input_file}.")
-            if not ok and 'middle-ware' in lctheline:
-                print(f"Please change 'middle-ware' to 'middleware' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'caption{}' in theline:
-                print(f"IMPORTANT: every figure needs a caption, on line {line_number} in {input_file}.")
-            if not ok and not isref and 'g-buffer' in theline:
-                print(f"'g-buffer' to 'G-Buffer', on line {line_number} in {input_file}.")
-            if not ok and not isref and 'G-Buffer' in theline:
-                print(f"'G-Buffer' to 'G-buffer', on line {line_number} in {input_file}.")
-            if not ok and not isref and 'z-buffer' in theline:
-                print(f"'z-buffer' to 'Z-Buffer', on line {line_number} in {input_file}.")
-            if not ok and not isref and 'Z-Buffer' in theline:
-                print(f"'Z-Buffer' to 'Z-buffer', on line {line_number} in {input_file}.")
-            if not twook and not isref and ' 1d ' in twoline:
-                print(f"'1d' to '1D' on line {line_number} in {input_file}.")
-            if not twook and not isref and ' 2d ' in twoline:
-                print(f"'2d' to '2D' on line {line_number} in {input_file}.")
-            if not twook and not isref and ' 3d ' in twoline:
-                print(f"'3d' to '3D' on line {line_number} in {input_file}.")
-            if not twook and not isref and re.search(r'^So ', twoline) and not re.search(r'^So far', twoline):
-                # https://english.stackexchange.com/questions/30436/when-do-we-need-to-put-a-comma-after-so
-                print(f"'So' should be 'So,' or combine with previous sentence, on line {line_number} in {input_file}.")
-            # If you must use "start point", also then use "end point" when talking about the other end.
-            if not twook and 'startpoint' in lctwoline:
-                print(f"'startpoint' to 'start point' on line {line_number} in {input_file}.")
-            if not ok and 'back-fac' in lctheline:
-                print(f"'back-face' to 'backface' on line {line_number} in {input_file}.")
-            if not twook and 'back fac' in lctwoline and not ('front and back fac' in twoline or 'front or back fac' in twoline or 'front and the back fac' in twoline):
-                print(f"'back face' to 'backface' on line {line_number} in {input_file}.")
-            if not ok and 'front-fac' in lctheline:
-                print(f"'front-face' to 'frontface' on line {line_number} in {input_file}.")
-            if not twook and 'front-fac' in lctwoline:
-                print(f"'front-face' to 'frontface' on line {line_number} in {input_file}.")
-            if not ok and 'wire-fram' in lctheline:
-                print(f"'wire-frame' to 'wireframe' on line {line_number} in {input_file}.")
-            if not twook and 'wire frame' in lctwoline:
-                print(f"'wire frame' to 'wireframe' on line {line_number} in {input_file}.")
-            if not twook and not isref and 'sub-pixel' in lctwoline:
-                print(f"'sub-pixel' to 'subpixel' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'mis-categorize' in lctheline:
-                print(f"'mis-categorize' to 'miscategorize', on line {line_number} in {input_file}.")
-            if not ok and 'counter-clockwise' in lctheline:
-                print(f"'counter-clockwise' to 'counterclockwise' on line {line_number} in {input_file}.")
-            if not twook and 'anti-alias' in lctwoline and not isref:
-                print(f"'anti-alias' to 'antialias' on line {line_number} in {input_file}.")
-            if not twook and ' b spline' in lctwoline and not isref:
-                print(f"'B spline' to 'B-spline' on line {line_number} in {input_file}.")
-            if not ok and 'modelled' in lctheline:
-                print(f"'modelled' to 'modeled' on line {line_number} in {input_file}.")
-            if not ok and 'tessela' in lctheline and not isref:
-                print(f"'tessela' to 'tessella' on line {line_number} in {input_file}.")
-            if not twook and 'greyscale' in lctwoline:
-                print(f"'greyscale' to 'grayscale' on line {line_number} in {input_file}.")
-            if not twook and 'speed-up' in lctwoline:
-                print(f"'speed-up' to 'speedup' on line {line_number} in {input_file}.")
-            # see https://english.stackexchange.com/questions/4300/semi-transparent-what-is-used-in-between
-            if not twook and 'semi-transparen' in lctwoline:
-                print(f"'semi-transparen' to 'semitransparen' on line {line_number} in {input_file}.")
-            if not twook and 'In this way ' in twoline:
-                print(f"'In this way ' to 'In this way,' on line {line_number} in {input_file}.")
-            if not twook and 'For example ' in twoline:
-                print(f"'For example ' to 'For example,' on line {line_number} in {input_file}.")
-            if not ok and 'off-screen' in lctheline:
-                print(f"'off-screen' to 'offscreen' on line {line_number} in {input_file}.")
-            if not ok and 'on-screen' in lctheline:
-                print(f"'on-screen' to 'onscreen' on line {line_number} in {input_file}.")
-            if not ok and 'photo-realistic' in lctheline:
-                print(f"'photo-realistic' to 'photorealistic' on line {line_number} in {input_file}.")
-            if not ok and 'point-cloud' in lctheline:
-                print(f"'point-cloud' to 'point cloud' on line {line_number} in {input_file}.")
-            if not twook and 'straight forward' in lctwoline:
-                print(f"You likely want to change 'straight forward' to 'straightforward' on line {line_number} in {input_file}.")
-                print("    See https://www.englishforums.com/English/StraightForwardStraightforward/bcjwmp/post.htm")
-                SAYOK()
-            if not twook and 'view point' in lctwoline:
-                print(f"'view point' to 'viewpoint' on line {line_number} in {input_file}.")
-            if not twook and 'gray scale' in lctwoline:
-                print(f"'gray scale' to 'grayscale' on line {line_number} in {input_file}.")
-            if not twook and not isref and 'post process' in lctwoline:
-                print(f"'post process' to 'post-process' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'postprocess' in lctheline:
-                print(f"'postprocess' to 'post-process' on line {line_number} in {input_file}.")
-            if not twook and not isref and 'half space' in lctwoline:
-                print(f"'half space' to 'half-space' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'halfspace' in lctheline:
-                print(f"'halfspace' to 'half-space' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'lock-less' in lctheline:
-                print(f"'lock-less' to 'lockless' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'bi-directional' in lctheline:
-                print(f"'bi-directional' to 'bidirectional' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'over-blur' in lctheline:
-                print(f"'over-blur' to 'overblur' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'multi-sampl' in lctheline:
-                print(f"'multi-sampl*' to 'multisampl*' (no hyphen), on line {line_number} in {input_file}.")
-            if not twook and not isref and '$uv$ coordinates' in lctwoline:
-                print(f"'$uv$ coordinates' to 'UV coordinates', on line {line_number} in {input_file}.")
-            # $uv$ might even be more correct, but UV coordinates is standard
-            if not ok and not isref and '$uv$-coordinates' in lctheline:
-                print(f"'$uv$-coordinates' to 'UV coordinates', on line {line_number} in {input_file}.")
-            if not ok and not isref and 'mip-map' in lctheline:
-                print(f"'mip-map' to 'mipmap' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'mip map' in lctheline:
-                print(f"'mip map' to 'mipmap' (no space), on line {line_number} in {input_file}.")
-            if not twook and not isref and 'wall clock time' in lctwoline:
-                print(f"'wall clock time' to 'wall-clock time', on line {line_number} in {input_file}.")
-            if not twook and not isref and 'RT PSO' in twoline:
-                print(f"'RT PSO' to 'RTPSO', on line {line_number} in {input_file}.")
-            m = re.search(r' (cubemap)', lctheline) if not ok and not isref and not inequation else None
-            if not m and not ok and not isref and not inequation and style:
-                m = re.search(r'(cube-map)', lctheline)
-            if m:
-                print(f"Change '{m.group(1)}' to 'cube map' on line {line_number} in {input_file}.")
-                SAYOK()
-            m = re.search(r' (lightmap)', lctheline) if not ok and not isref else None
-            if not m and not ok and not isref and style:
-                m = re.search(r'(light-map)', lctheline)
-            if m:
-                print(f"Change '{m.group(1)}' to 'light map' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not ok and not isref:
-                m = re.search(r' (screenspace)', lctheline)
-                if m:
-                    print(f"Change '{m.group(1)}' to 'screen space' on line {line_number} in {input_file}.")
+                # either is OK, https://en.wikipedia.org/wiki/Data_set - may someday use this one for a consistency check. TODO
+                if not ok and not isref and 'dataset' in lctheline:
+                    print(f"'dataset' to 'data set' (either is fine, 'data set' is preferred, but your choice) on line {line_number} in {input_file}.")
+                if not ok and not isref and 'depth-of-field' in lctheline:
+                    print(f"'depth-of-field' to 'depth of field' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'fall off' in lctwoline:
+                    print(f"'fall off' to 'falloff' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'fall-off' in lctheline:
+                    print(f"'fall-off' to 'falloff' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'farfield' in lctheline:
+                    print(f"'farfield' to 'far field' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'far-field' in lctheline:
+                    print(f"'far-field' to 'far field' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'nearfield' in lctheline:
+                    print(f"'nearfield' to 'near field' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'near-field' in lctheline:
+                    print(f"'near-field' to 'near field' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'six dimensional' in lctwoline:
+                    print(f"if used as an adjective, 'six dimensional' to 'six-dimensional' on line {line_number} in {input_file}.")
                     SAYOK()
-            if not ok and not isref and 'DXR' not in theline and 'DirectX' not in theline:
-                m = re.search(r' (raytrac)', lctheline)
-                if m:
-                    print(f"Change '{m.group(1)}' to 'ray trac*' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'five dimensional' in lctwoline:
+                    print(f"if used as an adjective, 'five dimensional' to 'five-dimensional' on line {line_number} in {input_file}.")
                     SAYOK()
-            # doing a rough survey, there are considerably more articles without the hyphen than with
-            if not ok and not isref and style:
-                m = re.search(r'(ray-trac)', lctheline)
-                if m:
-                    print(f"Consistency: change '{m.group(1)}' to 'ray trac*' (it's the norm), on line {line_number} in {input_file}.")
-            if not isref and 'directx ray tracing' in lctwoline:
-                print(f"Change 'DirectX ray tracing' to 'DirectX Raytracing' as this is how Microsoft writes it, on line {line_number} in {input_file}.")
-            if not isref and 'Directx raytracing' in twoline:
-                print(f"Change 'DirectX raytracing' to 'DirectX Raytracing' (capitalize the 'r'), as this is how Microsoft writes it, on line {line_number} in {input_file}.")
-            if not isref and style:
-                m = re.search(r' (pathtrac)', lctheline)
-                if m:
-                    print(f"Consistency: change '{m.group(1)}' to 'path trac*' on line {line_number} in {input_file}.")
-            if not isref and style:
-                m = re.search(r'(path-trac)', lctheline)
-                if m:
-                    print(f"Consistency: change '{m.group(1)}' to 'path trac*' (it's the norm), on line {line_number} in {input_file}.")
-            if not ok and not isref:
-                m = re.search(r' (raymarch)', lctheline)
-                if not m and style:
-                    m = re.search(r'(ray-march)', lctheline)
-                if m:
-                    print(f"Change '{m.group(1)}' to 'ray march*' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'four dimensional' in lctwoline:
+                    print(f"if used as an adjective, 'four dimensional' to 'four-dimensional' on line {line_number} in {input_file}.")
                     SAYOK()
-            if not ok and not isref:
-                m = re.search(r' (sub-surface)', lctheline)
-                if m:
-                    print(f"Change '{m.group(1)}' to 'subsurface' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'three dimensional' in lctwoline:
+                    print(f"if used as an adjective, 'three dimensional' to 'three-dimensional' on line {line_number} in {input_file}.")
                     SAYOK()
-            if not ok and not isref:
-                m = re.search(r' (preintegrate)', lctheline)
-                if m:
-                    print(f"Change '{m.group(1)}' to 'pre-integrate' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'two dimensional' in lctwoline:
+                    print(f"if used as an adjective, 'two dimensional' to 'two-dimensional' on line {line_number} in {input_file}.")
                     SAYOK()
-            if not ok and not isref:
-                m = re.search(r' (pre-calculate)', lctheline)
-                if m:
-                    # slight google preference for this, but we'll go precalculate
-                    print(f"Change '{m.group(1)}' to 'precalculate' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'one dimensional' in lctwoline:
+                    print(f"if used as an adjective, 'one dimensional' to 'one-dimensional' on line {line_number} in {input_file}.")
                     SAYOK()
-            if not ok and not isref:
-                m = re.search(r' (pre-comput)', lctheline)
-                if m:
-                    print(f"Change '{m.group(1)}' to 'precomput*' on line {line_number} in {input_file}.")
+                if not ok and 'LoD' in theline:
+                    print(f"'LoD' to 'LOD' on line {line_number} in {input_file}.")
+                if not ok and 'rerender' in lctheline and not isref:
+                    print(f"'rerender' should change to 're-render', on line {line_number} in {input_file}.")
+                if not ok and 'retro-reflect' in lctheline and not isref:
+                    print(f"'retro-reflect' should change to 'retroreflect', on line {line_number} in {input_file}.")
+                if not ok and 'inter-reflect' in lctheline and not isref:
+                    print(f"'inter-reflect' should change to 'interreflect', on line {line_number} in {input_file}.")
+                if not ok and 'level-of-detail' in lctheline and not isref:
+                    print(f"'level-of-detail' should change to 'level of detail' if used as a noun, on line {line_number} in {input_file}.")
+                if not ok and 'micro-facet' in lctheline and not isref:
+                    print(f"'micro-facet' should change to 'microfacet', on line {line_number} in {input_file}.")
+                if not ok and 'microdetail' in lctheline and not isref:
+                    print(f"'microdetail' should change to 'micro-detail', on line {line_number} in {input_file}.")
+                if not ok and 'black-body' in lctheline:
+                    print(f"'black-body' should change to 'blackbody' on line {line_number} in {input_file}.")
+                if not ok and 'black body' in lctwoline:
+                    print(f"'black body' should change to 'blackbody' on line {line_number} in {input_file}.")
+                if not twook and 'spot light' in lctwoline:
+                    print(f"'spot light' should change to 'spotlight' on line {line_number} in {input_file}.")
+                if not ok and 'spot-light' in theline:
+                    print(f"'spot-light' should change to 'spotlight' on line {line_number} in {input_file}.")
+                if not twook and 'frame buffer' in lctwoline and not isref:
+                    print(f"'frame buffer' to 'framebuffer' on line {line_number} in {input_file}.")
+                if not ok and 'frame-buffer' in lctheline and not isref:
+                    print(f"'frame-buffer' to 'framebuffer' on line {line_number} in {input_file}.")
+                # yes, this is inconsistent with the above; chosen by Google search popularity
+                if not ok and 'framerate' in lctheline and not isref:
+                    print(f"'framerate' to 'frame rate' on line {line_number} in {input_file}.")
+                if not ok and 'pre-filter' in lctheline and not isref:
+                    print(f"'pre-filter' to 'prefilter' on line {line_number} in {input_file}.")
+                if not ok and 'pre-process' in lctheline and not isref:
+                    print(f"'pre-process' to 'preprocess' on line {line_number} in {input_file}.")
+                if not ok and 'bandlimit' in lctheline and not isref:
+                    print(f"'bandlimit' to 'band-limit' on line {line_number} in {input_file}.")
+                if not ok and ' raycast' in lctheline and not isref:
+                    print(f"'raycast' to 'ray cast' on line {line_number} in {input_file}.")
+                if not twook and ' lob ' in lctwoline:
+                    print(f"Typo? 'lob' to 'lobe' on line {line_number} in {input_file}.")
+                if not ok and 'frustums' in lctheline and not isref:
+                    print(f"'frustums' to 'frusta' on line {line_number} in {input_file}.")
+                if not ok and '$Z' in theline:
+                    print(f"Consistency check: $Z should be $z (or change this test), on line {line_number} in {input_file}.")
+                if not twook and ' 6D' in twoline:
+                    print(f"'6D' to 'six-dimensional' on line {line_number} in {input_file}.")
+                # things like "1:1" should be "$1:1$"
+                if not twook and not isref and not inequation and ':1 ' in lctwoline and textonly != 1:
+                    print(f"'X:1' should be of the form '$X:1$', on line {line_number} in {input_file}.")
+                if not twook and not isref and not inequation and ' : 1' in lctwoline and textonly != 1:
+                    print(f"'X : 1' should be of the form '$X:1$' (no spaces), on line {line_number} in {input_file}.")
+                if not ok and not isref and ' PBRT' in twoline and textonly != 1:
+                    print(f"'PBRT' to '{{\\em pbrt}}', or cite the book or author, on line {line_number} in {input_file}.")
+                if not ok and not isref and 'DX9' in theline:
+                    print(f"'DX9' to 'DirectX~9' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'DX10' in theline:
+                    print(f"'DX10' to 'DirectX~10' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'DX11' in theline:
+                    print(f"'DX11' to 'DirectX~11' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'DX12' in theline:
+                    print(f"'DX12' to 'DirectX~12' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'Direct X' in twoline:
+                    print(f"'Direct X' to 'DirectX' on line {line_number} in {input_file}.")
+                if not ok and not isref and re.search(r'\u2122', theline) and textonly != 1:
+                    print(f"Put \\trademark instead of the TM symbol directly, if needed at all, on line {line_number} in {input_file}.")
+                # "2-degree color-matching" is how that phrase is always presented
+                if not ok and not isref and re.search(r'\d-degree', theline) and not re.search(r'color-matching', theline):
+                    print(f"'N-degree' to 'N degree' on line {line_number} in {input_file}.")
+                if not ok and 'Ph.D' in theline:
+                    print(f"'Ph.D.' to 'PhD' on line {line_number} in {input_file}.")
+                if not ok and 'M.S.' in theline:
+                    print(f"'M.S.' to 'MS' on line {line_number} in {input_file}.")
+                if not ok and 'M.Sc.' in theline:
+                    print(f"'M.Sc.' to 'MSc' on line {line_number} in {input_file}.")
+                if not twook and 'a MS' in twoline:
+                    print(f"'a MS' to 'an MS' on line {line_number} in {input_file}.")
+                if not ok and 'B.S.' in theline:
+                    print(f"'B.S.' to 'BS' on line {line_number} in {input_file}.")
+                if not ok and 'B.Sc.' in theline:
+                    print(f"'B.Sc.' to 'BSc' on line {line_number} in {input_file}.")
+                if not twook and 'masters thesis' in lctwoline:
+                    print(f"'masters' to 'master's' on line {line_number} in {input_file}.")
+                if not twook and 'masters degree' in lctwoline:
+                    print(f"'masters' to 'master's' on line {line_number} in {input_file}.")
+                if not twook and 'bachelors degree' in lctwoline:
+                    print(f"'bachelors' to 'bachelor's' on line {line_number} in {input_file}.")
+                if not twook and ' id ' in twoline and ' id Software' not in twoline:
+                    print(f"Please change 'id' to 'ID' on line {line_number} in {input_file}.")
+                if not twook and ' id~' in twoline:
+                    print(f"Please change 'id' to 'ID' on line {line_number} in {input_file}.")
+                if not twook and ' ids ' in twoline:
+                    print(f"Please change 'ids' to 'IDs' on line {line_number} in {input_file}.")
+                if not twook and ' ids~' in twoline:
+                    print(f"Please change 'ids' to 'IDs' on line {line_number} in {input_file}.")
+                if not ok and 'middle-ware' in lctheline:
+                    print(f"Please change 'middle-ware' to 'middleware' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'caption{}' in theline:
+                    print(f"IMPORTANT: every figure needs a caption, on line {line_number} in {input_file}.")
+                if not ok and not isref and 'g-buffer' in theline:
+                    print(f"'g-buffer' to 'G-Buffer', on line {line_number} in {input_file}.")
+                if not ok and not isref and 'G-Buffer' in theline:
+                    print(f"'G-Buffer' to 'G-buffer', on line {line_number} in {input_file}.")
+                if not ok and not isref and 'z-buffer' in theline:
+                    print(f"'z-buffer' to 'Z-Buffer', on line {line_number} in {input_file}.")
+                if not ok and not isref and 'Z-Buffer' in theline:
+                    print(f"'Z-Buffer' to 'Z-buffer', on line {line_number} in {input_file}.")
+                if not twook and not isref and ' 1d ' in twoline:
+                    print(f"'1d' to '1D' on line {line_number} in {input_file}.")
+                if not twook and not isref and ' 2d ' in twoline:
+                    print(f"'2d' to '2D' on line {line_number} in {input_file}.")
+                if not twook and not isref and ' 3d ' in twoline:
+                    print(f"'3d' to '3D' on line {line_number} in {input_file}.")
+                if not twook and not isref and re.search(r'^So ', twoline) and not re.search(r'^So far', twoline):
+                    # https://english.stackexchange.com/questions/30436/when-do-we-need-to-put-a-comma-after-so
+                    print(f"'So' should be 'So,' or combine with previous sentence, on line {line_number} in {input_file}.")
+                # If you must use "start point", also then use "end point" when talking about the other end.
+                if not twook and 'startpoint' in lctwoline:
+                    print(f"'startpoint' to 'start point' on line {line_number} in {input_file}.")
+                if not ok and 'back-fac' in lctheline:
+                    print(f"'back-face' to 'backface' on line {line_number} in {input_file}.")
+                if not twook and 'back fac' in lctwoline and not ('front and back fac' in twoline or 'front or back fac' in twoline or 'front and the back fac' in twoline):
+                    print(f"'back face' to 'backface' on line {line_number} in {input_file}.")
+                if not ok and 'front-fac' in lctheline:
+                    print(f"'front-face' to 'frontface' on line {line_number} in {input_file}.")
+                if not twook and 'front-fac' in lctwoline:
+                    print(f"'front-face' to 'frontface' on line {line_number} in {input_file}.")
+                if not ok and 'wire-fram' in lctheline:
+                    print(f"'wire-frame' to 'wireframe' on line {line_number} in {input_file}.")
+                if not twook and 'wire frame' in lctwoline:
+                    print(f"'wire frame' to 'wireframe' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'sub-pixel' in lctwoline:
+                    print(f"'sub-pixel' to 'subpixel' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'mis-categorize' in lctheline:
+                    print(f"'mis-categorize' to 'miscategorize', on line {line_number} in {input_file}.")
+                if not ok and 'counter-clockwise' in lctheline:
+                    print(f"'counter-clockwise' to 'counterclockwise' on line {line_number} in {input_file}.")
+                if not twook and 'anti-alias' in lctwoline and not isref:
+                    print(f"'anti-alias' to 'antialias' on line {line_number} in {input_file}.")
+                if not twook and ' b spline' in lctwoline and not isref:
+                    print(f"'B spline' to 'B-spline' on line {line_number} in {input_file}.")
+                if not ok and 'modelled' in lctheline:
+                    print(f"'modelled' to 'modeled' on line {line_number} in {input_file}.")
+                if not ok and 'tessela' in lctheline and not isref:
+                    print(f"'tessela' to 'tessella' on line {line_number} in {input_file}.")
+                if not twook and 'greyscale' in lctwoline:
+                    print(f"'greyscale' to 'grayscale' on line {line_number} in {input_file}.")
+                if not twook and 'speed-up' in lctwoline:
+                    print(f"'speed-up' to 'speedup' on line {line_number} in {input_file}.")
+                # see https://english.stackexchange.com/questions/4300/semi-transparent-what-is-used-in-between
+                if not twook and 'semi-transparen' in lctwoline:
+                    print(f"'semi-transparen' to 'semitransparen' on line {line_number} in {input_file}.")
+                if not twook and 'In this way ' in twoline:
+                    print(f"'In this way ' to 'In this way,' on line {line_number} in {input_file}.")
+                if not twook and 'For example ' in twoline:
+                    print(f"'For example ' to 'For example,' on line {line_number} in {input_file}.")
+                if not ok and 'off-screen' in lctheline:
+                    print(f"'off-screen' to 'offscreen' on line {line_number} in {input_file}.")
+                if not ok and 'on-screen' in lctheline:
+                    print(f"'on-screen' to 'onscreen' on line {line_number} in {input_file}.")
+                if not ok and 'photo-realistic' in lctheline:
+                    print(f"'photo-realistic' to 'photorealistic' on line {line_number} in {input_file}.")
+                if not ok and 'point-cloud' in lctheline:
+                    print(f"'point-cloud' to 'point cloud' on line {line_number} in {input_file}.")
+                if not twook and 'straight forward' in lctwoline:
+                    print(f"You likely want to change 'straight forward' to 'straightforward' on line {line_number} in {input_file}.")
+                    print("    See https://www.englishforums.com/English/StraightForwardStraightforward/bcjwmp/post.htm")
                     SAYOK()
-            if not ok and not isref and 'non-linear' in lctheline:
-                print(f"Change 'non-linear' to 'nonlinear' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'non-planar' in lctheline:
-                print(f"Change 'non-planar' to 'nonplanar' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'pre-pass' in lctheline:
-                print(f"Change 'pre-pass' to 'prepass' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'zeroes' in lctheline:
-                print(f"Change 'zeroes' to 'zeros' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'un-blur' in lctheline:
-                print(f"Change 'un-blur' to 'unblur' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'use-case' in lctheline:
-                print(f"Change 'use-case' to 'use case' (no hyphen), on line {line_number} in {input_file}.")
-            # our general rule: if Merriam-Webster says it's a word, it's a word
-            if not ok and not isref and 'multi-stage' in lctheline:
-                print(f"Change 'multi-stage' to 'multistage' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'XYZ-space' in lctheline:
-                print(f"Change 'XYZ-space' to 'XYZ space' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'spatio-temporal' in lctheline:
-                print(f"Change 'spatio-temporal' to 'spatiotemporal', on line {line_number} in {input_file}.")
-            if not ok and not isref and 'close-up' in lctheline:
-                print(f"Could change 'close-up' to the more modern 'closeup', on line {line_number} in {input_file}.")
-            if not twook and not isref and 'multi channel' in lctwoline:
-                print(f"Change 'multi channel' to 'multichannel', on line {line_number} in {input_file}.")
-            if not ok and not isref and 'multi-channel' in lctheline:
-                print(f"Change 'multi-channel' to 'multichannel', on line {line_number} in {input_file}.")
-            if not twook and not isref and 'multi ' in lctwoline:
-                print(f"It is unlikely that you want 'multi' with a space after it, on line {line_number} in {input_file}.")
-            if not twook and not isref and 'pseudo code' in lctwoline:
-                print(f"Change 'pseudo code' to 'pseudocode', on line {line_number} in {input_file}.")
-            if not ok and not isref and 'pseudo-code' in lctheline:
-                print(f"Change 'pseudo-code' to 'pseudocode', on line {line_number} in {input_file}.")
-            if not twook and not isref and 'pseudo ' in lctwoline:
-                print(f"It is unlikely that you want 'pseudo' with a space after it, on line {line_number} in {input_file}.")
-            if not twook and not isref and 'ray-generation shader' in lctwoline:
-                print(f"Change 'ray-generation' to 'ray generation' (no hyphen), on line {line_number} in {input_file}.")
-            if not ok and not isref and 'reexecute' in lctheline:
-                print(f"Change 'reexecute' to 're-execute', on line {line_number} in {input_file}.")
-            if not ok and not isref and ('XBox' in theline or 'XBOX' in theline):
-                print(f"Change 'XBox' to 'Xbox' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'x-box' in lctheline:
-                print(f"Change 'XBox' to 'Xbox' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'Renderman' in theline:
-                print(f"Change 'Renderman' to 'RenderMan' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'GeForce' not in theline and 'geforce' in lctheline:
-                print(f"Change 'Geforce' to 'GeForce' on line {line_number} in {input_file}.")
-            # https://www.nvidia.com/en-us/geforce/graphics-cards/rtx-2080-ti/
-            if not ok and not isref and '080ti' in lctheline:
-                print(f"Change '*080Ti' to '*080~Ti' on line {line_number} in {input_file}.")
-            if not ok and not isref:
-                m = re.search(r'(rtcore)', lctheline)
+                if not twook and 'view point' in lctwoline:
+                    print(f"'view point' to 'viewpoint' on line {line_number} in {input_file}.")
+                if not twook and 'gray scale' in lctwoline:
+                    print(f"'gray scale' to 'grayscale' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'post process' in lctwoline:
+                    print(f"'post process' to 'post-process' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'postprocess' in lctheline:
+                    print(f"'postprocess' to 'post-process' on line {line_number} in {input_file}.")
+                if not twook and not isref and 'half space' in lctwoline:
+                    print(f"'half space' to 'half-space' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'halfspace' in lctheline:
+                    print(f"'halfspace' to 'half-space' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'lock-less' in lctheline:
+                    print(f"'lock-less' to 'lockless' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'bi-directional' in lctheline:
+                    print(f"'bi-directional' to 'bidirectional' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'over-blur' in lctheline:
+                    print(f"'over-blur' to 'overblur' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'multi-sampl' in lctheline:
+                    print(f"'multi-sampl*' to 'multisampl*' (no hyphen), on line {line_number} in {input_file}.")
+                if not twook and not isref and '$uv$ coordinates' in lctwoline:
+                    print(f"'$uv$ coordinates' to 'UV coordinates', on line {line_number} in {input_file}.")
+                # $uv$ might even be more correct, but UV coordinates is standard
+                if not ok and not isref and '$uv$-coordinates' in lctheline:
+                    print(f"'$uv$-coordinates' to 'UV coordinates', on line {line_number} in {input_file}.")
+                if not ok and not isref and 'mip-map' in lctheline:
+                    print(f"'mip-map' to 'mipmap' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'mip map' in lctheline:
+                    print(f"'mip map' to 'mipmap' (no space), on line {line_number} in {input_file}.")
+                if not twook and not isref and 'wall clock time' in lctwoline:
+                    print(f"'wall clock time' to 'wall-clock time', on line {line_number} in {input_file}.")
+                if not twook and not isref and 'RT PSO' in twoline:
+                    print(f"'RT PSO' to 'RTPSO', on line {line_number} in {input_file}.")
+                m = re.search(r' (cubemap)', lctheline) if not ok and not isref and not inequation else None
+                if not m and not ok and not isref and not inequation and style:
+                    m = re.search(r'(cube-map)', lctheline)
                 if m:
-                    print(f"Change '{m.group(1)}' to 'RT Core' on line {line_number} in {input_file}.")
-            if not twook and not isref:
-                m = re.search(r'(rt core)', lctwoline)
+                    print(f"Change '{m.group(1)}' to 'cube map' on line {line_number} in {input_file}.")
+                    SAYOK()
+                m = re.search(r' (lightmap)', lctheline) if not ok and not isref else None
+                if not m and not ok and not isref and style:
+                    m = re.search(r'(light-map)', lctheline)
                 if m:
-                    print(f"Change '{m.group(1)}' to 'RT~Core' on line {line_number} in {input_file}.")
-            if not ok and not isref:
-                m = re.search(r'(RT~core)', theline)
-                if m:
-                    print(f"Change '{m.group(1)}' to 'RT~Core' on line {line_number} in {input_file}.")
-            if not ok and not isref and '080 ti' in theline:
-                print(f"Change '*080 ti' to '*080~Ti' on line {line_number} in {input_file}.")
-            elif not textonly and not ok and not isref and '0 Ti' in theline:
-                print(f"Change '*0 Ti' to '*0~Ti' on line {line_number} in {input_file}.")
-            if not textonly and not ok and not isref and 'titan v' in lctheline:
-                print(f"Change 'Titan V' to 'Titan~V' on line {line_number} in {input_file}.")
-            if not twook and 'gtx 2080' in lctwoline:
-                print(f"Change 'GTX' to 'RTX' on line {line_number} in {input_file}.")
-            if not ok and 'Game Developer Conference' in theline:
-                print(f"Change 'Game Developer Conference' to 'Game Developers Conference' on line {line_number} in {input_file}.")
-            if not ok and not inequation and 'Direct3D' in theline and not isref:
-                print(f"Just our own preference: 'Direct3D' to 'DirectX' on line {line_number} in {input_file}.")
-            if not ok and 'Playstation' in theline and not isref:
-                print(f"'Playstation' to 'PlayStation' on line {line_number} in {input_file}.")
-            # NVIDIA in caps; ignore in a URL
-            if not ok and 'nvidia' in theline and 'nvidia.com' not in theline and 'bibitem' not in theline and 'cite' not in theline:
-                print(f"'nvidia' to 'NVIDIA' on line {line_number} in {input_file}.")
-            if not ok and 'Nvidia' in theline and 'bibitem' not in theline and 'cite' not in theline:
-                print(f"'Nvidia' to 'NVIDIA' on line {line_number} in {input_file}.")
-            if not twook and ' a NVIDIA' in twoline:
-                print(f"'a NVIDIA' to 'an NVIDIA' on line {line_number} in {input_file}.")
-            # won't catch them all, but better than not catching any.
-            if not twook and ' can not ' in lctwoline:
-                print(f"'can not' to 'cannot' on line {line_number} in {input_file}.")
-            if not ok and 'trade off' in lctwoline and not isref:
-                print(f"possible fix: 'trade off' to 'trade-off', if not used as a verb, on line {line_number} in {input_file}.")
-            if not ok and 'absorbtion' in lctheline:
-                print(f"'absorbtion' to 'absorption' on line {line_number} in {input_file}.")
-            if not twook and not inequation and 'fourier' in twoline:
-                print(f"'fourier' to 'Fourier' on line {line_number} in {input_file}.")
-            if not twook and not inequation and 'fresnel' in twoline:
-                print(f"'fresnel' to 'Fresnel' on line {line_number} in {input_file}.")
-            if not twook and not inequation and ' gauss' in twoline:
-                print(f"'gauss' to 'Gauss' on line {line_number} in {input_file}.")
-            if not twook and not inequation and 'lambert' in twoline:
-                print(f"'lambert' to 'Lambert' on line {line_number} in {input_file}.")
-            if not twook and not inequation and ' russian' in twoline:
-                print(f"'russian' to 'Russian' on line {line_number} in {input_file}.")
-            if not twook and not inequation and ' gbuffer' in lctwoline:
-                print(f"'gbuffer' to 'G-buffer' on line {line_number} in {input_file}.")
-            if not twook and not inequation and ' zbuffer' in lctwoline:
-                print(f"'zbuffer' to 'Z-buffer' on line {line_number} in {input_file}.")
-            if not ok and 'ad-hoc' in lctheline:
-                print(f"'ad-hoc' to 'ad hoc' on line {line_number} in {input_file}.")
-            if not ok and 'co-author' in lctheline:
-                print(f"'co-author' to 'coauthor' on line {line_number} in {input_file}.")
-            if not ok and not inequation and 'lowpass' in lctheline:
-                print(f"'lowpass' to 'low-pass' on line {line_number} in {input_file}.")
-            if not ok and 'highpass' in lctheline:
-                print(f"'highpass' to 'high-pass' on line {line_number} in {input_file}.")
-            if not twook and 'high frequency' in lctwoline:
-                print(f"If an adjective, 'high frequency' to 'high-frequency' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and 'high level' in lctwoline:
-                print(f"If an adjective, 'high level' to 'high-level' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and 'high fidelity' in lctwoline:
-                print(f"If an adjective, 'high fidelity' to 'high-fidelity' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and 'higher quality' in lctwoline:
-                print(f"If an adjective, 'higher quality' to 'higher-quality' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and 'floating point' in lctwoline:
-                print(f"If an adjective, 'floating point' to 'floating-point' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not ok and 'nonboundary' in lctheline:
-                print(f"'nonboundary' to 'non-boundary' on line {line_number} in {input_file}.")
-            if not ok and 'penumbrae' in lctheline:
-                print(f"'penumbrae' to 'penumbras' on line {line_number} in {input_file}.")
-            if not twook and 'one bounce' in lctwoline:
-                print(f"You may want 'one bounce' to 'one-bounce' (add hyphen) if an adjective, on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and 'multi bounce' in lctwoline:
-                print(f"'multi bounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
-            if not ok and 'multibounce' in lctheline:
-                print(f"'multibounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
-            if not ok and 'multi-bounce' in lctheline:
-                print(f"'multi-bounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
-            if not twook and 'multiple bounce' in lctwoline and 'multiple bounces' not in lctwoline:
-                print(f"'multiple bounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
-            if not ok and 'multidimensional' in lctheline:
-                print(f"'multidimensional' to 'multi-dimensional' on line {line_number} in {input_file}.")
-            if not ok and 'multilayer' in lctheline:
-                print(f"'multilayer' to 'multi-layer' on line {line_number} in {input_file}.")
-            if not ok and 'multibound' in lctheline:
-                print(f"'multibound' to 'multi-bound' on line {line_number} in {input_file}.")
-            # searching the ACM Digital Library, 47 entries use "tone mapping" as two words
-            if not twook and 'tonemap' in lctwoline:
-                print(f"'tonemap' to 'tone map' if a noun, 'tone-map' if an adjective, on line {line_number} in {input_file}.")
-            if not twook and not isref and 'n-Patch' in twoline:
-                print(f"'n-Patch' to 'N-patch' on line {line_number} in {input_file}.")
-            if not twook and 'fill-rate' in lctwoline:
-                print(f"'fill-rate' to 'fill rate' on line {line_number} in {input_file}.")
-            if not ok and not isref and formal and 'bigger' in lctheline:
-                print(f"'bigger' to 'larger' on line {line_number} in {input_file}.")
-                FLAG_FORMAL()
-            if not ok and not isref and formal and 'biggest' in lctheline:
-                print(f"'biggest' to 'greatest' or similar, on line {line_number} in {input_file}.")
-                FLAG_FORMAL()
-            if not twook and not isref and 'self intersect' in lctwoline and 'self intersection' not in lctwoline:
-                print(f"'self intersect' to 'self-intersect' as it's a common term, on line {line_number} in {input_file}.")
-            if not ok and not isref and 'bidimensional' in lctheline:
-                print(f"'bidimensional' to 'two-dimensional' mr. fancy pants, on line {line_number} in {input_file}.")
-            if not ok and 'fillrate' in lctheline:
-                print(f"'fillrate' to 'fill rate' on line {line_number} in {input_file}.")
-            # more popular on Google
-            if not twook and not isref and 'run time' in lctwoline:
-                print(f"'run time' to 'runtime' for consistency, on line {line_number} in {input_file}.")
-            if not ok and not isref and 'videogame' in lctheline:
-                print(f"'videogame' to 'video game' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'videocamera' in lctheline:
-                print(f"'videocamera' to 'video camera' on line {line_number} in {input_file}.")
-            if not ok and isref and 'January' in theline:
-                print(f"Change January to Jan. in line {line_number} in {input_file}.")
-            if not ok and isref and 'February' in theline:
-                print(f"Change February to Feb. in line {line_number} in {input_file}.")
-            if not ok and isref and (re.search(r'March \d', twoline) or re.search(r'March,', twoline)):
-                print(f"Change March to Mar. in line {line_number} in {input_file}.")
-            if not ok and isref and 'September' in theline:
-                print(f"Change September to Sept. in line {line_number} in {input_file}.")
-            if not ok and isref and 'October' in theline:
-                print(f"Change October to Oct. in line {line_number} in {input_file}.")
-            if not ok and isref and 'November' in theline:
-                print(f"Change November to Nov. in line {line_number} in {input_file}.")
-            if not ok and isref and 'December' in theline:
-                print(f"Change December to Dec. in line {line_number} in {input_file}.")
-            if not ok and isref and 'Jan.,' in theline:
-                print(f"No comma needed after Jan. on line {line_number} in {input_file}.")
-            if not ok and isref and 'Feb.,' in theline:
-                print(f"No comma needed after Feb. on line {line_number} in {input_file}.")
-            if not ok and isref and 'March,' in theline:
-                print(f"No comma needed after March on line {line_number} in {input_file}.")
-            if not ok and isref and 'April,' in theline:
-                print(f"No comma needed after April on line {line_number} in {input_file}.")
-            if not ok and isref and 'May,' in theline:
-                print(f"No comma needed after May on line {line_number} in {input_file}.")
-            if not ok and isref and 'June,' in theline:
-                print(f"No comma needed after June on line {line_number} in {input_file}.")
-            if not ok and isref and 'July,' in theline:
-                print(f"No comma needed after July on line {line_number} in {input_file}.")
-            if not ok and isref and 'August,' in theline:
-                print(f"No comma needed after August on line {line_number} in {input_file}.")
-            if not ok and isref and 'Sept.,' in theline:
-                print(f"No comma needed after Sept. on line {line_number} in {input_file}.")
-            if not ok and isref and 'Oct.,' in theline:
-                print(f"No comma needed after Oct. on line {line_number} in {input_file}.")
-            if not ok and isref and 'Nov.,' in theline:
-                print(f"No comma needed after Nov. on line {line_number} in {input_file}.")
-            if not ok and isref and 'Dec.,' in theline:
-                print(f"No comma needed after Dec. on line {line_number} in {input_file}.")
-            if not ok and isref and 'course notes' in theline:
-                print(f"Change 'course notes' to 'course' on line {line_number} in {input_file}.")
-            if not ok and isref and 'JCGT' in theline:
-                print(f"SERIOUS: do not use JCGT abbreviation in reference on line {line_number} in {input_file}.")
-            if not ok and isref and 'JGT' in theline:
-                print(f"SERIOUS: do not use JGT abbreviation in reference on line {line_number} in {input_file}.")
-            # slight Google preference, and https://en.wikipedia.org/wiki/Lookup_table
-            if not ok and not isref and 'look-up' in lctheline:
-                print(f"Change 'look-up table' to 'lookup table' or similar on line {line_number} in {input_file}.")
-            if not ok and not isref and re.search(r'[\s]disc[\s\.,:;?]', lctheline):
-                print(f"Change 'disc' to 'disk' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'exemplif' in lctheline:
-                print(f"You might change 'exemplify' to 'give an example', 'show', or 'demonstrate', on line {line_number} in {input_file}.")
-            if not ok and not isref and re.search(r'[\s]discs[\s\.,:;?]', lctheline):
-                print(f"Change 'discs' to 'disks' on line {line_number} in {input_file}.")
-            # https://www.merriam-webster.com/dictionary/nonnegative says it's good
-            if not twook and not isref and 'non-negativ' in lctwoline:
-                print(f"Change 'non-negativ' to 'nonnegativ' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'non-physical' in lctheline and 'non-physically' not in lctheline:
-                print(f"Change 'non-physical' to 'nonphysical' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'non-random' in lctheline:
-                print(f"Change 'non-random' to 'nonrandom' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'non-uniform' in lctheline:
-                print(f"Change 'non-uniform' to 'nonuniform' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'non-zero' in lctheline:
-                print(f"Change 'non-zero' to 'nonzero' on line {line_number} in {input_file}.")
-			# https://learn.microsoft.com/en-us/style-guide/a-z-word-list-term-collections/f/far-left-far-right
-            if not ok and not isref and 'far-left' in lctheline:
-                print(f"Change 'far-left' to 'leftmost' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'far left' in lctheline:
-                print(f"Change 'far left' to 'leftmost' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'far-right' in lctheline:
-                print(f"Change 'far-right' to 'rightmost' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'far right' in lctheline:
-                print(f"Change 'far right' to 'rightmost' on line {line_number} in {input_file}.")
-			# unlikely, but just in case...
-            if not ok and not isref and 'far-top' in lctheline:
-                print(f"Change 'far-top' to 'topmost' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'far top' in lctheline:
-                print(f"Change 'far top' to 'topmost' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'far-bottom' in lctheline:
-                print(f"Change 'far-bottom' to 'bottommost' on line {line_number} in {input_file}.")
-            if not ok and not isref and 'far bottom' in lctheline:
-                print(f"Change 'far bottom' to 'bottommost' on line {line_number} in {input_file}.")
+                    print(f"Change '{m.group(1)}' to 'light map' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not ok and not isref:
+                    m = re.search(r' (screenspace)', lctheline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'screen space' on line {line_number} in {input_file}.")
+                        SAYOK()
+                if not ok and not isref and 'DXR' not in theline and 'DirectX' not in theline:
+                    m = re.search(r' (raytrac)', lctheline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'ray trac*' on line {line_number} in {input_file}.")
+                        SAYOK()
+                # doing a rough survey, there are considerably more articles without the hyphen than with
+                if not ok and not isref and style:
+                    m = re.search(r'(ray-trac)', lctheline)
+                    if m:
+                        print(f"Consistency: change '{m.group(1)}' to 'ray trac*' (it's the norm), on line {line_number} in {input_file}.")
+                if not isref and 'directx ray tracing' in lctwoline:
+                    print(f"Change 'DirectX ray tracing' to 'DirectX Raytracing' as this is how Microsoft writes it, on line {line_number} in {input_file}.")
+                if not isref and 'Directx raytracing' in twoline:
+                    print(f"Change 'DirectX raytracing' to 'DirectX Raytracing' (capitalize the 'r'), as this is how Microsoft writes it, on line {line_number} in {input_file}.")
+                if not isref and style:
+                    m = re.search(r' (pathtrac)', lctheline)
+                    if m:
+                        print(f"Consistency: change '{m.group(1)}' to 'path trac*' on line {line_number} in {input_file}.")
+                if not isref and style:
+                    m = re.search(r'(path-trac)', lctheline)
+                    if m:
+                        print(f"Consistency: change '{m.group(1)}' to 'path trac*' (it's the norm), on line {line_number} in {input_file}.")
+                if not ok and not isref:
+                    m = re.search(r' (raymarch)', lctheline)
+                    if not m and style:
+                        m = re.search(r'(ray-march)', lctheline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'ray march*' on line {line_number} in {input_file}.")
+                        SAYOK()
+                if not ok and not isref:
+                    m = re.search(r' (sub-surface)', lctheline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'subsurface' on line {line_number} in {input_file}.")
+                        SAYOK()
+                if not ok and not isref:
+                    m = re.search(r' (preintegrate)', lctheline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'pre-integrate' on line {line_number} in {input_file}.")
+                        SAYOK()
+                if not ok and not isref:
+                    m = re.search(r' (pre-calculate)', lctheline)
+                    if m:
+                        # slight google preference for this, but we'll go precalculate
+                        print(f"Change '{m.group(1)}' to 'precalculate' on line {line_number} in {input_file}.")
+                        SAYOK()
+                if not ok and not isref:
+                    m = re.search(r' (pre-comput)', lctheline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'precomput*' on line {line_number} in {input_file}.")
+                        SAYOK()
+                if not ok and not isref and 'non-linear' in lctheline:
+                    print(f"Change 'non-linear' to 'nonlinear' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'non-planar' in lctheline:
+                    print(f"Change 'non-planar' to 'nonplanar' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'pre-pass' in lctheline:
+                    print(f"Change 'pre-pass' to 'prepass' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'zeroes' in lctheline:
+                    print(f"Change 'zeroes' to 'zeros' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'un-blur' in lctheline:
+                    print(f"Change 'un-blur' to 'unblur' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'use-case' in lctheline:
+                    print(f"Change 'use-case' to 'use case' (no hyphen), on line {line_number} in {input_file}.")
+                # our general rule: if Merriam-Webster says it's a word, it's a word
+                if not ok and not isref and 'multi-stage' in lctheline:
+                    print(f"Change 'multi-stage' to 'multistage' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'XYZ-space' in lctheline:
+                    print(f"Change 'XYZ-space' to 'XYZ space' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'spatio-temporal' in lctheline:
+                    print(f"Change 'spatio-temporal' to 'spatiotemporal', on line {line_number} in {input_file}.")
+                if not ok and not isref and 'close-up' in lctheline:
+                    print(f"Could change 'close-up' to the more modern 'closeup', on line {line_number} in {input_file}.")
+                if not twook and not isref and 'multi channel' in lctwoline:
+                    print(f"Change 'multi channel' to 'multichannel', on line {line_number} in {input_file}.")
+                if not ok and not isref and 'multi-channel' in lctheline:
+                    print(f"Change 'multi-channel' to 'multichannel', on line {line_number} in {input_file}.")
+                if not twook and not isref and 'multi ' in lctwoline:
+                    print(f"It is unlikely that you want 'multi' with a space after it, on line {line_number} in {input_file}.")
+                if not twook and not isref and 'pseudo code' in lctwoline:
+                    print(f"Change 'pseudo code' to 'pseudocode', on line {line_number} in {input_file}.")
+                if not ok and not isref and 'pseudo-code' in lctheline:
+                    print(f"Change 'pseudo-code' to 'pseudocode', on line {line_number} in {input_file}.")
+                if not twook and not isref and 'pseudo ' in lctwoline:
+                    print(f"It is unlikely that you want 'pseudo' with a space after it, on line {line_number} in {input_file}.")
+                if not twook and not isref and 'ray-generation shader' in lctwoline:
+                    print(f"Change 'ray-generation' to 'ray generation' (no hyphen), on line {line_number} in {input_file}.")
+                if not ok and not isref and 'reexecute' in lctheline:
+                    print(f"Change 'reexecute' to 're-execute', on line {line_number} in {input_file}.")
+                if not ok and not isref and ('XBox' in theline or 'XBOX' in theline):
+                    print(f"Change 'XBox' to 'Xbox' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'x-box' in lctheline:
+                    print(f"Change 'XBox' to 'Xbox' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'Renderman' in theline:
+                    print(f"Change 'Renderman' to 'RenderMan' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'GeForce' not in theline and 'geforce' in lctheline:
+                    print(f"Change 'Geforce' to 'GeForce' on line {line_number} in {input_file}.")
+                # https://www.nvidia.com/en-us/geforce/graphics-cards/rtx-2080-ti/
+                if not ok and not isref and '080ti' in lctheline:
+                    print(f"Change '*080Ti' to '*080~Ti' on line {line_number} in {input_file}.")
+                if not ok and not isref:
+                    m = re.search(r'(rtcore)', lctheline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'RT Core' on line {line_number} in {input_file}.")
+                if not twook and not isref:
+                    m = re.search(r'(rt core)', lctwoline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'RT~Core' on line {line_number} in {input_file}.")
+                if not ok and not isref:
+                    m = re.search(r'(RT~core)', theline)
+                    if m:
+                        print(f"Change '{m.group(1)}' to 'RT~Core' on line {line_number} in {input_file}.")
+                if not ok and not isref and '080 ti' in theline:
+                    print(f"Change '*080 ti' to '*080~Ti' on line {line_number} in {input_file}.")
+                elif not textonly and not ok and not isref and '0 Ti' in theline:
+                    print(f"Change '*0 Ti' to '*0~Ti' on line {line_number} in {input_file}.")
+                if not textonly and not ok and not isref and 'titan v' in lctheline:
+                    print(f"Change 'Titan V' to 'Titan~V' on line {line_number} in {input_file}.")
+                if not twook and 'gtx 2080' in lctwoline:
+                    print(f"Change 'GTX' to 'RTX' on line {line_number} in {input_file}.")
+                if not ok and 'Game Developer Conference' in theline:
+                    print(f"Change 'Game Developer Conference' to 'Game Developers Conference' on line {line_number} in {input_file}.")
+                if not ok and not inequation and 'Direct3D' in theline and not isref:
+                    print(f"Just our own preference: 'Direct3D' to 'DirectX' on line {line_number} in {input_file}.")
+                if not ok and 'Playstation' in theline and not isref:
+                    print(f"'Playstation' to 'PlayStation' on line {line_number} in {input_file}.")
+                # NVIDIA in caps; ignore in a URL
+                if not ok and 'nvidia' in theline and 'nvidia.com' not in theline and 'bibitem' not in theline and 'cite' not in theline:
+                    print(f"'nvidia' to 'NVIDIA' on line {line_number} in {input_file}.")
+                if not ok and 'Nvidia' in theline and 'bibitem' not in theline and 'cite' not in theline:
+                    print(f"'Nvidia' to 'NVIDIA' on line {line_number} in {input_file}.")
+                if not twook and ' a NVIDIA' in twoline:
+                    print(f"'a NVIDIA' to 'an NVIDIA' on line {line_number} in {input_file}.")
+                # won't catch them all, but better than not catching any.
+                if not twook and ' can not ' in lctwoline:
+                    print(f"'can not' to 'cannot' on line {line_number} in {input_file}.")
+                if not ok and 'trade off' in lctwoline and not isref:
+                    print(f"possible fix: 'trade off' to 'trade-off', if not used as a verb, on line {line_number} in {input_file}.")
+                if not ok and 'absorbtion' in lctheline:
+                    print(f"'absorbtion' to 'absorption' on line {line_number} in {input_file}.")
+                if not twook and not inequation and 'fourier' in twoline:
+                    print(f"'fourier' to 'Fourier' on line {line_number} in {input_file}.")
+                if not twook and not inequation and 'fresnel' in twoline:
+                    print(f"'fresnel' to 'Fresnel' on line {line_number} in {input_file}.")
+                if not twook and not inequation and ' gauss' in twoline:
+                    print(f"'gauss' to 'Gauss' on line {line_number} in {input_file}.")
+                if not twook and not inequation and 'lambert' in twoline:
+                    print(f"'lambert' to 'Lambert' on line {line_number} in {input_file}.")
+                if not twook and not inequation and ' russian' in twoline:
+                    print(f"'russian' to 'Russian' on line {line_number} in {input_file}.")
+                if not twook and not inequation and ' gbuffer' in lctwoline:
+                    print(f"'gbuffer' to 'G-buffer' on line {line_number} in {input_file}.")
+                if not twook and not inequation and ' zbuffer' in lctwoline:
+                    print(f"'zbuffer' to 'Z-buffer' on line {line_number} in {input_file}.")
+                if not ok and 'ad-hoc' in lctheline:
+                    print(f"'ad-hoc' to 'ad hoc' on line {line_number} in {input_file}.")
+                if not ok and 'co-author' in lctheline:
+                    print(f"'co-author' to 'coauthor' on line {line_number} in {input_file}.")
+                if not ok and not inequation and 'lowpass' in lctheline:
+                    print(f"'lowpass' to 'low-pass' on line {line_number} in {input_file}.")
+                if not ok and 'highpass' in lctheline:
+                    print(f"'highpass' to 'high-pass' on line {line_number} in {input_file}.")
+                if not twook and 'high frequency' in lctwoline:
+                    print(f"If an adjective, 'high frequency' to 'high-frequency' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and 'high level' in lctwoline:
+                    print(f"If an adjective, 'high level' to 'high-level' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and 'high fidelity' in lctwoline:
+                    print(f"If an adjective, 'high fidelity' to 'high-fidelity' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and 'higher quality' in lctwoline:
+                    print(f"If an adjective, 'higher quality' to 'higher-quality' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and 'floating point' in lctwoline:
+                    print(f"If an adjective, 'floating point' to 'floating-point' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not ok and 'nonboundary' in lctheline:
+                    print(f"'nonboundary' to 'non-boundary' on line {line_number} in {input_file}.")
+                if not ok and 'penumbrae' in lctheline:
+                    print(f"'penumbrae' to 'penumbras' on line {line_number} in {input_file}.")
+                if not twook and 'one bounce' in lctwoline:
+                    print(f"You may want 'one bounce' to 'one-bounce' (add hyphen) if an adjective, on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and 'multi bounce' in lctwoline:
+                    print(f"'multi bounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
+                if not ok and 'multibounce' in lctheline:
+                    print(f"'multibounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
+                if not ok and 'multi-bounce' in lctheline:
+                    print(f"'multi-bounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
+                if not twook and 'multiple bounce' in lctwoline and 'multiple bounces' not in lctwoline:
+                    print(f"'multiple bounce' to 'multiple-bounce' on line {line_number} in {input_file}.")
+                if not ok and 'multidimensional' in lctheline:
+                    print(f"'multidimensional' to 'multi-dimensional' on line {line_number} in {input_file}.")
+                if not ok and 'multilayer' in lctheline:
+                    print(f"'multilayer' to 'multi-layer' on line {line_number} in {input_file}.")
+                if not ok and 'multibound' in lctheline:
+                    print(f"'multibound' to 'multi-bound' on line {line_number} in {input_file}.")
+                # searching the ACM Digital Library, 47 entries use "tone mapping" as two words
+                if not twook and 'tonemap' in lctwoline:
+                    print(f"'tonemap' to 'tone map' if a noun, 'tone-map' if an adjective, on line {line_number} in {input_file}.")
+                if not twook and not isref and 'n-Patch' in twoline:
+                    print(f"'n-Patch' to 'N-patch' on line {line_number} in {input_file}.")
+                if not twook and 'fill-rate' in lctwoline:
+                    print(f"'fill-rate' to 'fill rate' on line {line_number} in {input_file}.")
+                if not ok and not isref and formal and 'bigger' in lctheline:
+                    print(f"'bigger' to 'larger' on line {line_number} in {input_file}.")
+                    FLAG_FORMAL()
+                if not ok and not isref and formal and 'biggest' in lctheline:
+                    print(f"'biggest' to 'greatest' or similar, on line {line_number} in {input_file}.")
+                    FLAG_FORMAL()
+                if not twook and not isref and 'self intersect' in lctwoline and 'self intersection' not in lctwoline:
+                    print(f"'self intersect' to 'self-intersect' as it's a common term, on line {line_number} in {input_file}.")
+                if not ok and not isref and 'bidimensional' in lctheline:
+                    print(f"'bidimensional' to 'two-dimensional' mr. fancy pants, on line {line_number} in {input_file}.")
+                if not ok and 'fillrate' in lctheline:
+                    print(f"'fillrate' to 'fill rate' on line {line_number} in {input_file}.")
+                # more popular on Google
+                if not twook and not isref and 'run time' in lctwoline:
+                    print(f"'run time' to 'runtime' for consistency, on line {line_number} in {input_file}.")
+                if not ok and not isref and 'videogame' in lctheline:
+                    print(f"'videogame' to 'video game' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'videocamera' in lctheline:
+                    print(f"'videocamera' to 'video camera' on line {line_number} in {input_file}.")
+                if not ok and isref and 'January' in theline:
+                    print(f"Change January to Jan. in line {line_number} in {input_file}.")
+                if not ok and isref and 'February' in theline:
+                    print(f"Change February to Feb. in line {line_number} in {input_file}.")
+                if not ok and isref and (re.search(r'March \d', twoline) or re.search(r'March,', twoline)):
+                    print(f"Change March to Mar. in line {line_number} in {input_file}.")
+                if not ok and isref and 'September' in theline:
+                    print(f"Change September to Sept. in line {line_number} in {input_file}.")
+                if not ok and isref and 'October' in theline:
+                    print(f"Change October to Oct. in line {line_number} in {input_file}.")
+                if not ok and isref and 'November' in theline:
+                    print(f"Change November to Nov. in line {line_number} in {input_file}.")
+                if not ok and isref and 'December' in theline:
+                    print(f"Change December to Dec. in line {line_number} in {input_file}.")
+                if not ok and isref and 'Jan.,' in theline:
+                    print(f"No comma needed after Jan. on line {line_number} in {input_file}.")
+                if not ok and isref and 'Feb.,' in theline:
+                    print(f"No comma needed after Feb. on line {line_number} in {input_file}.")
+                if not ok and isref and 'March,' in theline:
+                    print(f"No comma needed after March on line {line_number} in {input_file}.")
+                if not ok and isref and 'April,' in theline:
+                    print(f"No comma needed after April on line {line_number} in {input_file}.")
+                if not ok and isref and 'May,' in theline:
+                    print(f"No comma needed after May on line {line_number} in {input_file}.")
+                if not ok and isref and 'June,' in theline:
+                    print(f"No comma needed after June on line {line_number} in {input_file}.")
+                if not ok and isref and 'July,' in theline:
+                    print(f"No comma needed after July on line {line_number} in {input_file}.")
+                if not ok and isref and 'August,' in theline:
+                    print(f"No comma needed after August on line {line_number} in {input_file}.")
+                if not ok and isref and 'Sept.,' in theline:
+                    print(f"No comma needed after Sept. on line {line_number} in {input_file}.")
+                if not ok and isref and 'Oct.,' in theline:
+                    print(f"No comma needed after Oct. on line {line_number} in {input_file}.")
+                if not ok and isref and 'Nov.,' in theline:
+                    print(f"No comma needed after Nov. on line {line_number} in {input_file}.")
+                if not ok and isref and 'Dec.,' in theline:
+                    print(f"No comma needed after Dec. on line {line_number} in {input_file}.")
+                if not ok and isref and 'course notes' in theline:
+                    print(f"Change 'course notes' to 'course' on line {line_number} in {input_file}.")
+                if not ok and isref and 'JCGT' in theline:
+                    print(f"SERIOUS: do not use JCGT abbreviation in reference on line {line_number} in {input_file}.")
+                if not ok and isref and 'JGT' in theline:
+                    print(f"SERIOUS: do not use JGT abbreviation in reference on line {line_number} in {input_file}.")
+                # slight Google preference, and https://en.wikipedia.org/wiki/Lookup_table
+                if not ok and not isref and 'look-up' in lctheline:
+                    print(f"Change 'look-up table' to 'lookup table' or similar on line {line_number} in {input_file}.")
+                if not ok and not isref and re.search(r'[\s]disc[\s\.,:;?]', lctheline):
+                    print(f"Change 'disc' to 'disk' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'exemplif' in lctheline:
+                    print(f"You might change 'exemplify' to 'give an example', 'show', or 'demonstrate', on line {line_number} in {input_file}.")
+                if not ok and not isref and re.search(r'[\s]discs[\s\.,:;?]', lctheline):
+                    print(f"Change 'discs' to 'disks' on line {line_number} in {input_file}.")
+                # https://www.merriam-webster.com/dictionary/nonnegative says it's good
+                if not twook and not isref and 'non-negativ' in lctwoline:
+                    print(f"Change 'non-negativ' to 'nonnegativ' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'non-physical' in lctheline and 'non-physically' not in lctheline:
+                    print(f"Change 'non-physical' to 'nonphysical' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'non-random' in lctheline:
+                    print(f"Change 'non-random' to 'nonrandom' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'non-uniform' in lctheline:
+                    print(f"Change 'non-uniform' to 'nonuniform' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'non-zero' in lctheline:
+                    print(f"Change 'non-zero' to 'nonzero' on line {line_number} in {input_file}.")
+    			# https://learn.microsoft.com/en-us/style-guide/a-z-word-list-term-collections/f/far-left-far-right
+                if not ok and not isref and 'far-left' in lctheline:
+                    print(f"Change 'far-left' to 'leftmost' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'far left' in lctheline:
+                    print(f"Change 'far left' to 'leftmost' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'far-right' in lctheline:
+                    print(f"Change 'far-right' to 'rightmost' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'far right' in lctheline:
+                    print(f"Change 'far right' to 'rightmost' on line {line_number} in {input_file}.")
+    			# unlikely, but just in case...
+                if not ok and not isref and 'far-top' in lctheline:
+                    print(f"Change 'far-top' to 'topmost' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'far top' in lctheline:
+                    print(f"Change 'far top' to 'topmost' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'far-bottom' in lctheline:
+                    print(f"Change 'far-bottom' to 'bottommost' on line {line_number} in {input_file}.")
+                if not ok and not isref and 'far bottom' in lctheline:
+                    print(f"Change 'far bottom' to 'bottommost' on line {line_number} in {input_file}.")
 
-            # nice for a final check one time, but kind of crazed and generates false positives
-            if picky:
-                if not twook and ' at. ' in twoline:
-                    print(f"Noteworthy: sentence finishes with the preposition 'at.' on line {line_number} in {input_file}.")
-                if not twook and ' of. ' in twoline:
-                    print(f"Noteworthy: sentence finishes with the preposition 'of.' on line {line_number} in {input_file}.")
-                if not twook and ' for. ' in twoline:
-                    print(f"Noteworthy: sentence finishes with the preposition 'for.' on line {line_number} in {input_file}.")
-                if not twook and not isref and 'a number of' in lctwoline:
-                    print(f"shortening tip: replace 'a number of' with 'several' (or possibly even remove), on line {line_number} in {input_file}.")
-                    SAYOK()
-                if not twook and not isref and 'in particular' in lctwoline:
-                    print(f"shortening tip: perhaps remove 'in particular' on line {line_number} in {input_file}.")
-                    SAYOK()
-                if not twook and not isref and 'a large number of' in lctwoline:
-                    print(f"shortening tip: perhaps replace 'a large number of' with 'many' on line {line_number} in {input_file}.")
-                    SAYOK()
-                if not twook and not isref and 'the majority of' in lctwoline:
-                    print(f"shortening tip: replace 'the majority of' with 'most' on line {line_number} in {input_file}.")
-                    SAYOK()
-                if not twook and 'kind of' in lctwoline:
-                    print(f"If you don't mean 'type of' for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line {line_number} in {input_file}.")
-                    SAYOK()
-                # finds some problems, but plenty of false positives:
-                if not ok and isref and re.search(r"\w''", theline):
-                    print(f"ERROR: reference title does not have comma before closed quotes, on line {line_number} in {input_file}.")
+                # nice for a final check one time, but kind of crazed and generates false positives
+                if picky:
+                    if not twook and ' at. ' in twoline:
+                        print(f"Noteworthy: sentence finishes with the preposition 'at.' on line {line_number} in {input_file}.")
+                    if not twook and ' of. ' in twoline:
+                        print(f"Noteworthy: sentence finishes with the preposition 'of.' on line {line_number} in {input_file}.")
+                    if not twook and ' for. ' in twoline:
+                        print(f"Noteworthy: sentence finishes with the preposition 'for.' on line {line_number} in {input_file}.")
+                    if not twook and not isref and 'a number of' in lctwoline:
+                        print(f"shortening tip: replace 'a number of' with 'several' (or possibly even remove), on line {line_number} in {input_file}.")
+                        SAYOK()
+                    if not twook and not isref and 'in particular' in lctwoline:
+                        print(f"shortening tip: perhaps remove 'in particular' on line {line_number} in {input_file}.")
+                        SAYOK()
+                    if not twook and not isref and 'a large number of' in lctwoline:
+                        print(f"shortening tip: perhaps replace 'a large number of' with 'many' on line {line_number} in {input_file}.")
+                        SAYOK()
+                    if not twook and not isref and 'the majority of' in lctwoline:
+                        print(f"shortening tip: replace 'the majority of' with 'most' on line {line_number} in {input_file}.")
+                        SAYOK()
+                    if not twook and 'kind of' in lctwoline:
+                        print(f"If you don't mean 'type of' for formal writing, change 'kind of' to 'somewhat, rather, or slightly' on line {line_number} in {input_file}.")
+                        SAYOK()
+                    # finds some problems, but plenty of false positives:
+                    if not ok and isref and re.search(r"\w''", theline):
+                        print(f"ERROR: reference title does not have comma before closed quotes, on line {line_number} in {input_file}.")
 
-            # promoted from "picky"
-            # The non-picky version - at the start of a sentence is particularly likely to be replaceable.
-            if not twook and not isref and 'In order to' in twoline:
-                print(f"shortening tip: perhaps replace 'In order to' with 'to' on line {line_number} in {input_file}.")
-                SAYOK()
-            # see https://www.grammar-monster.com/lessons/all_of.htm
-            if (not twook and not isref and ' all of ' in lctwoline
-                    and ' all of them' not in lctwoline
-                    and ' all of which' not in lctwoline
-                    and ' all of this' not in lctwoline
-                    and ' all of these' not in lctwoline
-                    and ' all of space' not in lctwoline
-                    and ' all of you' not in lctwoline
-                    and ' all of us' not in lctwoline
-                    and ' all of his' not in lctwoline
-                    and ' all of her' not in lctwoline
-                    and ' all of it' not in lctwoline):
-                print(f"shortening tip: replace 'all of' with 'all' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and ' off of ' in lctwoline:
-                print(f"shortening tip: replace 'off of' with 'off' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and ' on the basis of ' in lctwoline:
-                print(f"shortening tip: replace 'on the basis of' with 'based on' on line {line_number} in {input_file}.")
-                SAYOK()
-            if not twook and not isref and ' first of all, ' in lctwoline:
-                print(f"shortening tip: replace 'first of all,' with 'first,' on line {line_number} in {input_file}.")
-                SAYOK()
+                # promoted from "picky"
+                # The non-picky version - at the start of a sentence is particularly likely to be replaceable.
+                if not twook and not isref and 'In order to' in twoline:
+                    print(f"shortening tip: perhaps replace 'In order to' with 'to' on line {line_number} in {input_file}.")
+                    SAYOK()
+                # see https://www.grammar-monster.com/lessons/all_of.htm
+                if (not twook and not isref and ' all of ' in lctwoline
+                        and ' all of them' not in lctwoline
+                        and ' all of which' not in lctwoline
+                        and ' all of this' not in lctwoline
+                        and ' all of these' not in lctwoline
+                        and ' all of space' not in lctwoline
+                        and ' all of you' not in lctwoline
+                        and ' all of us' not in lctwoline
+                        and ' all of his' not in lctwoline
+                        and ' all of her' not in lctwoline
+                        and ' all of it' not in lctwoline):
+                    print(f"shortening tip: replace 'all of' with 'all' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and not isref and ' off of ' in lctwoline:
+                    print(f"shortening tip: replace 'off of' with 'off' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and not isref and ' on the basis of ' in lctwoline:
+                    print(f"shortening tip: replace 'on the basis of' with 'based on' on line {line_number} in {input_file}.")
+                    SAYOK()
+                if not twook and not isref and ' first of all, ' in lctwoline:
+                    print(f"shortening tip: replace 'first of all,' with 'first,' on line {line_number} in {input_file}.")
+                    SAYOK()
 
             # ---- end of the "skip" block (the large terminology/style checks section) ----
             # This closes the block that began with: if not skip:
@@ -2387,8 +2375,8 @@ def read_code_file():
                     term = m.group(1)
                     # if there are capitals in the term, ignore it - probably a title
                     if term.lower() == term:
-                        if term in emfound and input == eminput.get(term, ''):
-                            print(f"Warning: term '{term}' is emphasized a second time at line {line_number} in {input_file}.")
+                        if term in emfound and input_file == eminput.get(term, ''):
+                            print(f"Warning: term ''{term}'' is emphasized a second time at line {line_number} in {input_file}.")
                             print(f"    First found at {emfound[term]}.")
                         else:
                             emfound[term] = f"line {line_number} in {input_file}"
@@ -2449,27 +2437,20 @@ def read_code_file():
 
             twook = ok
 
-            # ---- else branch: the line was empty/blank ----
-            # (In the Perl code this is the else for "if there is anything on the line")
-            # This is handled by the main loop structure; if we reach here, the line had content.
-            # The blank-line case sets prev_line = '' if newpara is true,
-            # which is handled in the "else" of the outer if block in the main loop.
+        else:
+            # the line was empty or a control line; a blank line starts a new paragraph
+            if newpara:
+                prev_line = ''
 
-            lcprev_line = prev_line.lower()
+        lcprev_line = prev_line.lower()
 
-        # ---- end of while loop (end of file processing) ----
-
-        # close the file (handled by the with statement if using one, or explicitly)
-        # datafile.close()  # if not using 'with'
-
-        # Report any unclosed index entries
-        for elem in sorted(indexlong.keys()):
-            print(f"ERROR: index entry started, not ended: {{{elem}|( in {input_file}.")
-        indexlong.clear()
-
-
-
+    # ---- end of line loop (end of file processing) ----
     datafile.close()
+
+    # Report any unclosed index entries
+    for elem in sorted(indexlong.keys()):
+        print(f"ERROR: index entry started, not ended: {{{elem}|( in {input_file}.")
+    indexlong.clear()
 
 
 
@@ -2507,7 +2488,10 @@ if __name__ == '__main__':
                 # arguments followed by another argument
                 elif char == 'c':
                     if i < len(argv):
-                        testlisting = int(argv[i])
+                        try:
+                            testlisting = int(argv[i])
+                        except ValueError:
+                            testlisting = 0
                         i += 1
                     else:
                         testlisting = 0
