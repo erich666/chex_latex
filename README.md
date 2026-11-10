@@ -206,3 +206,9 @@ There are lots of false positives, such as CamelCase words and authors names, so
 That's it - nothing fancy, but it has saved me a considerable amount of time and turned up some typos I would probably not have found otherwise. I can also save the results file, so if I later change .tex files, I can make a new spell_check.txt and do a "diff" to see if I've introduced any new errors.
 
 Aspell also works on plaintext files, so if you can extract your text into a simple text file you can use this process to perform batch spell checking on anything. For other free tools, see [my blog post](http://www.realtimerendering.com/blog/free-editing-tools-and-tips/).
+
+# LLM Resources
+
+There are now skills for LLMs to check writing style. Here are two I know of:
+* [Economist Style Guide](https://github.com/TAJD/economist-style-guide-plugin) - a Claude Code plugin (skill) that edits and proofreads your writing the way The Economist's style guide would
+* [SimpleEnglish](https://github.com/AminBlg/SimpleEnglish) - an agent skill that makes LLMs write plain English
